@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HMG Site Assist</title>
+<meta name="description" content="Heat Merchants technical assistant for heat pump installers.">
+<meta name="theme-color" content="#0b6e74">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Site Assist">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen phone app. Sticky header with unit switch, scrolling view, fixed bottom tab bar. */
+:root{
+  --bg:#eef2f3; --surface:#ffffff; --sunk:#e2e8ea; --line:#c9d3d6;
+  --fg:#16232a; --muted:#56666d;
+  --accent:#0b6e74; --accent-fg:#ffffff; --accent-soft:#d5ecec;
+  --warn:#a85b00; --warn-soft:#fbecd6; --bad:#b42318; --bad-soft:#fbe1de;
+  --bubble:#0b6e74; --bubble-fg:#ffffff;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f171a; --surface:#172227; --sunk:#1f2d33; --line:#2c3d44;
+  --fg:#e3ecee; --muted:#93a6ad;
+  --accent:#4cc1c3; --accent-fg:#06282a; --accent-soft:#163a3d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
+  --bubble:#1d5e62; --bubble-fg:#eaf7f7; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f171a; --surface:#172227; --sunk:#1f2d33; --line:#2c3d44;
+  --fg:#e3ecee; --muted:#93a6ad;
+  --accent:#4cc1c3; --accent-fg:#06282a; --accent-soft:#163a3d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
+  --bubble:#1d5e62; --bubble-fg:#eaf7f7; color-scheme:dark}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);display:flex;flex-direction:column}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto;width:100%}
+
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
+.brand{display:flex;flex-direction:column;line-height:1.05;margin-right:auto}
+.brand b{font:700 22px/1 var(--f-display);letter-spacing:.02em;text-transform:uppercase}
+.brand span{font-size:12.5px;color:var(--muted)}
+.unit{display:flex;background:var(--sunk);border-radius:8px;padding:3px}
+.unit button{border:0;background:none;padding:6px 10px;border-radius:6px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.unit button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+
+main{flex:1;min-height:0;overflow-y:auto}
+main .wrap{padding-block:16px 24px}
+.view{display:flex;flex-direction:column;gap:14px}
+h2{font:700 24px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);margin:0;font-size:15px}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+
+nav.tabs{background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .wrap{display:grid;grid-template-columns:repeat(6,1fr)}
+nav.tabs button{border:0;background:none;padding:8px 2px 10px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button[aria-selected="true"]{color:var(--accent)}
+
+/* Ask */
+#log{display:flex;flex-direction:column;gap:12px}
+.msg{max-width:92%;padding:10px 13px;border-radius:12px;min-width:0;overflow-wrap:anywhere}
+.msg.me{align-self:flex-end;background:var(--bubble);color:var(--bubble-fg);border-bottom-right-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin:0}
+.msg.bot ol,.msg.bot ul{margin:4px 0 8px;padding-left:22px}
+.msg.bot li{margin:2px 0}
+.msg.bot h4{font:700 15px/1.2 var(--f-body);margin:10px 0 4px}
+.msg.bot strong{font-weight:600}
+.msg .thinking{color:var(--muted);font-style:italic}
+.msg img{border-radius:8px;max-height:160px;display:block;margin-bottom:6px}
+.msg-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.suggest{display:flex;flex-wrap:wrap;gap:8px}
+.suggest button,.ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:14px;text-align:left}
+.suggest button:hover,.ghost:hover{border-color:var(--accent)}
+.composer{position:sticky;bottom:0;background:var(--bg);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.composer .row{display:flex;gap:8px;align-items:flex-end}
+.composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;min-height:46px;max-height:140px}
+.iconbtn{width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.iconbtn:disabled{opacity:.5;cursor:default}
+.attached{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.attached img{height:40px;border-radius:6px}
+.notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px}
+
+/* Fault codes */
+.search{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:16px}
+.codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.code{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px;min-width:0}
+.code b{font:700 18px/1 var(--f-mono)}
+.code b.H{color:var(--accent)}.code b.F{color:var(--warn)}.code b.E{color:var(--bad)}
+.code span{font-size:13px;color:var(--muted);line-height:1.25}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel .big{font:700 40px/1 var(--f-mono)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px}
+.kv dt{color:var(--muted)}.kv dd{margin:0}
+.kv ul{margin:0;padding-left:18px}
+.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
+.btn.sec{background:var(--sunk);color:var(--fg)}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.src{font-size:13px;color:var(--muted)}
+
+/* Controller */
+.task{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.task h3{margin:0;font-size:16px;font-weight:600}
+.path{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
+.keys{font-family:var(--f-mono);font-size:13.5px}
+.task details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
+.group-h{font:700 15px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+
+/* Manuals */
+.doc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.doc h3{margin:0;font-size:16px;font-weight:600}
+.doc .meta{font-size:13px;color:var(--muted)}
+.doc .btnrow a{text-decoration:none;font-size:14.5px;padding:9px 14px}
+.doc .covers{font-size:14px;margin:0}
+a.pg{color:var(--accent);font-weight:600;font-size:14px}
+
+/* Sizing */
+.sz-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sz-in label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
+.sz-in input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font:500 16px var(--f-mono);color:var(--fg);min-width:0}
+.kw{display:flex;flex-wrap:wrap;gap:8px}
+.kw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font:700 16px var(--f-mono)}
+.kw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.sz-res{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.sz-res .big{font:700 44px/1 var(--f-mono)}
+.sz-res .of{color:var(--muted);font-size:15px}
+.sum{font:13px/1.5 var(--f-mono);background:var(--sunk);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
+table.cu{border-collapse:collapse;width:100%;font-size:14.5px}
+table.cu th,table.cu td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+table.cu th{font-size:12.5px;color:var(--muted);font-weight:600}
+table.cu td{font-family:var(--f-mono)}
+table.cu tr.pick td{background:var(--accent-soft);font-weight:700}
+table.cu tr.small td{color:var(--muted)}
+table.cu+table.cu{margin-top:8px}
+.sz-notes{margin:0;padding-left:20px;font-size:14.5px}
+.sz-notes li{margin:3px 0}
+
+/* Clearances */
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:6px;font-size:14.5px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.cl-fig{width:100%;max-width:360px;height:auto;align-self:center}
+.cl-fig .u{fill:var(--sunk);stroke:var(--fg);stroke-width:1.5}
+.cl-fig .w{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
+.cl-fig .d{stroke:var(--accent);stroke-width:1.5}
+.cl-fig text{fill:var(--fg);font:700 14px var(--f-mono)}
+.cl-fig text.l{fill:var(--muted);font:600 11.5px var(--f-body)}
+.cl-fig text.x{fill:var(--warn)}
+table.cl td{white-space:nowrap}
+table.cl td:first-child{white-space:normal}
+table.cl td.bad{color:var(--warn);font-weight:700}
+
+/* Escalate */
+form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+form label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
+form .full{grid-column:1/-1}
+form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font-weight:400;color:var(--fg);min-width:0}
+form textarea{min-height:76px;resize:vertical}
+pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
+.addr{font-family:var(--f-mono);user-select:all}
+@media (max-width:460px){form{grid-template-columns:1fr}.unit button{padding:6px 8px}}
+@media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px);opacity:.6}}}
+.wfig{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.wfig button{display:block;width:100%;padding:0;border:0;background:#fff;cursor:zoom-in}
+.wfig img{display:block;width:100%;height:auto;max-height:none;margin:0;border-radius:0}
+.wfig figcaption{padding:8px 10px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
+.wfig figcaption b{color:var(--fg);font-weight:600;font-size:14px}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.wgrid .wfig{margin:0}
+.wgrid .wfig button{height:150px;overflow:hidden}
+.wgrid .wfig img{height:150px;object-fit:cover;object-position:top}
+.zoom{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);display:flex;flex-direction:column}
+.zoom .bar{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;font-size:14px;background:#111}
+.zoom .bar span{flex:1;min-width:0}
+.zoom .bar button,.zoom .bar a{border:0;border-radius:8px;padding:8px 12px;background:#ffffff22;color:#fff;font:600 14px var(--f-body);text-decoration:none}
+.zoom .pane{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;touch-action:pan-x pan-y pinch-zoom}
+.zoom .pane img{display:block;width:100%;height:auto}
+.zoom.big .pane img{width:auto;max-width:none}
+.gate{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate form{max-width:360px;width:100%;display:flex;flex-direction:column;gap:12px}
+.gate input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px}
+.install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.disclaimer{font-size:12.5px;color:var(--muted);margin:0}
+</style>
+</head>
+<body>
+
+<div class="gate" id="gate" hidden><form id="gate-f">
+  <div class="brand"><b>HMG Site Assist</b><span>Heat Merchants technical support</span></div>
+  <p class="lede" style="margin:0">Enter the access code from Heat Merchants. You only need to do this once on this phone.</p>
+  <input id="gate-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access code" aria-label="Access code">
+  <button class="btn" type="submit">Continue</button>
+  <span class="src" id="gate-note"></span>
+</form></div>
+
+<header class="gut"><div class="wrap">
+  <div class="brand"><b>HMG Site Assist</b><span>Heat Merchants technical support</span></div>
+  <div class="unit" role="group" aria-label="Heat pump model">
+    <button id="u-J" aria-pressed="true" title="Panasonic J-series Mini Monobloc R32">J-series</button>
+    <button id="u-K" aria-pressed="false" title="Panasonic K-series split Hydromodule + Tank">K-series</button>
+    <button id="u-B" aria-pressed="false" title="Baxi Assure HP55 R290 monobloc">Baxi HP55</button>
+  </div>
+</div></header>
+
+<main class="gut" id="main"><div class="wrap">
+
+<section class="view" id="v-ask">
+  <div>
+    <h2>Ask</h2>
+    <p class="lede" id="ask-lede">Type a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
+    <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site.</p>
+  </div>
+  <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
+  <div class="panel install" id="install" hidden><span id="install-t">Add Site Assist to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
+  <div class="suggest" id="suggest"></div>
+  <div id="log" aria-live="polite"></div>
+  <div class="composer">
+    <div class="attached" id="attached" hidden><img id="att-img" alt="Attached photo"><span>Photo attached</span><button class="ghost" id="att-x">Remove</button></div>
+    <div class="row">
+      <label class="iconbtn" id="photo-btn" title="Attach a photo of the display or label" hidden>
+        <svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
+        <input type="file" id="photo" accept="image/*" hidden>
+      </label>
+      <textarea id="q" rows="1" placeholder="e.g. H62 after start-up, what do I check?"></textarea>
+      <button class="iconbtn primary" id="send" title="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<section class="view" id="v-faults" hidden>
+  <div><h2>Fault codes</h2><p class="lede" id="fault-lede"></p></div>
+  <input class="search" id="fq" placeholder="Code or word, e.g. H62 or flow" autocomplete="off">
+  <div id="fault-detail"></div>
+  <div class="codes" id="codes"></div>
+</section>
+
+<section class="view" id="v-ctrl" hidden>
+  <div><h2>Controller</h2><p class="lede" id="ctrl-lede">Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.</p></div>
+  <input class="search" id="cq" placeholder="Find a setting, e.g. thermostat, flow rate" autocomplete="off">
+  <div class="view" id="tasks"></div>
+</section>
+
+<section class="view" id="v-docs" hidden>
+  <div><h2>Manuals</h2><p class="lede" id="docs-lede">The original manufacturer PDFs for this unit. Open one to read it on your phone, or download it to keep a copy for sites with no signal. Manuals you open are also kept on the phone for next time.</p></div>
+  <div class="view" id="docs"></div>
+  <div><h2 style="font-size:20px">Wiring and PCB diagrams</h2><p class="lede">Terminal blocks and PCB layouts from the manuals for this unit. Tap one to enlarge.</p></div>
+  <div class="wgrid" id="wiring"></div>
+</section>
+
+<section class="view" id="v-size" hidden>
+  <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances for the selected unit, and primary pipe sizing.</p></div>
+  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button></div>
+  <div id="cl-body"></div>
+  <div id="size-body" hidden></div>
+</section>
+
+<section class="view" id="v-esc" hidden>
+  <div><h2>Escalate</h2><p class="lede">Send the job to Heat Merchants Technical Support from your own email, so they can reply to you directly. Your name, company and mobile are kept on this phone for next time.</p></div>
+  <div class="btnrow"><button class="btn sec" id="fill">Fill from chat</button><span class="src" id="fill-note"></span></div>
+  <form id="esc">
+    <label>Model<input id="e-model"></label>
+    <label>Serial number<input id="e-serial" placeholder="From the rating label"></label>
+    <label>Fault code<input id="e-code"></label>
+    <label>Eircode or town<input id="e-eircode"></label>
+    <label class="full">Site address<input id="e-addr"></label>
+    <label>Installer name<input id="e-name"></label>
+    <label>Company<input id="e-co"></label>
+    <label>Mobile<input id="e-mob" inputmode="tel"></label>
+    <label>Your email (for the reply)<input id="e-email" type="email" inputmode="email" autocomplete="email"></label>
+    <label class="full">Fault / symptoms<textarea id="e-sym"></textarea></label>
+    <label class="full">Checks completed so far (with readings)<textarea id="e-checks"></textarea></label>
+    <label class="full">Assistant's assessment<textarea id="e-assess"></textarea></label>
+    <label class="full">Notes<textarea id="e-notes"></textarea></label>
+    <div class="full btnrow"><button class="btn" type="submit">Prepare email</button></div>
+  </form>
+  <div class="panel" id="esc-out" hidden>
+    <span class="chip warn" id="esc-state">Not sent yet</span>
+    <p style="margin:0" id="esc-how">Tap <b>Open email</b>, check it, and press Send in your mail app. If it doesn't open, copy the text below and send it to <span class="addr">donal.reilly@heatmerchants.ie</span>.</p>
+    <div class="btnrow"><button class="btn" id="esc-send" hidden>Send to Heat Merchants</button><a class="btn" id="mailto" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="copy">Copy text</button><span class="src" id="esc-note"></span></div>
+    <pre class="summary" id="summary"></pre>
+  </div>
+</section>
+
+</div></main>
+
+<div class="zoom" id="zoom" hidden role="dialog" aria-label="Diagram"><div class="bar"><span id="zoom-t"></span><button id="zoom-size">Zoom in</button><button id="zoom-x">Close</button></div><div class="pane"><img id="zoom-img" alt=""></div></div>
+<nav class="tabs" role="tablist"><div class="wrap">
+  <button role="tab" data-v="ask" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Ask</button>
+  <button role="tab" data-v="faults" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>Fault codes</button>
+  <button role="tab" data-v="ctrl" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="5"/><path d="M9 15h.01M12 15h.01M15 15h.01M12 18h.01"/></svg>Controller</button>
+  <button role="tab" data-v="docs" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>Manuals</button>
+  <button role="tab" data-v="size" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8M14 3v4"/><circle cx="14" cy="10" r="3"/></svg>Install</button>
+  <button role="tab" data-v="esc" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/></svg>Escalate</button>
+</div></nav>
+
+<script>
+const $=s=>document.querySelector(s);
+let ESC_TO="donal.reilly@heatmerchants.ie";
+const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc"},
+             K:{name:"Panasonic K-series split Hydromodule + Tank (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)",short:"K-series split"},
+             B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55"}};
+let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=null;
+
+/* ---------- knowledge ---------- */
+/* knowledge.json here is the small part the screens need. The manual text stays on the server (api/ask). */
+const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();}).catch(()=>{
+  $("#codes").textContent="Could not load the manuals for this page.";});
+const STOP=new Set("the and for with what how does when this that from have are can not but you your its into then than there which where why why should would could after before about unit heat pump showing show shows check checks".split(" "));
+function toks(s){return (s.toLowerCase().match(/[a-z]\d\d\.\d{2,3}|[a-z]\d{2}|[a-z][a-z0-9\-]{2,}|\b[a-z][a-z0-9]\b|\d+(?:\.\d+)?/g)||[]).filter(w=>!STOP.has(w)&&(w.length!==2||/^\d/.test(w)||FCODES.B.has(w)));}
+const FCODES={B:new Set()};
+function indexCodes(){
+  for(const f of KB.B.faults) FCODES.B.add(f.code.toLowerCase());
+  for(const f of KB.B.ctlFaults) FCODES.B.add(f.code.toLowerCase());
+}
+
+/* ---------- server calls ---------- */
+/* Shared access code (if Heat Merchants has set one), kept on this phone. */
+const store={get(k){try{return localStorage.getItem(k);}catch{return null;}},set(k,v){try{localStorage.setItem(k,v);}catch{}}};
+function api(path,body,opts={}){
+  return fetch("api/"+path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Access-Code":store.get("hmg-code")||""},body:body?JSON.stringify(body):undefined,signal:opts.signal})
+    .then(r=>{if(r.status===401){showGate("That access code wasn't accepted.");throw Object.assign(new Error("access"),{code:"access_code"});}return r;});
+}
+function showGate(note){$("#gate").hidden=false;$("#gate-note").textContent=note||"";$("#gate-code").focus();}
+$("#gate-f").onsubmit=async e=>{
+  e.preventDefault();store.set("hmg-code",$("#gate-code").value.trim());
+  const c=await fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).catch(()=>null);
+  if(c&&c.accessOk){$("#gate").hidden=true;applyConfig(c);}else $("#gate-note").textContent=c?"That access code wasn't accepted.":"No connection. Try again.";
+};
+/* Photos are shrunk on the phone before sending (max 1568 px, JPEG): quicker on site signal and inside the upload limit. */
+async function photoData(file){
+  const bmp=await createImageBitmap(file).catch(()=>null);
+  if(!bmp) throw Object.assign(new Error("image"),{code:"image_rejected"});
+  const k=Math.min(1,1568/Math.max(bmp.width,bmp.height)),c=document.createElement("canvas");
+  c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+  return {media_type:"image/jpeg",data:c.toDataURL("image/jpeg",0.85).split(",")[1]};
+}
+/* Streams an answer from api/ask; onText gets the whole answer so far. */
+async function askServer(body,{signal,onText}){
+  const r=await api("ask",body,{signal});
+  if(!r.ok){const e=await r.json().catch(()=>({}));throw Object.assign(new Error("ask"),{code:e.error||"upstream"});}
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf="",text="",done=null;
+  try{
+    for(;;){
+      const {value,done:end}=await rd.read();if(end) break;
+      buf+=dec.decode(value,{stream:true});let i;
+      while((i=buf.indexOf("\n"))>=0){
+        const line=buf.slice(0,i);buf=buf.slice(i+1);if(!line.trim()) continue;
+        const ev=JSON.parse(line);
+        if(ev.t==="text"){text+=ev.v;onText(text);}
+        else if(ev.t==="reset"){text="";onText(text);}
+        else if(ev.t==="done") done=ev;
+        else if(ev.t==="error") throw Object.assign(new Error("ask"),{code:ev.code,text});
+      }
+    }
+  }catch(e){if(e.name==="AbortError") throw Object.assign(new Error("stop"),{code:"cancelled",text});throw e.code?e:Object.assign(e,{code:"upstream",text});}
+  if(!done) throw Object.assign(new Error("ask"),{code:"upstream",text});
+  return {text,truncated:done.truncated};
+}
+
+/* ---------- wiring / PCB diagrams (images in wiring/, catalogue in knowledge.json "wiring") ---------- */
+const wiringFor=u=>(KB?.wiring||[]).filter(w=>w.unit===u);
+const WIRE_Q=/\b(wir(e|es|ing)|connect(ion|ions|ed|or)?|terminal|terminals|pcb|board|cable|thermostat|3[- ]?way|three[- ]?way|2[- ]?way|diverter|valve|sensor|thermistor|probe|power supply|supply|mains|isolator|rcd|rccb|bus|xye|cn-?\w+|x\d{1,2}|immersion|booster|boiler contact|sg ready|pump|relay|contact)\b/i;
+/* Best diagrams for a question by tag overlap; used when the answer names none. */
+function wiringMatch(q,k=1){
+  const qs=[...new Set(toks(q))];if(!qs.length) return [];
+  return wiringFor(unit).map(w=>{const t=" "+w.tags+" "+w.title.toLowerCase()+" ";let s=0;for(const x of qs) if(t.includes(" "+x+" ")||t.includes(x)) s+=x.length>3?2:1;return {w,s};})
+    .filter(x=>x.s>=4).sort((a,b)=>b.s-a.s).slice(0,k).map(x=>x.w);
+}
+function splitDiagram(text){
+  const m=text.match(/\n?\s*\**Diagrams?:?\**:?\s*([a-z0-9\-, ]+?)\.?\s*$/i);
+  if(!m) return {body:text,ids:[]};
+  return {body:text.slice(0,m.index).trimEnd(),ids:m[1].split(/[,\s]+/).filter(Boolean)};
+}
+function wireFig(w){
+  const f=document.createElement("figure");f.className="wfig";
+  const link=pageLink(w.key,w.page);
+  f.innerHTML=`<button type="button" aria-label="Enlarge ${esc(w.title)}"><img loading="lazy" src="${w.file}" width="${w.w}" height="${w.h}" alt="${esc(w.title)}"></button>
+    <figcaption><b>${esc(w.title)}</b><span>${esc(KB[w.key].cite)} p.${w.page}</span>${link}</figcaption>`;
+  f.querySelector("button").onclick=()=>openZoom(w);
+  return f;
+}
+function openZoom(w){
+  $("#zoom-img").src=w.file;$("#zoom-img").alt=w.title;$("#zoom-t").textContent=`${w.title} · ${KB[w.key].cite} p.${w.page}`;
+  $("#zoom").classList.remove("big");$("#zoom-size").textContent="Zoom in";$("#zoom").hidden=false;
+}
+$("#zoom-x").onclick=()=>{$("#zoom").hidden=true;};
+$("#zoom-size").onclick=()=>{const z=$("#zoom").classList.toggle("big");$("#zoom-size").textContent=z?"Fit width":"Zoom in";};
+document.addEventListener("keydown",e=>{if(e.key==="Escape") $("#zoom").hidden=true;});
+function renderWiring(){
+  const box=$("#wiring");if(!box) return;box.innerHTML="";
+  const ws=wiringFor(unit);
+  if(!ws.length){box.innerHTML=`<p class="src">No diagrams on file for this unit.</p>`;return;}
+  for(const w of ws) box.append(wireFig(w));
+}
+function addDiagrams(b,ids,q){
+  const all=wiringFor(unit);
+  let ws=ids.map(id=>all.find(w=>w.id===id)).filter(Boolean);
+  if(!ws.length&&WIRE_Q.test(q)) ws=wiringMatch(q);
+  for(const w of ws.slice(0,2)) b.append(wireFig(w));
+}
+
+/* ---------- markdown (small, safe) ---------- */
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function inline(s){return esc(s).replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/`([^`]+)`/g,"<code>$1</code>");}
+function md(src){
+  const out=[];let list=null;
+  const close=()=>{if(list){out.push(`</${list}>`);list=null;}};
+  for(const raw of src.split("\n")){
+    const l=raw.trimEnd();
+    let m;
+    if(!l.trim()){close();continue;}
+    if(m=l.match(/^#{1,6}\s+(.*)/)){close();out.push(`<h4>${inline(m[1])}</h4>`);continue;}
+    if(m=l.match(/^\s*(\d+)[.)]\s+(.*)/)){if(list!=="ol"){close();out.push(`<ol start="${m[1]}">`);list="ol";}out.push(`<li>${inline(m[2])}</li>`);continue;}
+    if(m=l.match(/^\s*[-*•]\s+(.*)/)){if(list!=="ul"){close();out.push("<ul>");list="ul";}out.push(`<li>${inline(m[1])}</li>`);continue;}
+    close();out.push(`<p>${inline(l)}</p>`);
+  }
+  close();return out.join("");
+}
+
+/* ---------- tabs and unit ---------- */
+function show(v){
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  for(const id of ["ask","faults","ctrl","docs","size","esc"]) $("#v-"+id).hidden=id!==v;
+  $("#main").scrollTop=0;
+}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
+function setUnit(u){
+  unit=u;for(const k of ["J","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
+  $("#e-model").value=UNITS[u].name;
+  renderSuggest();renderDocs();renderSizing();renderClear();if(KB){renderFaults();renderTasks();renderWiring();}
+}
+$("#u-J").onclick=()=>setUnit("J");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
+
+/* ---------- Manuals ---------- */
+/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160. */
+const DOCS={
+  J:{docs:[
+    {key:"J",from:1,to:80,file:"Panasonic-J-series-SM-part1-pp1-80.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 1 (pp.1-80)",meta:"WH-MDC05/07/09J3E5 · 12.7 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, installation, siting, water and electrical connections, commissioning."},
+    {key:"J",from:81,to:159,file:"Panasonic-J-series-SM-part2-pp81-159.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 2 (pp.81-159)",meta:"WH-MDC05/07/09J3E5 · 6.3 MB",covers:"Remote controller and installer setup, operation and control, servicing, pump down, pump speed, dry concrete, hidden maintenance and custom menus."},
+    {key:"J",from:160,to:246,file:"Panasonic-J-series-SM-part3-pp160-246.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 3 (pp.160-246)",meta:"WH-MDC05/07/09J3E5 · 8.4 MB",covers:"Troubleshooting, error codes (pp.164-165) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists."}]},
+  K:{docs:[{key:"K",file:"Panasonic-K-series-Hydromodule-Tank-Installation-Manual.pdf",title:"Panasonic K-series Hydromodule + Tank, installation manual",meta:"WH-ADC0309K3E5/K6E5 · 34 pages · 8.4 MB",covers:"Installation, pipework, wiring, controller setup and commissioning. No fault code list (that's in the service manual, not on file yet)."}]},
+  B:{docs:[
+    {key:"B",from:1,to:44,file:"Baxi-Assure-HP55-IM-part1-pp1-44.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 1 (pp.1-44)",meta:"7890198 v03 · 9.3 MB",covers:"Safety (R290), technical specs, siting and clearances, hydraulic connections, flow rates, freeze protection."},
+    {key:"B",from:45,to:68,file:"Baxi-Assure-HP55-IM-part2-pp45-68.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 2 (pp.45-68)",meta:"7890198 v03 · 6.5 MB",covers:"Electrical connections, flushing and filling, maintenance, error codes (pp.57-60), Benchmark and service records."},
+    {key:"B2",file:"Baxi-ASHP-Control-IM-7887625-v04.pdf",title:"Baxi ASHP Control (indoor unit / controller) manual",meta:"7887625 v04 · 140 pages · 12.7 MB",covers:"Controller buttons and menus, installer settings, commissioning, controller error codes (pp.124-134)."}]}};
+const docUrl=d=>"manuals/"+d.file;
+/* Link to a page of a unit's PDF, or "" when that page isn't in a PDF on file. */
+function pageLink(key,p){
+  const d=(DOCS[unit].docs||[]).find(x=>x.key===key&&(!x.from||(p>=x.from&&p<=x.to)));
+  if(!d) return "";
+  return `<a class="pg" href="${docUrl(d)}#page=${d.from?p-d.from+1:p}" target="_blank" rel="noopener">Open p.${p} in the manual</a>`;
+}
+function renderDocs(){
+  const box=$("#docs"),u=DOCS[unit];box.innerHTML="";
+  for(const d of u.docs){
+    const el=document.createElement("div");el.className="doc";
+    el.innerHTML=`<h3>${esc(d.title)}</h3><div class="meta">${esc(d.meta)} · PDF</div><p class="covers">${esc(d.covers)}</p>
+      <div class="btnrow"><a class="btn" href="${docUrl(d)}" target="_blank" rel="noopener" style="text-decoration:none">Open</a><a class="btn sec" href="${docUrl(d)}" download="${esc(d.file)}" style="text-decoration:none">Download</a></div>`;
+    box.append(el);
+  }
+  if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
+  if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
+  if(unit==="J"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
+}
+
+/* ---------- Outdoor unit clearances (HMG figures, Donal Reilly 24/10/2026) ---------- */
+/* Left/right looking at the front (fan side). Manual figures: Baxi HP55 IM p.32 (Fig.21/22); J-series SM p.52 drawing has no figures; K drawing not on file. */
+const CLEAR={J:{rear:300,right:300,left:100,front:1000},B:{rear:300,right:300,left:100,front:1000},K:{rear:100,right:300,left:100,front:1000}};
+const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
+let clSize="small";
+document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";});
+function clFig(c,m){
+  const lab=(k,x,y)=>{const bad=m&&m[k]>c[k];return `<text x="${x}" y="${y}" text-anchor="middle" class="${bad?"x":""}">${c[k]}${bad?" / "+m[k]:""}</text>`;};
+  return `<svg class="cl-fig" viewBox="0 0 340 250" role="img" aria-label="Plan view of the outdoor unit with clearances">
+    <line class="w" x1="20" y1="22" x2="320" y2="22"/><text class="l" x="170" y="16" text-anchor="middle">Rear (wall side)</text>
+    <rect class="u" x="110" y="70" width="120" height="70" rx="4"/><text class="l" x="170" y="110" text-anchor="middle">Outdoor unit</text>
+    <line class="d" x1="170" y1="24" x2="170" y2="68"/>${lab("rear",200,52)}
+    <line class="d" x1="20" y1="105" x2="108" y2="105"/>${lab("left",62,98)}<text class="l" x="62" y="122" text-anchor="middle">Left</text>
+    <line class="d" x1="232" y1="105" x2="320" y2="105"/>${lab("right",278,98)}<text class="l" x="278" y="122" text-anchor="middle">Right</text>
+    <line class="d" x1="170" y1="142" x2="170" y2="214"/>${lab("front",215,182)}
+    <text class="l" x="170" y="236" text-anchor="middle">Front (fan / air out) · mm · plan view</text></svg>`;
+}
+function renderClear(){
+  const box=$("#cl-body"),c=CLEAR[unit],u=UNITS[unit];
+  const row=(n,k,man)=>`<tr><td>${n}</td><td>${c[k]} mm</td>${man===undefined?"":`<td class="src">${man} mm</td>`}</tr>`;
+  let body;
+  if(unit==="B"){
+    const m={...BAXI_MAN,front:BAXI_MAN.front[clSize]};
+    body=`<div class="panel">
+      <div class="src" style="font-weight:600">Baxi model</div>
+      <div class="kw" id="cl-sz"><button data-s="small" aria-pressed="${clSize==="small"}">4 / 6 / 8 kW</button><button data-s="big" aria-pressed="${clSize==="big"}">11 / 13 kW</button></div>
+      ${clFig(c)}
+      <table class="cu cl"><thead><tr><th>Minimum clearance</th><th>HMG (use)</th><th>Baxi manual (note)</th></tr></thead><tbody>
+        ${row("Rear","rear",m.rear)}${row("Right-hand side","right",m.right)}${row("Left-hand side","left",m.left)}${row("Front","front",m.front)}
+        <tr><td>Base above ground</td><td>–</td><td>100 mm</td></tr><tr><td>Top to obstacle above</td><td>–</td><td>500 mm</td></tr></tbody></table>
+      <p class="src" style="margin:0"><b>Use the HMG figures.</b> For reference, the Baxi manual (p.32) gives 500 mm each side${clSize==="big"?" and 1500 mm at the front on the 11 and 13 kW":""}.</p>
+      <ul class="sz-notes">
+        <li>Between units (p.33): back to back 600 mm, front to front ${clSize==="big"?3000:2500} mm, side by side 500 mm.</li>
+        <li>An obstacle above may overhang the unit by no more than 500 mm (p.32). In snow, keep 100 mm above the mean snow cover and put the back to the wall (p.34).</li>
+      </ul>
+      <div class="btnrow">${pageLink("B",32)}</div>
+      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026); Baxi HP55 IM p.32 (Fig.21, Fig.22), p.33 (Fig.23), p.34.</div>
+    </div>
+    <div class="panel">
+      <span class="chip warn">R290 protective perimeter</span>
+      <p style="margin:0">R290 is highly flammable and heavier than air. As well as the clearances, mark out a protective perimeter (pp.30-31):</p>
+      <ul class="sz-notes">
+        <li><b>Free-standing</b> (ground or flat roof): 1000 mm all round.</li>
+        <li><b>In front of a wall:</b> 300 mm behind, 1000 mm in front. At the sides, 500 mm at the top of the unit widening to 1000 mm at ground level. At least as high as the unit.</li>
+        <li><b>In a corner:</b> 300 mm behind, 500 mm to the side wall, 1000 mm on the open side, up to 1800 mm in front. See Fig.20.</li>
+        <li><b>Nothing inside it:</b> no doors, windows, vents, lightwells, cellar access or sewer hatches; no lights, switches or sockets; no barbecues, mowers or smoking; not next to alleys, parking, neighbours' plots or public areas.</li>
+      </ul>
+      <div class="btnrow">${pageLink("B",31)}</div>
+      <div class="src">Source: Baxi HP55 IM pp.30-31 (Fig.18-20).</div>
+    </div>`;
+  }else{
+    body=`<div class="panel">
+      ${clFig(c)}
+      <table class="cu cl"><thead><tr><th>Minimum clearance</th><th>HMG</th></tr></thead><tbody>
+        ${row("Rear","rear")}${row("Right-hand side","right")}${row("Left-hand side","left")}${row("Front","front")}</tbody></table>
+      ${unit==="K"?`<p class="src" style="margin:0">K-series rear is <b>100 mm</b>, not the 300 mm used on the J-series and Baxi.</p>`:""}
+      <div class="notice">${unit==="J"?"Not in the manual: the J-series service manual (p.52) refers to a clearance drawing, but the drawing has no figures, and no other page gives any. These are HMG's figures.":"Not checked against the manual: the K-series manual on file covers the indoor tank unit only, not the outdoor unit. These are HMG's figures."}</div>
+      ${unit==="J"?`<ul class="sz-notes"><li>Outdoors only, on a flat solid base, on a stand over 50 mm, fixed with 4 × M12 anchor bolts (SM p.52).</li><li>Don't block the discharge air or let it short-circuit back to the intake; keep the intake out of the prevailing wind (SM p.52).</li></ul>`:""}
+      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026)${unit==="J"?"; J-series SM p.52":""}.</div>
+      ${unit==="J"?`<div class="btnrow">${pageLink("J",52)}</div>`:""}
+    </div>`;
+  }
+  box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
+  box.querySelectorAll("#cl-sz button").forEach(b=>b.onclick=()=>{clSize=b.dataset.s;renderClear();});
+  $("#cl-ask").onclick=()=>{show("ask");ask(`What clearances do I need around the ${u.short} outdoor unit?`);};
+}
+
+/* ---------- Pipe sizing (HMG method, Panasonic J/K only) ---------- */
+/* d = 2000 × √(P ÷ (1000 × SHC × ΔT × π × V)), HMG Pro Academy handbook pp.36-38. */
+const NOMINAL={5:14.3,7:20,9:25.8,12:34.4,16:45.9};
+const RATED_K={3:9.2,5:14.3,7:20.1,9:25.8};
+/* [OD, wall, bore] mm. Copper: EN 1057 standard wall. MLCP: 2 mm wall (HMG, Donal Reilly 24/10/2026). */
+const PIPES=[{name:"copper",list:[[15,0.7,13.6],[22,0.9,20.2],[28,0.9,26.2],[35,1.2,32.6],[42,1.2,39.6],[54,1.2,51.6]]},
+             {name:"MLCP",list:[[16,2,12],[20,2,16],[26,2,22],[32,2,28],[40,2,36],[50,2,46]]}];
+let sz={kw:7,dt:5,v:1};
+const fmt=(x,n=1)=>(+x).toFixed(n);
+function renderSizing(){
+  const box=$("#size-body");
+  if(unit==="B"){box.innerHTML=`<div class="notice">HMG's pipe sizing guidance and nominal flow rates are for the Panasonic J-series and K-series only. Don't use them for the Baxi HP55. Use the flow rates in the Baxi HP55 manual, or ask in the Ask tab.</div>`;return;}
+  const kws=unit==="K"?[3,5,7,9,12,16]:[5,7,9,12,16];
+  box.innerHTML=`<div class="panel">
+      <div class="src" style="font-weight:600">Heat pump output (kW)</div>
+      <div class="kw" id="sz-kw">${kws.map(k=>`<button data-k="${k}" aria-pressed="${k===sz.kw}">${k}</button>`).join("")}</div>
+      <div class="sz-in">
+        <label>Output kW<input id="sz-p" inputmode="decimal" value="${sz.kw}"></label>
+        <label>ΔT flow/return °C<input id="sz-dt" inputmode="decimal" value="${sz.dt}"></label>
+        <label>Max velocity m/s<input id="sz-v" inputmode="decimal" value="${sz.v}"></label>
+      </div>
+    </div>
+    <div class="panel" id="sz-out"></div>
+    <div class="panel">
+      <ul class="sz-notes">
+        <li>HMG recommended maximum velocity is <b>1 m/s</b>, to avoid too much velocity. The handbook's worked example uses 0.9 m/s.</li>
+        <li>At commissioning, confirm max flow with the main pump running is <b>not less than 15 l/min</b> (J-series SM p.63, K-series IM p.12). Low flow can trigger H75 in defrost.</li>
+        <li>Insulate the water pipework with <b>20 mm or more</b> insulation, especially outdoor runs (J-series SM p.53).</li>
+        <li>Unit connections: J-series Rp 1¼" (SM p.53), K-series tank unit R1¼" (IM p.5). Size the pipe by the sum, not by the connection.</li>
+        <li>Not covered: pressure drop and pump head on long runs, glycol correction (glycol needs more flow), emitter-side pipework.</li>
+      </ul>
+      <div class="src">Source: HMG sizing guidance (Pro Academy handbook pp.36-38; HMG Panasonic nominal flow rate table). Copper bores: EN 1057 standard wall. MLCP: 2 mm wall, so bore = OD − 4 mm; check the maker's bore if it differs.</div>
+    </div>`;
+  box.querySelectorAll("#sz-kw button").forEach(b=>b.onclick=()=>{sz.kw=+b.dataset.k;$("#sz-p").value=sz.kw;calcSizing();});
+  for(const [id,k] of [["sz-p","kw"],["sz-dt","dt"],["sz-v","v"]]) $("#"+id).oninput=e=>{sz[k]=parseFloat(e.target.value.replace(",","."));calcSizing();};
+  calcSizing();
+}
+function calcSizing(){
+  const out=$("#sz-out"); if(!out) return;
+  document.querySelectorAll("#sz-kw button").forEach(b=>b.setAttribute("aria-pressed",+b.dataset.k===sz.kw));
+  const {kw:P,dt,v}=sz;
+  if(!(P>0&&dt>0&&v>0)){out.innerHTML=`<p class="src">Enter the output, ΔT and velocity.</p>`;return;}
+  const Q=P/(1000*4.2*dt), d=2000*Math.sqrt(Q/(Math.PI*v)), lpm=Q*60000;
+  const d15=lpm<15?2000*Math.sqrt((15/60000)/(Math.PI*v)):0;
+  const need=Math.max(d,d15), picks=PIPES.map(t=>t.list.find(c=>c[2]>=need));
+  const vel=c=>Q/(Math.PI*(c[2]/2000)**2);
+  const nom=dt===5&&NOMINAL[P]?`Panasonic nominal flow: <b>${NOMINAL[P]} l/min</b> (HMG table).`:"";
+  const kr=unit==="K"&&RATED_K[P]?` K-series rated heating flow: ${RATED_K[P]} l/min (IM p.8).`:"";
+  const extra=(P===12||P===16)?` ${P} kW isn't covered by the ${unit}-series manual on file; flow from the HMG table only.`:"";
+  out.innerHTML=`<div class="src" style="font-weight:600">Minimum internal diameter</div>
+    <div class="sz-res"><span class="big">${fmt(d)} mm</span><span class="of">→ ${PIPES.map((t,i)=>picks[i]?`<b>${picks[i][0]} mm ${t.name}</b> at ${fmt(vel(picks[i]),2)} m/s`:`bigger than the largest ${t.name} listed`).join(" · ")}</span></div>
+    <div class="src">Flow at ${fmt(P,P%1?1:0)} kW, ΔT ${dt}°C: ${fmt(lpm)} l/min. ${nom}${kr}${extra}</div>
+    <div class="sum">d = 2000 × √(${P} ÷ (1000 × 4.2 × ${dt} × π × ${v}))<br>= 2000 × √${fmt(Q/(Math.PI*v),6)} = ${fmt(d,2)} mm</div>
+    ${P===7&&picks[1]&&picks[1][0]===26?`<div class="notice"><b>7 kW on MLCP:</b> 26 mm works (${fmt(vel(picks[1]),2)} m/s), but <b>32 mm is preferred</b> to allow for bends and elbows (${fmt(vel(PIPES[1].list.find(c=>c[0]===32)),2)} m/s). HMG guidance, Donal Reilly 24/10/2026.</div>`:""}
+    ${v>1?`<div class="notice">${v} m/s is over the HMG recommended maximum of 1 m/s. Size at 1 m/s or less.</div>`:""}
+    ${d15?`<div class="notice">${fmt(lpm)} l/min is under the 15 l/min minimum the unit must be able to pass (${unit}-series ${unit==="J"?"SM p.63":"IM p.12"}). Sized for 15 l/min at ${v} m/s it needs ${fmt(d15)} mm bore, so the pipe sizes above are picked for 15 l/min.</div>`:""}
+    ${PIPES.map((t,i)=>`<table class="cu"><thead><tr><th>${t.name==="MLCP"?"MLCP (2 mm wall)":"Copper"}</th><th>Bore</th><th>Velocity</th><th></th></tr></thead><tbody>
+    ${t.list.map(c=>{const ok=c[2]>=need;return `<tr class="${c===picks[i]?"pick":ok?"":"small"}"><td>${c[0]} mm</td><td>${c[2]}</td><td>${fmt(vel(c),2)} m/s</td><td>${c===picks[i]?"Use":ok?"":"Too small"}</td></tr>`;}).join("")}
+    </tbody></table>`).join("")}
+    <div class="btnrow"><button class="btn sec" id="sz-ask">Ask about this</button></div>`;
+  $("#sz-ask").onclick=()=>{show("ask");ask(`What size primary pipe for a ${P} kW ${UNITS[unit].short}, ΔT ${dt}°C, ${v} m/s?`);};
+}
+
+/* ---------- Ask ---------- */
+const SUGGEST={J:["H62 after start-up, what do I check?","Where do I see the flow rate?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What clearances does the outdoor unit need?"],
+               K:["Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","How do I get into the maintenance menu?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
+               B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
+function renderSuggest(){
+  const box=$("#suggest");box.innerHTML="";
+  if(turns.length) return;
+  for(const s of SUGGEST[unit]){const b=document.createElement("button");b.textContent=s;b.onclick=()=>ask(s);box.append(b);}
+}
+function bubble(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;$("#log").append(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;}
+const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The assistant's Claude key isn't working. Tell Heat Merchants.",access_code:"Enter the access code first.",rate_limited:"Too many questions in a short time. Wait a minute and try again.",busy:"Claude is busy right now. Try again in a minute.",refused:"The assistant couldn't answer that. Try rewording it.",image_rejected:"That photo couldn't be read. Try a JPEG or PNG.",prompt_too_large:"That was too much at once. Start a shorter question."};
+
+async function ask(text,extra){
+  text=(text||"").trim(); if(!text&&!photo) return;
+  if(busy){return;}
+  await kbReady;
+  $("#suggest").innerHTML="";
+  const img=photo; clearPhoto(); $("#q").value=""; autosize();
+  bubble("me",(img?`<img src="${URL.createObjectURL(img)}" alt="Photo">`:"")+esc(text||"(photo)"));
+  if(!CFG.ai){bubble("bot",`<p>The assistant isn't switched on yet. Try the <b>Fault codes</b> and <b>Controller</b> tabs.</p>`);return;}
+  const b=bubble("bot",`<span class="thinking">Checking the manual…</span>`);
+  const ctl=new AbortController(); busy=ctl; setBusy(true);
+  try{
+    const body={unit,text,history:turns.slice(-8),extra:extra||null};
+    if(img) body.image=await photoData(img);
+    const r=await askServer(body,{signal:ctl.signal,onText:text=>{b.innerHTML=text?md(splitDiagram(text).body.replace(/\n\s*\**Diagrams?:?[^\n]*$/i,"")):`<span class="thinking">Checking the manual…</span>`;}});
+    const sd=splitDiagram(r.text);
+    b.innerHTML=md(sd.body)+(r.truncated?`<p class="src">Answer cut short. Ask a narrower question.</p>`:"");
+    addDiagrams(b,sd.ids,text);
+    turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
+    addActions(b,r.text);
+  }catch(e){
+    if(e.code==="cancelled"){b.innerHTML=e.text?md(e.text)+`<p class="src">Stopped.</p>`:`<p class="src">Stopped.</p>`;}
+    else{b.innerHTML=(e.text?md(e.text):"")+`<p class="src">${ERR[e.code]||"Connection problem. Try again."}</p>`;
+      if(e.code==="not_configured") aiOff();}
+  }finally{busy=null;setBusy(false);}
+}
+function addActions(b,text){
+  if(!/escalat|Technical Support/i.test(text)) return;
+  const a=document.createElement("div");a.className="msg-actions";
+  const e=document.createElement("button");e.className="ghost";e.textContent="Escalate this job";e.onclick=()=>{show("esc");fillFromChat();};
+  a.append(e);b.append(a);
+}
+function setBusy(on){
+  const s=$("#send");
+  s.innerHTML=on?`<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>`:`<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+  s.title=on?"Stop":"Send";
+}
+$("#send").onclick=()=>busy?busy.abort():ask($("#q").value);
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)ask($("#q").value);}});
+function autosize(){const t=$("#q");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px";}
+$("#q").addEventListener("input",autosize);
+$("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;photo=f;$("#att-img").src=URL.createObjectURL(f);$("#attached").hidden=false;e.target.value="";};
+function clearPhoto(){photo=null;$("#attached").hidden=true;}
+$("#att-x").onclick=clearPhoto;
+function aiOff(){$("#ai-off").hidden=false;$("#photo-btn").hidden=true;$("#fill").hidden=true;}
+
+/* ---------- Fault codes ---------- */
+let openCode=null;
+function renderFaults(){
+  const q=$("#fq").value.trim().toLowerCase(), box=$("#codes"), det=$("#fault-detail");
+  box.innerHTML="";
+  if(unit==="B"){
+    const ctl=KB.B.ctlFaults, odu=KB.B.faults;
+    $("#fault-lede").textContent=`Baxi Assure HP55 · ${ctl.length} controller codes (A/H/E, ASHP Control IM pp.125-134, with checks) and ${odu.length} outdoor unit codes (HP55 IM pp.57-60, meaning only). Tap a code.`;
+    const hit=(f,extra)=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||extra.toLowerCase().includes(q);
+    const groups=[["Controller (on the indoor unit screen)",ctl.filter(f=>hit(f,f.type+" "+f.checks)),"c"],["Outdoor unit (on the outdoor PCB display)",odu.filter(f=>hit(f,f.group)),"o"]];
+    for(const [title,list,k] of groups){
+      if(!list.length) continue;
+      const h=document.createElement("div");h.className="group-h";h.style.gridColumn="1/-1";h.textContent=title;box.append(h);
+      for(const f of list){
+        const b=document.createElement("button");b.className="code";
+        b.innerHTML=`<b class="${k==="c"?({A:"F",H:"H",E:"E"})[f.code[0]]:f.code[0]}">${f.code}</b><span>${esc(k==="c"?f.type+" · "+f.meaning:f.meaning)}</span>`;
+        b.onclick=()=>{openCode=k+":"+f.code+"@"+f.tablePage;faultDetail();det.scrollIntoView({behavior:"smooth",block:"start"});};
+        box.append(b);
+      }
+    }
+    if(!box.children.length) box.innerHTML=`<p class="src">No code matches “${esc(q)}” in the Baxi lists.</p>`;
+    faultDetail();
+    return;
+  }
+  if(unit==="K"){
+    $("#fault-lede").textContent="K-series split";
+    det.innerHTML=`<div class="notice">K-series fault codes aren't covered yet. The K-series document on file is the installation manual, which has no fault code list. Upload the K-series service manual to add them. Don't use J-series codes for a K-series unit.</div>`;
+    return;
+  }
+  $("#fault-lede").textContent=`J-series Mini Monobloc R32 · ${KB.faults.length} codes from the error codes table (SM pp.164-165). Tap a code.`;
+  const list=KB.faults.filter(f=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||f.verify.join(" ").toLowerCase().includes(q));
+  for(const f of list){
+    const b=document.createElement("button");b.className="code";
+    b.innerHTML=`<b class="${f.code[0]}">${f.code}</b><span>${esc(f.meaning)}</span>`;
+    b.onclick=()=>{openCode=f.code;faultDetail();det.scrollIntoView({behavior:"smooth",block:"start"});};
+    box.append(b);
+  }
+  if(!list.length) box.innerHTML=`<p class="src">No code matches “${esc(q)}” in the J-series table.</p>`;
+  faultDetail();
+}
+function fieldNotesFor(code,u){return (KB.fieldNoteList||[]).filter(n=>n.codes.includes(code)&&n.units.includes(u));}
+function fnBlock(code,u){const ns=fieldNotesFor(code,u);if(!ns.length)return "";
+  return ns.map(n=>`<div class="notice" style="white-space:pre-line"><b>HMG field note: ${esc(n.title)}</b>
+<b>Cause:</b> ${esc(n.cause)}
+<b>Fix:</b> ${esc(n.fix)}
+<span class="src">Source: HMG Field Notes – ${esc(n.title)} (confirmed by ${esc(n.confirmed)})</span></div>`).join("");}
+function fnNote(code,u){return fieldNotesFor(code,u).map(n=>` HMG Field Notes – ${n.title}: Cause: ${n.cause} Fix: ${n.fix}`).join("");}
+function faultDetail(){
+  const det=$("#fault-detail");
+  if(unit==="B"){
+    const c=openCode&&openCode.startsWith("c:")&&KB.B.ctlFaults.find(x=>"c:"+x.code+"@"+x.tablePage===openCode);
+    if(c){
+      det.innerHTML=`<div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span class="big">${c.code}</span><button class="ghost" id="fd-x">Close</button></div>
+        <div style="font-weight:600;font-size:17px">${esc(c.meaning)}</div>
+        <dl class="kv"><dt>Type</dt><dd>${c.type}${c.type==="Lockout"?" (flashing red): fix the cause, then acknowledge on the screen":c.type==="Blocking"?" (continuous red)":" (no colour change)"}</dd>
+        <dt>Check first</dt><dd>${c.checks?esc(c.checks):"No checks listed in the manual."}</dd></dl>
+        ${c.odu?`<div class="notice">Generated by the outdoor unit. Open Installer › Error history, highlight this error and press the dial to read the outdoor unit code in the details, then look that code up under Outdoor unit.</div>`:""}
+        <div class="src">Source: Baxi ASHP Control IM p.${c.tablePage} (error codes) · ${pageLink("B2",c.tablePage)}</div>
+        <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+      </div>`;
+      $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
+      $("#fd-go").onclick=()=>{show("ask");ask(`${c.code} on the Baxi controller. What do I check?`,{code:c.code,pages:[{m:"B2",p:c.tablePage}],note:`Controller error code ${c.code} (${c.type}): ${c.meaning}. Checks in the manual: ${c.checks||"none listed"}.${c.odu?" The manual says this error is generated by the outdoor unit; the outdoor code is in the error details.":""} (Baxi ASHP Control IM p.${c.tablePage}).`});};
+      $("#fd-esc").onclick=()=>{$("#e-code").value=c.code;$("#e-sym").value=`${c.code}: ${c.meaning}`;show("esc");};
+      return;
+    }
+    const f=openCode&&KB.B.faults.find(x=>"o:"+x.code+"@"+x.tablePage===openCode);
+    if(!f){det.innerHTML="";return;}
+    const twin=KB.B.faults.filter(x=>x.code===f.code&&x!==f);
+    det.innerHTML=`<div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span class="big">${f.code}</span><button class="ghost" id="fd-x">Close</button></div>
+      <div style="font-weight:600;font-size:17px">${esc(f.meaning)}</div>
+      <dl class="kv"><dt>Group</dt><dd>${esc(f.group)}</dd>
+      <dt>Shown on</dt><dd>${f.shownOn==="PCB"?"Outdoor Main Control PCB display only":"User interface and outdoor Main Control PCB"}</dd></dl>
+      ${twin.length?`<div class="notice">${f.code} is also listed as “${esc(twin[0].meaning)}” (p.${twin[0].tablePage}). Check where it shows to tell them apart.</div>`:""}
+      <div class="src">Source: Baxi HP55 IM p.${f.tablePage} (error codes). No check procedure for this code in the manual. ${pageLink("B",f.tablePage)}</div>
+      <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+    </div>`;
+    $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
+    $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the Baxi HP55 outdoor unit. What do I check?`,{code:f.code,pages:[f.tablePage],note:`Error code list row: ${f.code} | ${f.meaning} | ${f.group} | shown on: ${f.shownOn} (Baxi HP55 IM p.${f.tablePage}).${twin.length?` Note: ${f.code} is also listed as "${twin[0].meaning}" on p.${twin[0].tablePage}.`:""}`});};
+    $("#fd-esc").onclick=()=>{$("#e-code").value=f.code;$("#e-sym").value=`${f.code}: ${f.meaning}`;show("esc");};
+    return;
+  }
+  const f=unit==="J"&&KB.faults.find(x=>x.code===openCode);
+  if(!f){det.innerHTML="";return;}
+  const diag=f.diagPages.length?`SM p.${f.diagPages.join(", ")}`:"no self-diagnosis page";
+  det.innerHTML=`<div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><span class="big">${f.code}</span><button class="ghost" id="fd-x">Close</button></div>
+    <div style="font-weight:600;font-size:17px">${esc(f.meaning)}</div>
+    <dl class="kv"><dt>Triggers when</dt><dd>${esc(f.judgement)}</dd>
+    <dt>Check first</dt><dd>${f.verify.length?"<ul>"+f.verify.map(v=>`<li>${esc(v)}</li>`).join("")+"</ul>":"—"}</dd></dl>
+    ${fnBlock(f.code,"J")}
+    <div class="src">Source: J-series SM p.${f.tablePage} (error codes table); self-diagnosis ${diag}</div>
+    <div class="btnrow">${pageLink("J",f.tablePage)}${f.diagPages.length?pageLink("J",f.diagPages[0]).replace(/Open p\.(\d+) in the manual/,"Open check procedure (p.$1)"):""}</div>
+    <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+  </div>`;
+  $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
+  $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the J-series. What do I check?`,{code:f.code,pages:[f.tablePage,...f.diagPages],note:`Error codes table row: ${f.code} | ${f.meaning} | judgement: ${f.judgement} | verify: ${f.verify.join("; ")} (J-series SM p.${f.tablePage}).${fnNote(f.code,"J")}`});};
+  $("#fd-esc").onclick=()=>{$("#e-code").value=f.code;$("#e-sym").value=`${f.code}: ${f.meaning}`;show("esc");};
+}
+$("#fq").addEventListener("input",renderFaults);
+
+/* ---------- Controller ---------- */
+function parseTables(section){
+  const rows=[];let head=null,group=null;
+  for(const l of section.split("\n")){
+    if(/^##\s/.test(l)) group=l.replace(/^##\s*[AB]\d\.\s*/,"");
+    if(/^\S.*recipes.*:$/i.test(l)) group=l.replace(/:$/,"");
+    if(!l.startsWith("|")){head=null;continue;}
+    const cells=l.slice(1,-1).split("|").map(c=>c.trim());
+    if(cells.every(c=>/^-+$/.test(c))) continue;
+    if(!head){head=cells;continue;}
+    const o={group};head.forEach((h,i)=>o[h]=cells[i]||"");rows.push(o);
+  }
+  return rows;
+}
+function renderTasks(){
+  const nav=KB.nav, a=nav.indexOf("# Part A"), b=nav.indexOf("# Part B");
+  const part=unit==="B"?KB.B.nav:unit==="J"?nav.slice(a,b):nav.slice(b);
+  const keep=["recipes","Hidden menus"];
+  const rows=parseTables(part).filter(r=>r.Task||r.Menu).filter(r=>keep.some(k=>(r.group||"").includes(k)));
+  const q=$("#cq").value.trim().toLowerCase();
+  const box=$("#tasks");box.innerHTML="";
+  let last=null;
+  for(const r of rows){
+    const text=Object.values(r).join(" ").toLowerCase().replace(/\*/g,"");
+    if(q&&!text.includes(q)) continue;
+    if(r.group!==last){last=r.group;const h=document.createElement("div");h.className="group-h";h.textContent=/Hidden/.test(r.group)?"Hidden menus":/User|user/.test(r.group)?"User menu (no installer access needed)":unit==="B"?"Installer (Menu › Installer › code 0012)":"Installer setup";box.append(h);}
+    const name=(r.Task||r.Menu).replace(/\*\*/g,"");
+    const path=r["Path after \"Installer setup\""]?`Installer setup → ${r["Path after \"Installer setup\""]}`:(r.Steps||(r.Hold?`Hold ${r.Hold}`:""));
+    const d=document.createElement("div");d.className="task";
+    d.innerHTML=`<h3>${esc(name)}</h3><div class="path">${esc(path.replace(/\*\*/g,""))}</div>
+      ${r["Options / default"]?`<div style="font-size:14px">${esc(r["Options / default"])}</div>`:""}
+      ${r.Contents?`<div style="font-size:14px">${esc(r.Contents)}</div>`:""}
+      ${r["Check it changed"]?`<details><summary>Check it changed</summary><div style="font-size:14px;margin-top:4px">${esc(r["Check it changed"])}</div></details>`:""}
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="src">Source: ${unit==="B"?"Baxi ASHP Control IM":unit==="J"?"J-series SM":"K-series IM"} ${esc(r.Source)}</span><button class="ghost">Step by step</button></div>`;
+    d.querySelector("button").onclick=()=>{show("ask");ask(`How do I: ${name}?`);};
+    box.append(d);
+  }
+  if(!box.children.length) box.innerHTML=`<p class="src">Nothing matches. Ask the assistant instead.</p>`;
+  $("#ctrl-lede").textContent=unit==="B"?"Button-by-button help on the Baxi ASHP Control screen. Installer settings: [Menu] › Installer › code 0012.":"Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.";
+  if(unit==="B"){const g=document.createElement("div");g.className="notice";g.textContent="Baxi buttons (manual p.15): [Back] on the left, [Menu] on the right, and the [Dial] knob in the centre (turn to scroll, press to confirm). Blue screen = normal, red = warning or blockage, flashing red = lockout. No need to switch the unit off for installer settings. Error history: highlight an error and press the dial for details, press and hold the dial to clear. Child lock: briefly press Menu and the dial together.";box.prepend(g);}
+}
+$("#cq").addEventListener("input",renderTasks);
+
+/* ---------- Escalate ---------- */
+const F=id=>$("#e-"+id).value.trim();
+function summaryText(){
+  const n=(s,ifEmpty="—")=>s||ifEmpty;
+  const checks=F("checks").split("\n").filter(Boolean).map((l,i)=>/^\d/.test(l)?l:`${i+1}. ${l}`).join("\n");
+  return `Escalation – ${n(F("model"))} – ${n(F("code"),"no code")}
+
+Fault code / symptoms: ${n(F("sym")||F("code"))}
+Model: ${n(F("model"))}
+Serial number: ${n(F("serial"))}
+Site address: ${n(F("addr"))}${F("eircode")?", "+F("eircode"):""}
+Installer: ${[F("name"),F("co"),F("mob"),F("email")].filter(Boolean).join(", ")||"—"}
+Checks completed so far:
+${checks||"—"}
+Assistant's assessment: ${n(F("assess"))}
+Notes: ${n(F("notes"))}`;
+}
+/* The installer's own details are remembered on this phone. */
+const ME=["name","co","mob","email"];
+for(const k of ME){const v=store.get("hmg-me-"+k);if(v) $("#e-"+k).value=v;}
+let escMail=null;
+$("#esc").onsubmit=e=>{
+  e.preventDefault();
+  for(const k of ME) store.set("hmg-me-"+k,F(k));
+  const missing=[["serial","serial number"],["addr","site address"],["name","installer name"],["mob","mobile"]].filter(([k])=>!F(k)).map(x=>x[1]);
+  const body=summaryText();
+  const subject=`Escalation – ${F("model")||"model?"} – ${F("code")||"no code"} – ${F("eircode")||"location?"}`;
+  $("#summary").textContent=(missing.length?`Still missing: ${missing.join(", ")}. You can send it anyway.\n\n`:"")+body;
+  $("#mailto").href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;
+  escMail={subject,body,replyTo:F("email")};
+  $("#esc-state").textContent="Not sent yet";$("#esc-note").textContent="";$("#esc-send").disabled=false;
+  $("#esc-out").hidden=false;$("#esc-out").scrollIntoView({behavior:"smooth"});
+};
+/* Sent by the server when Heat Merchants has set up email (api/escalate); otherwise only the mailto link shows. */
+$("#esc-send").onclick=async()=>{
+  if(!escMail) return;
+  const btn=$("#esc-send"),note=$("#esc-note");btn.disabled=true;note.textContent="Sending…";
+  try{
+    const r=await api("escalate",escMail);if(!r.ok) throw 0;
+    $("#esc-state").textContent="Sent";note.textContent=escMail.replyTo?`Sent. A copy went to ${escMail.replyTo}.`:"Sent. Add your email next time to get a copy.";
+  }catch{note.textContent="Couldn't send it. Use Open email instead.";btn.disabled=false;}
+};
+$("#copy").onclick=async()=>{
+  const t=`To: ${ESC_TO}\n\n`+summaryText();
+  try{await navigator.clipboard.writeText(t);$("#copy").textContent="Copied";}
+  catch{const r=document.createRange();r.selectNodeContents($("#summary"));const s=getSelection();s.removeAllRanges();s.addRange(r);$("#copy").textContent="Text selected";}
+  setTimeout(()=>$("#copy").textContent="Copy text",2000);
+};
+async function fillFromChat(){
+  const note=$("#fill-note");
+  if(!turns.length){note.textContent="Ask about the fault first, then this fills in the details.";return;}
+  if(!CFG.ai){note.textContent="Needs the assistant, which isn't switched on yet.";return;}
+  note.textContent="Reading the chat…";$("#fill").disabled=true;
+  try{
+    const r=await api("extract",{unit,turns});
+    const d=await r.json();if(!r.ok) throw Object.assign(new Error("extract"),{code:d.error});
+    const set=(id,v)=>{if(v&&!F(id))$("#e-"+id).value=v;};
+    set("code",d.code);set("sym",d.symptoms);set("checks",(d.checks||[]).filter(Boolean).join("\n"));set("assess",d.assessment);
+    set("serial",d.serial);set("addr",d.address);set("eircode",d.eircode);set("name",d.name);set("co",d.company);set("mob",d.mobile);
+    note.textContent="Filled from the chat. Check each field.";
+  }catch(e){note.textContent=ERR[e.code]||"Couldn't read the chat. Fill it in by hand.";}
+  finally{$("#fill").disabled=false;}
+}
+$("#fill").onclick=fillFromChat;
+
+/* ---------- start ---------- */
+function applyConfig(c){
+  CFG=c;if(c.escalationTo){ESC_TO=c.escalationTo;document.querySelectorAll(".addr").forEach(a=>a.textContent=ESC_TO);}
+  $("#photo-btn").hidden=!c.ai;$("#fill").hidden=!c.ai;$("#ai-off").hidden=c.ai;
+  if(c.email){$("#esc-send").hidden=false;$("#esc-how").innerHTML=`Tap <b>Send to Heat Merchants</b>. Or use <b>Open email</b> to send it from your own mail app.`;}
+}
+setUnit("J");
+fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).then(c=>{
+  applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(store.get("hmg-code")?"That access code no longer works. Ask Heat Merchants for the new one.":"");
+}).catch(()=>aiOff());
+
+/* Works offline once opened: screens, fault codes, diagrams and any manual already opened (sw.js). */
+if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));
+/* Add-to-home-screen hint: Android/Chrome gives an Install button; iPhone needs Share › Add to Home Screen. */
+(()=>{
+  const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  if(standalone||store.get("hmg-install-x")) return;
+  const box=$("#install");let ev=null;
+  $("#install-x").onclick=()=>{box.hidden=true;store.set("hmg-install-x","1");};
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;$("#install-go").hidden=false;box.hidden=false;});
+  $("#install-go").onclick=async()=>{if(!ev) return;ev.prompt();await ev.userChoice.catch(()=>{});box.hidden=true;};
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){$("#install-t").innerHTML="Add Site Assist to your home screen: tap <b>Share</b>, then <b>Add to Home Screen</b>.";box.hidden=false;}
+})();
+</script>
+</body>
+</html>
