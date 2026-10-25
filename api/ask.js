@@ -1,12 +1,15 @@
 // POST /api/ask  →  streams the assistant's answer as newline-delimited JSON events:
+//   {"t":"quota","left":4}   questions this phone has left today (only when DAILY_QUESTION_LIMIT is on)
 //   {"t":"text","v":"..."}   more answer text
 //   {"t":"reset"}            discard the text so far (Claude handed over to its fallback model mid-answer)
 //   {"t":"done","truncated":false}
 //   {"t":"error","code":"rate_limited"}
+// Over the daily limit it answers 429 {"error":"daily_limit","limit":5} instead (see lib/quota.js).
 // Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data} }
 import Anthropic from "@anthropic-ai/sdk";
 import { UNITS, pagesFor, excerpt } from "../lib/kb.js";
 import { rules } from "../lib/prompt.js";
+import { take, giveBack } from "../lib/quota.js";
 import { send, readJson, checkAccess, onlyPost, errorCode, clip } from "../lib/http.js";
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
@@ -37,6 +40,8 @@ export default async function handler(req, res) {
     ? { code: clip(body.extra.code, 20), pages: Array.isArray(body.extra.pages) ? body.extra.pages.slice(0, 6) : [], note: clip(body.extra.note, 3000) } : null;
   const img = body.image && IMAGE_TYPES.has(body.image.media_type) && typeof body.image.data === "string" && body.image.data.length < 5_000_000 ? body.image : null;
   if (!text && !img) return send(res, 400, { error: "bad_request" });
+  const quota = await take(req);
+  if (!quota.ok) return send(res, 429, { error: "daily_limit", limit: quota.limit });
 
   const pages = pagesFor(unit, text, extra);
   const ctx = pages.length ? `Manual excerpts for this question:\n\n${pages.map(x => excerpt(x.m, x.p)).join("\n\n")}\n\n` : "No manual pages matched this question.\n\n";
@@ -62,6 +67,7 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
   res.setHeader("X-Accel-Buffering", "no");
   const emit = o => res.write(JSON.stringify(o) + "\n");
+  if (quota.left !== null) emit({ t: "quota", left: quota.left });
   let closed = false;
   res.on("close", () => { if (!res.writableFinished) { closed = true; stream.abort(); } });
 
@@ -79,6 +85,7 @@ export default async function handler(req, res) {
       model: msg.model, stop: msg.stop_reason, ms: Date.now() - started, usage: msg.usage }));
   } catch (e) {
     if (closed) return;
+    await giveBack(quota);
     console.error(JSON.stringify({ evt: "ask_error", unit, status: e.status, message: e.message }));
     emit({ t: "error", code: errorCode(e, Anthropic) });
   }
