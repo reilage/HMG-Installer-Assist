@@ -146,6 +146,11 @@ test("static files are served", async () => {
     const C = k.components[u], ids = new Set(C.drawings.map(d => d.id));
     for (const d of C.drawings) assert.equal((await fetch(BASE + "/" + d.file)).status, 200, d.file);
     for (const c of C.components) for (const [d] of c.at) assert.ok(ids.has(d), `${u} ${c.name}: ${d}`);
+    // every tap target on a drawing points at a component on that drawing, and sits inside the image
+    for (const d of C.drawings) for (const [n, x, y, w, h] of d.spots || []) {
+      assert.ok(C.components.some(c => c.name === n || c.at.some(([id, m]) => id === d.id && m === n)), `${d.id} spot ${n}`);
+      assert.ok(x >= -10 && y >= -10 && x + w <= d.w + 10 && y + h <= d.h + 10, `${d.id} spot ${n} off the image`);
+    }
   }
 });
 

@@ -289,6 +289,13 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .zoom .pane{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;touch-action:pan-x pan-y pinch-zoom}
 .zoom .pane img{display:block;width:100%;height:auto}
 .zoom.big .pane img{width:auto;max-width:none}
+.zoom .zw{position:relative}
+.zoom.big .zw{display:inline-block}
+.zoom .hint{display:block;font-size:12.5px;color:#ffffffbb}
+.spot{position:absolute;transform:translate(-50%,-50%);border:2px solid var(--hmg-cyan);border-radius:8px;background:rgba(0,169,224,.12);padding:0;cursor:pointer}
+.spot[aria-pressed="true"]{background:rgba(0,169,224,.35);border-color:#0077A8}
+.zoom .sheet{max-height:48%;overflow:auto;background:var(--bg);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 16px rgba(0,0,0,.3)}
+.zoom .sheet .cp-x{display:block;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px;margin:0 0 6px auto}
 .gate{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
 .gate form{max-width:360px;width:100%;display:flex;flex-direction:column;gap:12px}
 .gate .brand{flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 6px}
@@ -435,7 +442,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 </div></main>
 
-<div class="zoom" id="zoom" hidden role="dialog" aria-label="Diagram"><div class="bar"><span id="zoom-t"></span><button id="zoom-size">Zoom in</button><button id="zoom-x">Close</button></div><div class="pane"><img id="zoom-img" alt=""></div></div>
+<div class="zoom" id="zoom" hidden role="dialog" aria-label="Diagram"><div class="bar"><span id="zoom-t"></span><button id="zoom-size">Zoom in</button><button id="zoom-x">Close</button></div><div class="pane"><div class="zw"><img id="zoom-img" alt=""><div id="zoom-spots"></div></div></div><div class="sheet" id="zoom-sheet" hidden></div></div>
 <nav class="tabs" role="tablist"><div class="wrap">
   <button role="tab" data-v="ask" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Ask</button>
   <button role="tab" data-v="faults" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>Fault codes</button>
@@ -554,6 +561,25 @@ function wireFig(w){
 function openZoom(w){
   $("#zoom-img").src=w.file;$("#zoom-img").alt=w.title;$("#zoom-t").textContent=`${w.title} · ${KB[w.key].cite} p.${w.page}`;
   $("#zoom").classList.remove("big");$("#zoom-size").textContent="Zoom in";$("#zoom").hidden=false;
+  zoomSpots(w);
+}
+/* Component drawings have tap targets on the numbers (source/components.json "spots"): tapping one shows that part's card. */
+function zoomSpots(w){
+  const box=$("#zoom-spots"), sheet=$("#zoom-sheet");box.innerHTML="";sheet.hidden=true;sheet.innerHTML="";
+  const C=KB?.components?.[w.unit];
+  if(!w.spots||!C){$("#zoom-t").querySelector(".hint")?.remove();return;}
+  $("#zoom-t").insertAdjacentHTML("beforeend",`<span class="hint">Tap a ${w.spots.some(s=>/^\w{1,3}(-\d)?$/.test(s[0]))?"number":"label"} to see what that part is. Small numbers? Tap Zoom in.</span>`);
+  for(const [n,x,y,sw,sh] of w.spots){
+    const c=C.components.find(c=>c.name===n||c.at.some(a=>a[0]===w.id&&a[1]===n));if(!c) continue;
+    const b=document.createElement("button");b.type="button";b.className="spot";b.setAttribute("aria-label",`${n}: ${c.name}`);
+    Object.assign(b.style,{left:(x+sw/2)/w.w*100+"%",top:(y+sh/2)/w.h*100+"%",width:sw/w.w*100+"%",height:sh/w.h*100+"%"});
+    b.onclick=()=>{box.querySelectorAll(".spot").forEach(s=>s.setAttribute("aria-pressed",s===b));
+      sheet.innerHTML=`<button type="button" class="cp-x">Close</button>`;sheet.append(cpCard(c,w.id));sheet.hidden=false;
+      sheet.querySelector(".cp-x").onclick=()=>{sheet.hidden=true;b.setAttribute("aria-pressed","false");};
+      sheet.querySelectorAll("[data-f],[data-ask]").forEach(x=>x.addEventListener("click",()=>{$("#zoom").hidden=true;},{capture:true}));
+      sheet.querySelectorAll("[data-d]").forEach(x=>x.onclick=()=>openZoom(C.drawings.find(d=>d.id===x.dataset.d)));};
+    box.append(b);
+  }
 }
 $("#zoom-x").onclick=()=>{$("#zoom").hidden=true;};
 $("#zoom-size").onclick=()=>{const z=$("#zoom").classList.toggle("big");$("#zoom-size").textContent=z?"Fit width":"Zoom in";};
@@ -800,7 +826,7 @@ function renderComp(){
   const C=KB.components?.[unit];
   if(!C){box.innerHTML=`<div class="notice">There's no component drawing on file for the ${esc(UNITS[unit].short)} yet.</div>`;return;}
   if(!C.drawings.some(d=>d.id===cpDraw[unit])) cpDraw[unit]=C.drawings[0].id;
-  box.innerHTML=`<p class="src" style="margin:0">Labelled drawings from the ${unit==="B"?"Baxi manuals":"Panasonic manual"}. Pick a drawing, tap it to enlarge, and match the numbers to the list. Or search for a part or fault code.</p>
+  box.innerHTML=`<p class="src" style="margin:0">Labelled drawings from the ${unit==="B"?"Baxi manuals":"Panasonic manual"}. Pick a drawing and tap it to enlarge, then tap a number to see what that part is. The list below has every part, or search for a part or fault code.</p>
     <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",K:"flow sensor, expansion vessel, 3-way",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
     <div class="cp-draw" id="cp-draw" role="group" aria-label="Drawing">${C.drawings.map(d=>`<button type="button" data-d="${d.id}" aria-pressed="${d.id===cpDraw[unit]}">${esc(d.tab)}</button>`).join("")}</div>
     <div id="cp-fig"></div><div class="view" id="cp-list"></div>
