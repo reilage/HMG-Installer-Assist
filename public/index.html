@@ -229,11 +229,11 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </form>
 <form id="req-f" hidden>
   <b style="font:24px/1.2 var(--f-display)">Request access</b>
-  <p class="lede" style="margin:0">Heat Merchants will check your details and email you your personal code.</p>
+  <p class="lede" style="margin:0">Heat Merchants will check your details and send you your personal code.</p>
   <input id="r-name" autocomplete="name" placeholder="Your name" aria-label="Your name" required>
   <input id="r-co" autocomplete="organization" placeholder="Company" aria-label="Company">
   <input id="r-mob" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile" aria-label="Mobile" required>
-  <input id="r-email" type="email" inputmode="email" autocomplete="email" placeholder="Email (your code is sent here)" aria-label="Email" required>
+  <input id="r-email" type="email" inputmode="email" autocomplete="email" placeholder="Email" aria-label="Email" required>
   <input id="r-note" placeholder="Anything else? (e.g. units you install)" aria-label="Note">
   <input id="r-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
   <button class="btn" type="submit">Send request</button>
@@ -386,7 +386,7 @@ $("#req-f").onsubmit=async e=>{
   btn.disabled=true;note.textContent="Sending…";
   const r=await fetch("api/apply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:v("name"),company:v("co"),mobile:v("mob"),email:v("email"),note:v("note"),website:v("web")})}).catch(()=>null);
   const d=r?await r.json().catch(()=>({})):null;btn.disabled=false;
-  if(r&&r.ok){$("#req-f").reset();note.textContent="Thanks, your request has gone to Heat Merchants. Once it's approved you'll get your code by email. Enter it here with \"I have a code\".";}
+  if(r&&r.ok){$("#req-f").reset();note.textContent=`Thanks, your request has gone to Heat Merchants. Once it's approved you'll get your code by ${CFG.email?"email":"text or email"}. Enter it here with "I have a code".`;}
   else note.textContent=!r?"No connection. Try again.":({details_missing:"Enter your name, mobile and a valid email.",too_many:"Too many requests from here today. Try again tomorrow."})[d.error]||"That didn't go through. Try again in a minute.";
 };
 $("#gate-f").onsubmit=async e=>{
