@@ -86,6 +86,18 @@ test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi ge
   assert.match(b, /HMG has no Baxi commissioning procedure yet/);
 });
 
+test("the J-series parts list is in the J rules only, with the part number per model", async () => {
+  mock.seen.length = 0;
+  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "Part number for the water PCB?" }));
+  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(j, /J-SERIES PARTS LIST/);
+  assert.match(j, /^58 PUMP \(water pump circulating pump circulator\) \| all models ACXB53-00390 \| qty 1 \| keep in stock \| j-parts-water$/m);
+  assert.match(j, /^63 ELECTRONIC CONTROLLER \(MAIN\) - WATER .*\| 05: ACXA73C58300R, 07: ACXA73C58310R, 09: ACXA73C58320R \|/m);
+  assert.match(j, /^33 ELECTRO MAGNETIC SWITCH .*05: not fitted, 07: CWA001023, 09: CWA001023 \| qty 05: 0, 07\/09: 1/m);
+  assert.match(j, /confirm the number with the Panasonic parts supplier/);
+  for (const t of [k, b]) { assert.doesNotMatch(t, /J-SERIES PARTS LIST/); assert.match(t, /no parts list on file/); }
+});
+
 test("a photo is sent as an image block", async () => {
   mock.seen.length = 0;
   await events(await ask({ unit: "K", text: "", image: { media_type: "image/jpeg", data: "/9j/4AAQ" } }));
@@ -118,6 +130,8 @@ test("static files are served", async () => {
   const k = await (await fetch(BASE + "/knowledge.json")).json();
   assert.equal(k.J.pages, undefined, "manual text stays on the server");
   assert.equal(k.faults.length, 52);
+  assert.equal(k.parts.J.parts.length, 100);
+  for (const v of k.parts.J.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);
 });
 
 test("access code, fallback reset and missing key", async () => {

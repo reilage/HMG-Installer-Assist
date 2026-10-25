@@ -5,7 +5,7 @@ The Heat Merchants technical assistant for heat pump installers, as a web app th
 - **Ask**: type a question or send a photo of the controller or rating label. Claude answers only from the manufacturer manuals and HMG Field Notes, in the HMG answer format, with the page. Wiring questions show the matching PCB/terminal diagram.
 - **Fault codes**: Panasonic J-series (52 codes) and Baxi HP55 (controller and outdoor unit codes), with HMG field notes on the cards.
 - **Controller**: menu paths and button-by-button steps, plus **Commissioning**: the HMG step-by-step commissioning checklist for the Panasonic J-series and K-series, ticked off on site.
-- **Manuals**: the original PDFs, plus 38 wiring and PCB diagrams.
+- **Manuals**: the original PDFs, 38 wiring and PCB diagrams, and **Spare parts** for the Panasonic J-series: the service manual's 4 exploded views and parts list (100 parts), searchable by name, ref number or part number, with the part number for the 5, 7 or 9 kW model. Ask gives part numbers too.
 - **Install**: outdoor unit clearances (HMG figures) and primary pipe sizing (Panasonic only).
 - **Escalate**: builds the escalation to Technical Support, filled in from the chat.
 
@@ -48,6 +48,7 @@ Everything the assistant knows is in `source/`:
 | `source/manuals/` | Manual text (one `--- Page N ---` marker per printed page) and the controller navigation references |
 | `source/j-series-faults.json` | J-series error codes table (SM pp.164-165) |
 | `source/wiring-index.json` | Catalogue of the diagrams in `public/wiring/` |
+| `source/j-series-parts.json` | J-series spare parts (SM pp.237-246): one line per part, with the part number for each model. Correct a superseded number here. Exploded view images are in `public/parts/`. |
 
 Edit a file on GitHub and commit: Vercel rebuilds and the app updates within a minute or two. The answer rules themselves are in `lib/prompt.js`, and the screens are `public/index.html`.
 
