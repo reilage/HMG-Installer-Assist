@@ -30,4 +30,4 @@ http.createServer(async (req, res) => {
     console.error(e);
     if (!res.headersSent) { res.statusCode = 500; res.end("Server error"); }
   }
-}).listen(PORT, () => console.log(`HMG Site Assist on http://localhost:${PORT}${process.env.ANTHROPIC_API_KEY ? "" : " (no ANTHROPIC_API_KEY: Ask is off)"}`));
+}).listen(PORT, () => console.log(`HMG Installer Assistant on http://localhost:${PORT}${process.env.ANTHROPIC_API_KEY ? "" : " (no ANTHROPIC_API_KEY: Ask is off)"}`));
