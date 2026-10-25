@@ -3,6 +3,7 @@
 The Heat Merchants technical assistant for heat pump installers, as a web app that works on any phone and can be added to the home screen like an app. It has the same screens as the demo:
 
 - **Ask**: type a question or send a photo of the controller or rating label. Claude answers only from the manufacturer manuals and HMG Field Notes, in the HMG answer format, with the page. Wiring questions show the matching PCB/terminal diagram.
+- **Voice**: tap the microphone in Ask and speak the question (Irish English). It sends when the installer stops talking, and the answer is read aloud, with **Stop reading** and **Read aloud again** under it. Typed questions stay silent. It uses the phone's own speech recognition and voices (Web Speech API), so there's no extra cost. It works in Chrome on Android and in Safari on iPhone; where the browser can't do it (e.g. Firefox), tapping the microphone says to use the keyboard's microphone key instead.
 - **Fault codes**: Panasonic J-series (52 codes) and Baxi HP55 (controller and outdoor unit codes), with HMG field notes on the cards.
 - **Controller**: menu paths and button-by-button steps, plus **Commissioning**: the HMG step-by-step commissioning checklist for the Panasonic J-series and K-series, ticked off on site.
 - **Manuals**: the original PDFs, 38 wiring and PCB diagrams, and **Spare parts** for the Panasonic J-series: the service manual's 4 exploded views and parts list (100 parts), searchable by name, ref number or part number, with the part number for the 5, 7 or 9 kW model. Ask gives part numbers too.

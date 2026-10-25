@@ -131,6 +131,9 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .iconbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .iconbtn:disabled{opacity:.5;cursor:default}
+.iconbtn.listening{background:#c62828;border-color:#c62828;color:#fff;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px rgba(198,40,40,.25)}}
+@media (prefers-reduced-motion:reduce){.iconbtn.listening{animation:none}}
 .attached{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .attached img{height:40px;border-radius:6px}
 .notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px}
@@ -357,7 +360,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <div class="hero" id="hero">
     <span class="hero-k" id="hero-unit">J-series</span>
     <h2>How can we assist?</h2>
-    <p id="ask-lede">Type a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
+    <p id="ask-lede">Type or speak a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
   </div>
   <p class="src" id="who" hidden></p>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
@@ -372,8 +375,10 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
         <input type="file" id="photo" accept="image/*" hidden>
       </label>
       <textarea id="q" rows="1" placeholder="e.g. H62 after start-up, what do I check?"></textarea>
+      <button class="iconbtn" id="mic" title="Ask by speaking" aria-label="Ask by speaking"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
       <button class="iconbtn primary" id="send" title="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
+    <p class="src" id="voice-note" role="status" hidden></p>
     <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site. Questions are saved to help Heat Merchants improve the service.</p>
   </div>
 </section>
@@ -1017,9 +1022,10 @@ const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The
 
 /* typed: the installer wrote it; anything else is a button's ready-made question, which stands on its own, so it can be
    answered from a stored answer even part-way through a chat. fresh: the id of a stored answer that didn't help. */
-async function ask(text,extra,{typed,fresh}={}){
+async function ask(text,extra,{typed,fresh,spoken}={}){
   text=(text||"").trim(); if(!text&&!photo) return;
   if(busy){return;}
+  stopSpeaking();
   await kbReady;
   $("#suggest").innerHTML="";$("#hero").hidden=true;
   const img=photo; clearPhoto(); $("#q").value=""; autosize();
@@ -1038,9 +1044,10 @@ async function ask(text,extra,{typed,fresh}={}){
       +(r.stored?`<p class="src stored">Answered straight away from an earlier answer to the same question, so it didn't use one of today's questions.</p>`:"")
       +(r.left!==null&&r.left<=2?`<p class="src">${r.left?`${r.left} question${r.left>1?"s":""} left today.`:"That was your last question for today."}</p>`:"");
     addDiagrams(b,sd.ids,text);
+    if(spoken) addReadAloud(b,sd.body);
     turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
     addActions(b,r.text);
-    if(r.stored) addFresh(b,text,extra,r.stored.id,typed);
+    if(r.stored) addFresh(b,text,extra,r.stored.id,typed,spoken);
   }catch(e){
     if(e.code==="cancelled"){b.innerHTML=e.text?md(e.text)+`<p class="src">Stopped.</p>`:`<p class="src">Stopped.</p>`;}
     else{b.innerHTML=(e.text?md(e.text):"")+`<p class="src">${ERR[e.code]||"Connection problem. Try again."}</p>`;
@@ -1049,10 +1056,10 @@ async function ask(text,extra,{typed,fresh}={}){
 }
 /* "Didn't help" on a stored answer: ask Claude afresh. Straight after it, that is the first question again (the stored answer leaves
    the chat history), so the new answer replaces the stored one. */
-function addFresh(b,text,extra,id,typed){
+function addFresh(b,text,extra,id,typed,spoken){
   const a=document.createElement("div");a.className="msg-actions";
   const f=document.createElement("button");f.className="ghost";f.textContent="Didn't help? Get a fresh answer";
-  f.onclick=()=>{if(busy) return;a.remove();if(turns.length===2) turns.length=0;ask(text,extra,{typed,fresh:id});};
+  f.onclick=()=>{if(busy) return;a.remove();if(turns.length===2) turns.length=0;ask(text,extra,{typed,fresh:id,spoken});};
   a.append(f);b.append(a);
 }
 function addActions(b,text){
@@ -1067,7 +1074,7 @@ function addActions(b,text){
 function setBusy(on){
   const s=$("#send");
   s.innerHTML=on?`<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>`:`<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
-  s.title=on?"Stop":"Send";
+  s.title=on?"Stop":"Send";$("#mic").disabled=on;
 }
 $("#send").onclick=()=>busy?busy.abort():ask($("#q").value,null,{typed:true});
 $("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)ask($("#q").value,null,{typed:true});}});
@@ -1076,7 +1083,79 @@ $("#q").addEventListener("input",autosize);
 $("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;photo=f;$("#att-img").src=URL.createObjectURL(f);$("#attached").hidden=false;e.target.value="";};
 function clearPhoto(){photo=null;$("#attached").hidden=true;}
 $("#att-x").onclick=clearPhoto;
-function aiOff(){$("#ai-off").hidden=false;$("#photo-btn").hidden=true;$("#fill").hidden=true;}
+function aiOff(){$("#ai-off").hidden=false;$("#photo-btn").hidden=true;$("#mic").hidden=true;$("#fill").hidden=true;}
+
+/* ---------- voice: ask by speaking, and hear the answer ----------
+   Uses the phone's own speech recognition and voices (Web Speech API), so it costs nothing extra. A spoken question is sent
+   as soon as the installer stops talking and its answer is read aloud; typed questions stay silent. */
+const Recog=window.SpeechRecognition||window.webkitSpeechRecognition, synth=window.speechSynthesis;
+let rec=null;
+function voiceNote(t){const n=$("#voice-note");n.textContent=t||"";n.hidden=!t;}
+function micOn(on){const m=$("#mic");m.classList.toggle("listening",on);m.title=on?"Stop listening":"Ask by speaking";m.setAttribute("aria-label",m.title);
+  $("#q").placeholder=on?"Listening… say your question":"e.g. H62 after start-up, what do I check?";}
+const MIC_ERR={"not-allowed":"The microphone is blocked. Allow it for this site in your browser or phone settings, then try again.",
+  "service-not-allowed":"Voice questions aren't allowed in this browser. Type the question, or use the microphone key on your keyboard.",
+  "no-speech":"Didn't hear anything. Tap the microphone and try again.","audio-capture":"No microphone found on this device.",
+  network:"Voice questions need signal. Type the question instead, or try again."};
+$("#mic").onclick=()=>{
+  if(rec){rec.stop();return;}
+  if(busy) return;
+  if(!Recog){voiceNote("Voice questions don't work in this browser. Use the microphone key on your phone's keyboard to speak into the box, or open the app in Chrome or Safari.");return;}
+  stopSpeaking();unlockSpeech();voiceNote("");
+  const r=new Recog();rec=r;let said="",heard=false;
+  r.lang="en-IE";r.interimResults=true;r.continuous=false;r.maxAlternatives=1;
+  r.onresult=e=>{let fin="",tmp="";for(const x of e.results) (x.isFinal?(fin+=x[0].transcript):(tmp+=x[0].transcript));said=fin;heard=true;$("#q").value=(fin+tmp).trim();autosize();};
+  r.onerror=e=>{if(e.error!=="aborted") voiceNote(MIC_ERR[e.error]||"Voice didn't work there. Try again, or type the question.");};
+  r.onend=()=>{rec=null;micOn(false);const t=(said||(heard?$("#q").value:"")).trim();if(t) ask(t,null,{typed:true,spoken:true});};
+  try{r.start();micOn(true);}catch{rec=null;voiceNote("Voice didn't start. Try again, or type the question.");}
+};
+
+/* The answer as it should sound: no markdown, diagram names or links, and manual shorthand said in full. */
+function speechText(src){
+  const ids=new Set(wiringFor(unit).map(w=>w.id));
+  return src.split("\n").map(l=>l.trim()).filter(l=>l&&!/^\**Diagrams?\b/i.test(l)).map(l=>{
+    l=l.replace(/^#{1,6}\s+/,"").replace(/^[-*•]\s+/,"").replace(/\*\*|__|`/g,"").replace(/https?:\/\/\S+/g,"")
+      .replace(/\b[a-z0-9]+(?:-[a-z0-9]+)+\b/gi,w=>ids.has(w.toLowerCase())?"":w)
+      .replace(/\bpp\.\s?(\d+)\s?[-–]\s?(\d+)/g,"pages $1 to $2").replace(/\bpp?\.\s?(\d+)/g,"page $1")
+      .replace(/\bSM\b/g,"service manual").replace(/\bIM\b/g,"installation manual").replace(/\bODU\b/g,"outdoor unit")
+      .replace(/ΔT/g,"delta T").replace(/\s?°C\b/g," degrees").replace(/(\d)\s?kW\b/g,"$1 kilowatt").replace(/(\d)\s?mm\b/g,"$1 millimetres")
+      .replace(/(\d)\s?m\/s\b/g,"$1 metres per second").replace(/(\d)\s?l\/min\b/gi,"$1 litres per minute").replace(/(\d)\s?bar\b/g,"$1 bar")
+      .replace(/\s*(→|->)\s*/g,", then ").replace(/[>›»]/g,", ").replace(/\s*[([{]\s*/g,", ").replace(/\s*[)\]}]/g,",").replace(/[|#*_~]/g," ")
+      .replace(/\s{2,}/g," ").replace(/\s+([.,;:!?])/g,"$1").replace(/,+([.,;:!?])/g,"$1").replace(/^[,\s]+|[,\s]+$/g,"");
+    return l&&!/[.!?:;,]$/.test(l)?l+".":l;
+  }).filter(l=>l.replace(/[\s.,]/g,"")).join(" ");
+}
+/* Short pieces: some phones stop reading a long utterance part-way. */
+function speechChunks(t){
+  const out=[];for(const s of t.split(/(?<=[.!?])\s+/)){const last=out.length-1;if(last>=0&&(out[last]+s).length<180) out[last]+=" "+s;else out.push(s);}
+  return out.map(s=>s.trim()).filter(Boolean);
+}
+function pickVoice(){
+  const vs=synth?.getVoices()||[];const by=l=>vs.filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(l));
+  return by("en-ie")[0]||by("en-gb").find(v=>v.localService)||by("en-gb")[0]||by("en")[0]||null;
+}
+/* iPhones only speak after a tap, so say nothing once while the mic tap is still the current gesture. */
+function unlockSpeech(){try{if(synth&&!synth.speaking){const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}}catch{}}
+let speakingBtn=null;
+function stopSpeaking(){if(synth&&(synth.speaking||synth.pending)) synth.cancel();if(speakingBtn){speakingBtn.textContent="Read aloud again";speakingBtn=null;}}
+function speak(text,btn){
+  stopSpeaking();
+  if(!synth||!window.SpeechSynthesisUtterance){btn.remove();voiceNote("This browser can't read answers aloud. The answer is on screen.");return;}
+  const parts=speechChunks(speechText(text));if(!parts.length) return;
+  const v=pickVoice();speakingBtn=btn;btn.textContent="Stop reading";
+  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang=v?.lang||"en-IE";if(v) u.voice=v;u.rate=1;
+    if(i===parts.length-1) u.onend=()=>{if(speakingBtn===btn) stopSpeaking();};
+    u.onerror=e=>{if(e.error!=="canceled"&&e.error!=="interrupted"&&speakingBtn===btn){stopSpeaking();voiceNote("The answer couldn't be read aloud. It's on screen.");}};
+    synth.speak(u);});
+}
+function addReadAloud(b,text){
+  const a=document.createElement("div");a.className="msg-actions";
+  const r=document.createElement("button");r.className="ghost";r.textContent="Read aloud";r.onclick=()=>speakingBtn===r?stopSpeaking():speak(text,r);
+  a.append(r);b.append(a);speak(text,r);
+}
+synth?.getVoices(); // starts loading the voices list in Chrome
+window.addEventListener("pagehide",stopSpeaking);
+document.addEventListener("visibilitychange",()=>{if(document.hidden){stopSpeaking();if(rec){rec.onend=()=>{rec=null;micOn(false);};rec.abort();}}});
 
 /* ---------- Fault codes ---------- */
 let openCode=null;
