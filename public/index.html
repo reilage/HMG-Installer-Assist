@@ -136,6 +136,18 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 @media (prefers-reduced-motion:reduce){.iconbtn.listening{animation:none}}
 .attached{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .attached img{height:40px;border-radius:6px}
+/* My questions */
+.ask-top{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.ask-top .ghost{display:inline-flex;align-items:center;gap:6px}
+.ask-top svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#hist{display:flex;flex-direction:column;gap:12px}
+#hist-head{display:flex;align-items:center;gap:8px}#hist-head h2{flex:1;margin:0}
+.hrow{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--card-line);background:var(--surface);box-shadow:var(--shadow);border-radius:var(--r);padding:11px 14px;min-width:0;width:100%;overflow-wrap:anywhere}
+.hrow:hover{box-shadow:0 0 0 2px var(--accent)}
+.hrow .hq{font-weight:600}.hrow .hs{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hmeta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
+.hmeta b{font:600 12px/1 var(--f-body);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 8px}
+#hist-list{display:flex;flex-direction:column;gap:8px}
 .notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px}
 
 /* Fault codes */
@@ -363,6 +375,12 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
     <p id="ask-lede">Type or speak a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
   </div>
   <p class="src" id="who" hidden></p>
+  <div class="ask-top" id="ask-top"><button class="ghost" id="new-chat" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New question</button><button class="ghost" id="hist-open"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>My questions</button></div>
+  <div id="hist" hidden>
+    <div id="hist-head"><h2>My questions</h2><button class="ghost" id="hist-x">Close</button></div>
+    <p class="src" id="hist-note"></p>
+    <div id="hist-body"></div>
+  </div>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
   <div class="panel install" id="install" hidden><span id="install-t">Add HMG Installer Assistant to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
   <div class="suggest" id="suggest"></div>
@@ -596,10 +614,10 @@ function renderWiring(){
   if(!ws.length){box.innerHTML=`<p class="src">No diagrams on file for this unit.</p>`;return;}
   for(const w of ws) box.append(wireFig(w));
 }
-function addDiagrams(b,ids,q){
-  const all=[...wiringFor(unit),...(KB?.parts?.[unit]?.views||[]),...(KB?.components?.[unit]?.drawings||[])];
+function addDiagrams(b,ids,q,u=unit){
+  const all=[...wiringFor(u),...(KB?.parts?.[u]?.views||[]),...(KB?.components?.[u]?.drawings||[])];
   let ws=ids.map(id=>all.find(w=>w.id===id)).filter(Boolean);
-  if(!ws.length&&WIRE_Q.test(q)) ws=wiringMatch(q);
+  if(!ws.length&&WIRE_Q.test(q)&&u===unit) ws=wiringMatch(q);
   for(const w of ws.slice(0,2)) b.append(wireFig(w));
 }
 
@@ -1011,8 +1029,8 @@ function sicon(s){
 }
 function renderSuggest(){
   const box=$("#suggest");box.innerHTML="";
-  $("#hero-unit").textContent=UNITS[unit].pill;$("#hero").hidden=!!turns.length;
-  if(turns.length) return;
+  $("#hero-unit").textContent=UNITS[unit].pill;$("#hero").hidden=!!turns.length||!$("#hist").hidden;
+  if(turns.length||!$("#hist").hidden) return;
   for(const s of SUGGEST[unit]){const b=document.createElement("button");b.innerHTML=`${sicon(s)}<span class="st">${esc(s)}</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;b.onclick=()=>ask(s);box.append(b);}
 }
 function bubble(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;$("#log").append(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;}
@@ -1025,6 +1043,7 @@ const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The
 async function ask(text,extra,{typed,fresh,spoken}={}){
   text=(text||"").trim(); if(!text&&!photo) return;
   if(busy){return;}
+  if(!$("#hist").hidden) closeHist();
   stopSpeaking();
   await kbReady;
   $("#suggest").innerHTML="";$("#hero").hidden=true;
@@ -1034,7 +1053,7 @@ async function ask(text,extra,{typed,fresh,spoken}={}){
   const b=bubble("bot",`<span class="thinking">Checking the manual…</span>`);
   const ctl=new AbortController(); busy=ctl; setBusy(true);
   try{
-    const body={unit,text,history:turns.slice(-8),extra:extra||null};
+    const body={unit,text,history:turns.slice(-8),extra:extra||null,chat:chatId};
     if(!typed) body.standalone=true;
     if(fresh) body.fresh=fresh;
     if(img) body.image=await photoData(img);
@@ -1046,6 +1065,7 @@ async function ask(text,extra,{typed,fresh,spoken}={}){
     addDiagrams(b,sd.ids,text);
     if(spoken) addReadAloud(b,sd.body);
     turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
+    keepLocal({unit,code:extra?.code,q:text,a:r.text,photo:!!img});$("#new-chat").hidden=false;
     addActions(b,r.text);
     if(r.stored) addFresh(b,text,extra,r.stored.id,typed,spoken);
   }catch(e){
@@ -1084,6 +1104,113 @@ $("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;photo=f;$("#att-
 function clearPhoto(){photo=null;$("#attached").hidden=true;}
 $("#att-x").onclick=clearPhoto;
 function aiOff(){$("#ai-off").hidden=false;$("#photo-btn").hidden=true;$("#mic").hidden=true;$("#fill").hidden=true;}
+
+/* ---------- My questions: the installer's past questions and answers, free to look at again ----------
+   With a personal installer code they are kept on the account (api/history), so they show on any phone. Every phone also keeps
+   its own copy of the latest ones, which is all there is with the shared access code, and what shows when there's no signal. */
+const newId=()=>crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2);
+let chatId=newId(), hUnit="all", hItems=[], hFrom="phone";
+const LOCAL_MAX=150;
+function localHist(){try{return JSON.parse(store.get("hmg-history")||"[]");}catch{return [];}}
+function keepLocal({unit:u,code,q,a,photo:p}){
+  const c=code||((q.match(u==="B"?/\b([AHE]\d{2}\.\d{2,3})\b/i:/\b([HF]\d{2})\b/i)||[])[1]||"").toUpperCase();
+  const h=localHist();h.push({id:newId(),chat:chatId,at:new Date().toISOString(),unit:u,code:c,q,a,...(p?{photo:true}:{})});
+  while(h.length){try{localStorage.setItem("hmg-history",JSON.stringify(h.slice(-LOCAL_MAX)));break;}catch{h.splice(0,10);}}
+}
+/* One row per chat: its first question, newest chat first. */
+function chats(items){
+  const m=new Map();
+  for(const e of [...items].sort((a,b)=>a.at.localeCompare(b.at))){const c=m.get(e.chat);if(c) c.more.push(e);else m.set(e.chat,{first:e,more:[],last:e.at});if(c) c.last=e.at;}
+  return [...m.values()].sort((a,b)=>b.last.localeCompare(a.last));
+}
+const hDate=d=>new Date(d).toLocaleDateString("en-IE",{day:"numeric",month:"short",year:new Date(d).getFullYear()===new Date().getFullYear()?undefined:"numeric"});
+const plain=a=>(a||"").replace(/\n\s*\**Diagrams?:?[^\n]*$/i,"").replace(/\*\*|`|^#+\s*/gm,"").replace(/\s+/g," ").trim().slice(0,160);
+async function openHist(){
+  stopSpeaking();
+  for(const id of ["hero","suggest","log","ask-top"]) $("#"+id).hidden=true;
+  document.querySelector("#v-ask .composer").hidden=true;$("#hist").hidden=false;
+  $("#hist-body").innerHTML=`<p class="src">Loading…</p>`;$("#hist-note").textContent="";
+  hItems=localHist();hFrom="phone";
+  if(CFG.installer){
+    try{const r=await api("history",{action:"list"});if(!r.ok) throw 0;hItems=(await r.json()).items;hFrom="account";}
+    catch{$("#hist-note").textContent="Couldn't reach your account, so this shows the questions saved on this phone.";}
+  }
+  if(!$("#hist-note").textContent) $("#hist-note").textContent=hFrom==="account"
+    ?"Saved on your installer account, so they show on any phone you sign in on. Opening one is free and doesn't use one of today's questions."
+    :"Saved on this phone only (your latest "+LOCAL_MAX+"). Opening one is free. Ask Heat Merchants for a personal installer code to keep them on your account.";
+  listHist();
+}
+function closeHist(){
+  $("#hist").hidden=true;for(const id of ["log","ask-top"]) $("#"+id).hidden=false;
+  document.querySelector("#v-ask .composer").hidden=false;renderSuggest();
+}
+function listHist(){
+  const box=$("#hist-body");
+  if(!hItems.length){box.innerHTML=`<div class="notice">No questions yet. Questions you ask in Ask, and their answers, show here.</div>`;return;}
+  box.innerHTML=`<input class="search" id="hist-q" placeholder="Search, e.g. H62 or flow rate" autocomplete="off">
+    <div class="seg" role="group" aria-label="Unit">${[["all","All"],["J","J-series"],["K","K-series"],["B","Baxi"]].map(([k,n])=>`<button data-u="${k}" aria-pressed="${hUnit===k}">${n}</button>`).join("")}</div>
+    <div id="hist-list"></div>`;
+  box.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{hUnit=b.dataset.u;box.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));rowsHist();});
+  $("#hist-q").oninput=rowsHist;rowsHist();
+}
+function rowsHist(){
+  const words=$("#hist-q").value.toLowerCase().replace(/\b([a-z])\s+(\d{2})\b/g,"$1$2").split(/\s+/).filter(Boolean);
+  const hay=e=>[e.q,e.code,e.s||plain(e.a),e.a,UNITS[e.unit]?.short].join(" ").toLowerCase();
+  const list=chats(hItems).filter(c=>hUnit==="all"||c.first.unit===hUnit)
+    .filter(c=>!words.length||words.every(w=>[c.first,...c.more].some(e=>hay(e).includes(w))));
+  const box=$("#hist-list");box.innerHTML="";
+  if(!list.length){box.innerHTML=`<p class="src">Nothing matches.</p>`;return;}
+  for(const c of list.slice(0,200)){
+    const e=c.first,b=document.createElement("button");b.className="hrow";
+    b.innerHTML=`<span class="hmeta"><b>${esc(UNITS[e.unit]?.pill||e.unit)}</b>${e.code?`<b>${esc(e.code)}</b>`:""}<span>${hDate(c.last)}</span>${c.more.length?`<span>+${c.more.length} follow-up${c.more.length>1?"s":""}</span>`:""}${e.photo?"<span>photo</span>":""}</span>
+      <span class="hq">${esc(e.q||"(photo)")}</span><span class="hs">${esc(e.s||plain(e.a))}</span>`;
+    b.onclick=()=>openChatView(e.chat);box.append(b);
+  }
+}
+async function openChatView(chat){
+  const box=$("#hist-body");box.innerHTML=`<p class="src">Loading…</p>`;
+  let es=hItems.filter(e=>e.chat===chat).sort((a,b)=>a.at.localeCompare(b.at));
+  if(hFrom==="account"){
+    try{const r=await api("history",{action:"open",chat});if(!r.ok) throw 0;es=(await r.json()).items;}
+    catch{const mine=localHist().filter(e=>e.chat===chat);if(mine.length) es=mine;else{box.innerHTML=`<div class="notice">Couldn't open that one. Check your signal and try again.</div><div class="btnrow"><button class="btn sec" id="hc-back">Back</button></div>`;$("#hc-back").onclick=listHist;return;}}
+  }
+  const u=es[0]?.unit||unit;
+  box.innerHTML=`<p class="src">${esc(UNITS[u]?.short||u)} · ${hDate(es[0].at)}</p><div id="hc-log" style="display:flex;flex-direction:column;gap:12px"></div>
+    <div class="btnrow"><button class="btn" id="hc-go">Continue this chat</button><button class="btn sec" id="hc-back">Back to list</button><button class="ghost" id="hc-del">Delete</button></div>`;
+  const log=$("#hc-log");
+  for(const e of es){
+    const q=document.createElement("div");q.className="msg me";q.textContent=(e.photo?"(photo) ":"")+(e.q||"");log.append(q);
+    const a=document.createElement("div");a.className="msg bot";const sd=splitDiagram(e.a||"");a.innerHTML=md(sd.body);addDiagrams(a,sd.ids,e.q||"",u);log.append(a);
+  }
+  $("#hc-back").onclick=listHist;
+  $("#hc-go").onclick=()=>continueChat(chat,es);
+  const del=$("#hc-del");let sure=false;
+  del.onclick=async()=>{
+    if(!sure){sure=true;del.textContent="Tap again to delete";return;}
+    try{localStorage.setItem("hmg-history",JSON.stringify(localHist().filter(e=>e.chat!==chat)));}catch{}
+    if(hFrom==="account") await api("history",{action:"delete",chat}).catch(()=>{});
+    hItems=hItems.filter(e=>e.chat!==chat);listHist();
+  };
+}
+/* Pick an old chat up where it left off: same unit, same chat, and the assistant sees what was said. */
+function continueChat(chat,es){
+  if(busy) return;
+  if(es[0]&&es[0].unit!==unit) setUnit(es[0].unit);
+  startChat(chat);
+  for(const e of es){
+    bubble("me",esc((e.photo?"(photo) ":"")+(e.q||"")));
+    const sd=splitDiagram(e.a||""),b=bubble("bot",md(sd.body));addDiagrams(b,sd.ids,e.q||"");
+    turns.push({role:"user",content:(e.photo?"[photo attached] ":"")+(e.q||"")},{role:"assistant",content:e.a||""});
+  }
+  $("#new-chat").hidden=!turns.length;closeHist();$("#q").focus();
+}
+/* A clean chat: nothing carried over from the last one. */
+function startChat(id){
+  if(busy) busy.abort();
+  stopSpeaking();turns=[];chatId=id||newId();$("#log").innerHTML="";$("#new-chat").hidden=true;renderSuggest();
+}
+$("#hist-open").onclick=openHist;$("#hist-x").onclick=closeHist;
+$("#new-chat").onclick=()=>startChat();
 
 /* ---------- voice: ask by speaking, and hear the answer ----------
    Uses the phone's own speech recognition and voices (Web Speech API), so it costs nothing extra. A spoken question is sent
