@@ -1,5 +1,6 @@
 // GET /api/config  →  what the app should switch on. Holds no secrets.
 import { send, accessRequired, accessOk } from "../lib/http.js";
+import { dailyLimit } from "../lib/quota.js";
 import { emailEnabled, escalationTo } from "./escalate.js";
 
 export default function handler(req, res) {
@@ -9,5 +10,6 @@ export default function handler(req, res) {
     accessOk: accessOk(req),
     email: emailEnabled(),
     escalationTo: escalationTo(),
+    dailyLimit: dailyLimit(),
   });
 }

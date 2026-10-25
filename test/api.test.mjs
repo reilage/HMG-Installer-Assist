@@ -17,7 +17,7 @@ const stop = p => new Promise(r => { p.once("exit", r); p.kill(); });
 const ask = (body, headers = {}) => fetch(BASE + "/api/ask", { method: "POST", headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body) });
 const events = async r => (await r.text()).trim().split("\n").map(l => JSON.parse(l));
 
-before(async () => { mock = await startMock(MOCK); app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", RESEND_API_KEY: "" }); });
+before(async () => { mock = await startMock(MOCK); app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", RESEND_API_KEY: "", DAILY_QUESTION_LIMIT: "0" }); });
 after(async () => { await stop(app); mock.server.close(); });
 
 test("config says Ask is on and email is off", async () => {
@@ -98,7 +98,7 @@ test("access code, fallback reset and missing key", async () => {
   await stop(app);
   mock.server.close();
   mock = await startMock(MOCK, { fallbackAfter: "partial from the first model" });
-  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "boiler42" });
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "boiler42", DAILY_QUESTION_LIMIT: "0" });
   assert.equal((await ask({ unit: "J", text: "H62" })).status, 401);
   const c = await (await fetch(BASE + "/api/config", { headers: { "X-Access-Code": "boiler42" } })).json();
   assert.equal(c.accessCode, true); assert.equal(c.accessOk, true);
@@ -112,4 +112,19 @@ test("access code, fallback reset and missing key", async () => {
   const r = await ask({ unit: "J", text: "H62" });
   assert.equal(r.status, 503); assert.equal((await r.json()).error, "not_configured");
   assert.equal((await (await fetch(BASE + "/api/config")).json()).ai, false);
+});
+
+test("each phone gets its daily question limit", async () => {
+  await stop(app);
+  mock.server.close();
+  mock = await startMock(MOCK);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", DAILY_QUESTION_LIMIT: "2", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  assert.equal((await (await fetch(BASE + "/api/config")).json()).dailyLimit, 2);
+  const phoneA = { "X-Device-Id": "phone-aaaaaaaa" }, phoneB = { "X-Device-Id": "phone-bbbbbbbb" };
+  assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, phoneA)))[0], { t: "quota", left: 1 });
+  assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, phoneA)))[0], { t: "quota", left: 0 });
+  const r = await ask({ unit: "J", text: "H62" }, phoneA);
+  assert.equal(r.status, 429); assert.deepEqual(await r.json(), { error: "daily_limit", limit: 2 });
+  assert.equal(mock.seen.length, 2, "Claude isn't called once the limit is reached");
+  assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, phoneB)))[0], { t: "quota", left: 1 });
 });

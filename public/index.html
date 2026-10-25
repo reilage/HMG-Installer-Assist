@@ -350,8 +350,10 @@ function indexCodes(){
 /* ---------- server calls ---------- */
 /* Shared access code (if Heat Merchants has set one), kept on this phone. */
 const store={get(k){try{return localStorage.getItem(k);}catch{return null;}},set(k,v){try{localStorage.setItem(k,v);}catch{}}};
+/* A random id for this phone, so the server can count its questions against the daily limit. */
+const DEVICE=store.get("hmg-device")||(()=>{const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));store.set("hmg-device",id);return id;})();
 function api(path,body,opts={}){
-  return fetch("api/"+path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Access-Code":store.get("hmg-code")||""},body:body?JSON.stringify(body):undefined,signal:opts.signal})
+  return fetch("api/"+path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Access-Code":store.get("hmg-code")||"","X-Device-Id":DEVICE},body:body?JSON.stringify(body):undefined,signal:opts.signal})
     .then(r=>{if(r.status===401){showGate("That access code wasn't accepted.");throw Object.assign(new Error("access"),{code:"access_code"});}return r;});
 }
 function showGate(note){$("#gate").hidden=false;$("#gate-note").textContent=note||"";$("#gate-code").focus();}
@@ -372,7 +374,7 @@ async function photoData(file){
 async function askServer(body,{signal,onText}){
   const r=await api("ask",body,{signal});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw Object.assign(new Error("ask"),{code:e.error||"upstream"});}
-  const rd=r.body.getReader(),dec=new TextDecoder();let buf="",text="",done=null;
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf="",text="",done=null,left=null;
   try{
     for(;;){
       const {value,done:end}=await rd.read();if(end) break;
@@ -381,6 +383,7 @@ async function askServer(body,{signal,onText}){
         const line=buf.slice(0,i);buf=buf.slice(i+1);if(!line.trim()) continue;
         const ev=JSON.parse(line);
         if(ev.t==="text"){text+=ev.v;onText(text);}
+        else if(ev.t==="quota") left=ev.left;
         else if(ev.t==="reset"){text="";onText(text);}
         else if(ev.t==="done") done=ev;
         else if(ev.t==="error") throw Object.assign(new Error("ask"),{code:ev.code,text});
@@ -388,7 +391,7 @@ async function askServer(body,{signal,onText}){
     }
   }catch(e){if(e.name==="AbortError") throw Object.assign(new Error("stop"),{code:"cancelled",text});throw e.code?e:Object.assign(e,{code:"upstream",text});}
   if(!done) throw Object.assign(new Error("ask"),{code:"upstream",text});
-  return {text,truncated:done.truncated};
+  return {text,truncated:done.truncated,left};
 }
 
 /* ---------- wiring / PCB diagrams (images in wiring/, catalogue in knowledge.json "wiring") ---------- */
@@ -639,7 +642,8 @@ function renderSuggest(){
   for(const s of SUGGEST[unit]){const b=document.createElement("button");b.textContent=s;b.onclick=()=>ask(s);box.append(b);}
 }
 function bubble(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;$("#log").append(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;}
-const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The assistant's Claude key isn't working. Tell Heat Merchants.",access_code:"Enter the access code first.",rate_limited:"Too many questions in a short time. Wait a minute and try again.",busy:"Claude is busy right now. Try again in a minute.",refused:"The assistant couldn't answer that. Try rewording it.",image_rejected:"That photo couldn't be read. Try a JPEG or PNG.",prompt_too_large:"That was too much at once. Start a shorter question."};
+const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The assistant's Claude key isn't working. Tell Heat Merchants.",access_code:"Enter the access code first.",rate_limited:"Too many questions in a short time. Wait a minute and try again.",busy:"Claude is busy right now. Try again in a minute.",refused:"The assistant couldn't answer that. Try rewording it.",image_rejected:"That photo couldn't be read. Try a JPEG or PNG.",prompt_too_large:"That was too much at once. Start a shorter question.",
+  get daily_limit(){return `You've used your ${CFG.dailyLimit||""} questions for today. They reset at midnight. Fault codes, controller steps, manuals and Escalate still work.`;}};
 
 async function ask(text,extra){
   text=(text||"").trim(); if(!text&&!photo) return;
@@ -656,7 +660,8 @@ async function ask(text,extra){
     if(img) body.image=await photoData(img);
     const r=await askServer(body,{signal:ctl.signal,onText:text=>{b.innerHTML=text?md(splitDiagram(text).body.replace(/\n\s*\**Diagrams?:?[^\n]*$/i,"")):`<span class="thinking">Checking the manual…</span>`;}});
     const sd=splitDiagram(r.text);
-    b.innerHTML=md(sd.body)+(r.truncated?`<p class="src">Answer cut short. Ask a narrower question.</p>`:"");
+    b.innerHTML=md(sd.body)+(r.truncated?`<p class="src">Answer cut short. Ask a narrower question.</p>`:"")
+      +(r.left!==null&&r.left<=2?`<p class="src">${r.left?`${r.left} question${r.left>1?"s":""} left today.`:"That was your last question for today."}</p>`:"");
     addDiagrams(b,sd.ids,text);
     turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
     addActions(b,r.text);
