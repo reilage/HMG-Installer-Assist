@@ -31,7 +31,8 @@
 [hidden]{display:none!important}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body)}
-button,input{font:inherit;color:inherit}
+button,input,textarea{font:inherit;color:inherit}
+textarea{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;width:100%;min-height:220px;resize:vertical}
 main{max-width:760px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px;display:flex;flex-direction:column;gap:16px}
 .brand{display:flex;align-items:center;gap:12px}
 .brand img{height:44px}
@@ -96,7 +97,14 @@ details.inst summary::-webkit-details-marker{display:none}
   </form>
 
   <div id="app" hidden>
-    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button></div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button></div>
+    <div id="t-answers" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
+      <div class="btnrow" style="justify-content:space-between"><h2>Stored answers</h2><select id="sa-unit" aria-label="Unit"><option value="">All units</option><option value="J">J-series</option><option value="K">K-series</option><option value="B">Baxi HP55</option></select></div>
+      <p class="src">The first time a question is asked, Claude's answer is kept here. When an installer asks the same question again for the same unit, they get this answer straight away, free, and it doesn't use one of their questions for the day. Installers can tap "Didn't help" to get a fresh answer from Claude, which then replaces the stored one. Answers are cleared for a unit when its manuals or field notes change. Edit an answer to fix its wording: an edited answer stays even if an installer says it didn't help.</p>
+      <div class="totals" id="sa-totals"></div>
+      <div id="sa-list" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div class="btnrow"><button class="btn bad sm" id="sa-clear">Clear stored answers</button></div>
+    </div>
     <div id="t-trends" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
       <div class="btnrow" style="justify-content:space-between"><h2>Fault trends</h2><select id="tr-week" aria-label="Week"></select></div>
       <p class="src">What installers asked in the app, overall and per installer. The counts are worked out live. Each Monday morning Claude writes a short summary of the week before (about 5 cent each).</p>
@@ -287,7 +295,8 @@ function renderTrends(){
   $("#tr-totals").innerHTML=`<div class="stat"><b>${s.total}</b><span>question${s.total===1?"":"s"} ${s.last||s.total?`(${s.last} the week before)`:""}</span></div>
     <div class="stat"><b>${s.installers}</b><span>installer${s.installers===1?"":"s"} asking</span></div>
     <div class="stat"><b>${s.unanswered}</b><span>not answered from the manuals</span></div>
-    <div class="stat"><b>${s.escalated}</b><span>told to escalate</span></div>`;
+    <div class="stat"><b>${s.escalated}</b><span>told to escalate</span></div>
+    <div class="stat"><b>${s.stored||0}</b><span>answered from stored answers, free</span></div>`;
   const sm=TR.summary;
   $("#tr-summary").innerHTML=sm&&sm.text?mdLite(sm.text)+`<p class="src">Written ${new Date(sm.generated).toLocaleString("en-IE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}${sm.by==="weekly"?" (weekly)":""} from ${sm.questions} question${sm.questions===1?"":"s"}${sm.questions!==s.total?`. ${s.total-sm.questions} more since: write it again to include them`:""}.</p>`
     :`<p class="src">${!s.total?"No questions this week, so there's nothing to summarise.":TR.current?"The weekly summary is written on Monday morning. Tap Write summary now for one on the week so far.":"No summary for this week yet. Tap Write summary now."}</p>`;
@@ -306,9 +315,45 @@ $("#tr-write").onclick=async e=>{
   try{await loadTrends("trends_write");}catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");renderTrends();}
   finally{b.disabled=false;}
 };
+/* ---------- Stored answers (lib/answers.js) ---------- */
+let SA=null, saEdit=null;
+async function loadAnswers(){SA=await admin({action:"answers"});renderAnswers();}
+function renderAnswers(){
+  const u=$("#sa-unit").value, list=SA.answers.filter(a=>!u||a.unit===u), hits=list.reduce((n,a)=>n+a.hits,0);
+  $("#sa-totals").innerHTML=SA.on?`<div class="stat"><b>${list.length}</b><span>stored answer${list.length===1?"":"s"}</span></div>
+    <div class="stat"><b>${hits}</b><span>question${hits===1?"":"s"} answered from them, about €${(hits*COST_PER_Q).toFixed(2)} saved</span></div>`
+    :`<div class="notice">Stored answers are switched off (STORED_ANSWERS=off in Vercel). Every question goes to Claude.</div>`;
+  $("#sa-clear").hidden=!list.length;$("#sa-clear").textContent=u?`Clear all ${UNIT[u]} answers`:"Clear all stored answers";
+  $("#sa-list").innerHTML=list.length?list.map(a=>`<details class="inst" data-sa="${a.id}"${saEdit===a.id?" open":""}><summary><span class="qtext">${esc(a.q)}</span>
+      <span class="src">${UNIT[a.unit]}${a.code?` · <span class="mono">${esc(a.code)}</span>`:""} · reused ${a.hits}×</span></summary>
+    <div class="src">Saved ${day(a.at)}${a.by?` from ${esc(a.by)}'s question`:""}${a.edited?" · edited by you":""}</div>
+    ${a.bad?`<div><span class="chip full">${a.bad} installer${a.bad===1?"":"s"} said it didn't help</span></div>`:""}
+    ${saEdit===a.id?`<textarea aria-label="Answer">${esc(a.a)}</textarea><div class="btnrow"><button class="btn sm" data-sa-act="save">Save</button><button class="btn sec sm" data-sa-act="cancel">Cancel</button></div>`
+      :`<div class="summary">${mdLite(a.a)}</div><div class="btnrow"><button class="btn sec sm" data-sa-act="edit">Edit</button><button class="btn bad sm" data-sa-act="delete">Delete</button></div>`}
+  </details>`).join(""):`<p class="src">${SA.answers.length?"No stored answers for this unit yet.":"No stored answers yet. They build up as installers ask questions."}</p>`;
+}
+$("#sa-unit").onchange=()=>SA&&renderAnswers();
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-sa-act]"); if(!b) return;
+  const card=b.closest("[data-sa]"), id=card.dataset.sa, a=SA.answers.find(x=>x.id===id), act=b.dataset.saAct;
+  if(act==="edit"){saEdit=id;return renderAnswers();}
+  if(act==="cancel"){saEdit=null;return renderAnswers();}
+  try{
+    if(act==="save"){await admin({action:"answer_edit",id,text:card.querySelector("textarea").value});saEdit=null;}
+    if(act==="delete"){if(!confirm("Delete this stored answer? The next installer to ask this question gets a fresh answer from Claude.")) return;await admin({action:"answer_delete",id});}
+    await loadAnswers();
+  }catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
+});
+$("#sa-clear").onclick=async()=>{
+  const u=$("#sa-unit").value;
+  if(!confirm(`Clear ${u?`all ${UNIT[u]}`:"all"} stored answers? Questions go to Claude again until new answers are stored.`)) return;
+  try{await admin({action:"answers_clear",unit:u||undefined});await loadAnswers();}catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
+};
+
 document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=async()=>{
   document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
-  const tr=t.dataset.tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tr;
+  const tab=t.dataset.tab, tr=tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tab!=="accounts";$("#t-answers").hidden=tab!=="answers";
+  if(tab==="answers"){$("#sa-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadAnswers();}catch(err){if(err.code) $("#sa-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tr&&!TR){$("#tr-summary").innerHTML=`<p class="src">Loading…</p>`;try{await loadTrends();}catch(err){if(err.code) $("#tr-summary").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
 });
 

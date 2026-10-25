@@ -516,7 +516,7 @@ async function photoData(file){
 async function askServer(body,{signal,onText}){
   const r=await api("ask",body,{signal});
   if(!r.ok){const e=await r.json().catch(()=>({}));throw Object.assign(new Error("ask"),{code:e.error||"upstream"});}
-  const rd=r.body.getReader(),dec=new TextDecoder();let buf="",text="",done=null,left=null;
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf="",text="",done=null,left=null,stored=null;
   try{
     for(;;){
       const {value,done:end}=await rd.read();if(end) break;
@@ -526,6 +526,7 @@ async function askServer(body,{signal,onText}){
         const ev=JSON.parse(line);
         if(ev.t==="text"){text+=ev.v;onText(text);}
         else if(ev.t==="quota") left=ev.left;
+        else if(ev.t==="stored") stored=ev;
         else if(ev.t==="reset"){text="";onText(text);}
         else if(ev.t==="done") done=ev;
         else if(ev.t==="error") throw Object.assign(new Error("ask"),{code:ev.code,text});
@@ -533,7 +534,7 @@ async function askServer(body,{signal,onText}){
     }
   }catch(e){if(e.name==="AbortError") throw Object.assign(new Error("stop"),{code:"cancelled",text});throw e.code?e:Object.assign(e,{code:"upstream",text});}
   if(!done) throw Object.assign(new Error("ask"),{code:"upstream",text});
-  return {text,truncated:done.truncated,left};
+  return {text,truncated:done.truncated,left,stored};
 }
 
 /* ---------- wiring / PCB diagrams (images in wiring/, catalogue in knowledge.json "wiring") ---------- */
@@ -1014,7 +1015,9 @@ const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The
   unavailable:"The account check isn't responding. Try again in a minute.",
   get daily_limit(){return `You've used your ${CFG.dailyLimit||""} questions for today. They reset at midnight. Fault codes, controller steps, manuals and Escalate still work.`;}};
 
-async function ask(text,extra){
+/* typed: the installer wrote it; anything else is a button's ready-made question, which stands on its own, so it can be
+   answered from a stored answer even part-way through a chat. fresh: the id of a stored answer that didn't help. */
+async function ask(text,extra,{typed,fresh}={}){
   text=(text||"").trim(); if(!text&&!photo) return;
   if(busy){return;}
   await kbReady;
@@ -1026,19 +1029,31 @@ async function ask(text,extra){
   const ctl=new AbortController(); busy=ctl; setBusy(true);
   try{
     const body={unit,text,history:turns.slice(-8),extra:extra||null};
+    if(!typed) body.standalone=true;
+    if(fresh) body.fresh=fresh;
     if(img) body.image=await photoData(img);
     const r=await askServer(body,{signal:ctl.signal,onText:text=>{b.innerHTML=text?md(splitDiagram(text).body.replace(/\n\s*\**Diagrams?:?[^\n]*$/i,"")):`<span class="thinking">Checking the manual…</span>`;}});
     const sd=splitDiagram(r.text);
     b.innerHTML=md(sd.body)+(r.truncated?`<p class="src">Answer cut short. Ask a narrower question.</p>`:"")
+      +(r.stored?`<p class="src stored">Answered straight away from an earlier answer to the same question, so it didn't use one of today's questions.</p>`:"")
       +(r.left!==null&&r.left<=2?`<p class="src">${r.left?`${r.left} question${r.left>1?"s":""} left today.`:"That was your last question for today."}</p>`:"");
     addDiagrams(b,sd.ids,text);
     turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
     addActions(b,r.text);
+    if(r.stored) addFresh(b,text,extra,r.stored.id,typed);
   }catch(e){
     if(e.code==="cancelled"){b.innerHTML=e.text?md(e.text)+`<p class="src">Stopped.</p>`:`<p class="src">Stopped.</p>`;}
     else{b.innerHTML=(e.text?md(e.text):"")+`<p class="src">${ERR[e.code]||"Connection problem. Try again."}</p>`;
       if(e.code==="not_configured") aiOff();}
   }finally{busy=null;setBusy(false);}
+}
+/* "Didn't help" on a stored answer: ask Claude afresh. Straight after it, that is the first question again (the stored answer leaves
+   the chat history), so the new answer replaces the stored one. */
+function addFresh(b,text,extra,id,typed){
+  const a=document.createElement("div");a.className="msg-actions";
+  const f=document.createElement("button");f.className="ghost";f.textContent="Didn't help? Get a fresh answer";
+  f.onclick=()=>{if(busy) return;a.remove();if(turns.length===2) turns.length=0;ask(text,extra,{typed,fresh:id});};
+  a.append(f);b.append(a);
 }
 function addActions(b,text){
   const comm=unit!=="B"&&/commissioning/i.test(text), escl=/escalat|Technical Support/i.test(text);
@@ -1054,8 +1069,8 @@ function setBusy(on){
   s.innerHTML=on?`<svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1"/></svg>`:`<svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
   s.title=on?"Stop":"Send";
 }
-$("#send").onclick=()=>busy?busy.abort():ask($("#q").value);
-$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)ask($("#q").value);}});
+$("#send").onclick=()=>busy?busy.abort():ask($("#q").value,null,{typed:true});
+$("#q").addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();if(!busy)ask($("#q").value,null,{typed:true});}});
 function autosize(){const t=$("#q");t.style.height="auto";t.style.height=Math.min(t.scrollHeight,140)+"px";}
 $("#q").addEventListener("input",autosize);
 $("#photo").onchange=e=>{const f=e.target.files[0];if(!f)return;photo=f;$("#att-img").src=URL.createObjectURL(f);$("#attached").hidden=false;e.target.value="";};
