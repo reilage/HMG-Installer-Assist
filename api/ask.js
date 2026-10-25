@@ -10,7 +10,7 @@
 // standalone: a ready-made question from a button (fault card, suggestion...), which can be answered from storage even
 // part-way through a chat. fresh: the installer tapped "Didn't help" on stored answer <id>, so ask Claude afresh and store that answer instead.
 import Anthropic from "@anthropic-ai/sdk";
-import { UNITS, pagesFor, excerpt } from "../lib/kb.js";
+import { UNITS, pagesFor, excerpt, normCodes, faultContext } from "../lib/kb.js";
 import { rules } from "../lib/prompt.js";
 import { take, giveBack } from "../lib/quota.js";
 import { recordQuestion } from "../lib/trends.js";
@@ -51,9 +51,12 @@ export default async function handler(req, res) {
   try { body = await readJson(req); } catch (e) { return send(res, e.code === "too_large" ? 413 : 400, { error: e.code === "too_large" ? "prompt_too_large" : "bad_request" }); }
 
   const unit = UNITS[body.unit] ? body.unit : "J";
-  const text = clip(body.text, 4000).trim();
-  const extra = body.extra && typeof body.extra === "object"
+  const text = normCodes(unit, clip(body.text, 4000).trim());
+  let extra = body.extra && typeof body.extra === "object"
     ? { code: clip(body.extra.code, 20), pages: Array.isArray(body.extra.pages) ? body.extra.pages.slice(0, 6) : [], note: clip(body.extra.note, 3000) } : null;
+  // A code typed or said in Ask gets the fault card's table row and check pages too (the card sends its own).
+  const fc = extra?.code ? null : faultContext(unit, text);
+  if (fc) extra = { code: extra?.code || "", pages: [...fc.pages, ...(extra?.pages || [])].slice(0, 6), note: [fc.note, extra?.note].filter(Boolean).join("\n\n") };
   const img = body.image && IMAGE_TYPES.has(body.image.media_type) && typeof body.image.data === "string" && body.image.data.length < 5_000_000 ? body.image : null;
   if (!text && !img) return send(res, 400, { error: "bad_request" });
   const history = cleanHistory(body.history);
