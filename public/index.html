@@ -75,12 +75,16 @@ h2::after{content:"";display:block;width:32px;height:3px;border-radius:2px;backg
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .chip.warn{background:var(--warn-soft);color:var(--warn)}
 
-nav.tabs{background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+/* Bottom menu: HMG cyan bar, each option its own white-text button split by thin white dividers; the open one turns charcoal. */
+nav.tabs{background:var(--hmg-cyan);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.tabs .wrap{display:grid;grid-template-columns:repeat(6,1fr)}
-nav.tabs button{position:relative;border:0;background:none;padding:9px 2px 10px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
-nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-nav.tabs button[aria-selected="true"]{color:var(--accent)}
-nav.tabs button[aria-selected="true"]::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--hmg-cyan)}
+nav.tabs button{position:relative;border:0;background:none;padding:10px 2px 11px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;line-height:1.15;color:#fff}
+nav.tabs button+button{border-left:1px solid rgba(255,255,255,.55)}
+nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs button:active{background:rgba(0,0,0,.12)}
+nav.tabs button[aria-selected="true"]{background:var(--hmg-grey)}
+nav.tabs button[aria-selected="true"]+button{border-left-color:transparent}
+nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 
 /* Ask */
 #log{display:flex;flex-direction:column;gap:12px}
