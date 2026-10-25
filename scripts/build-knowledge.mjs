@@ -81,6 +81,7 @@ const nav = read("manuals/panasonic/panasonic-controller-navigation.md");
 const fn = read("hmg-field-notes.md");
 const sizing = read("hmg-primary-pipe-sizing.md");
 const clearances = read("hmg-outdoor-unit-clearances.md");
+const weatherComp = read("hmg-weather-compensation.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 
 // Field notes, structured for the fault cards: codes from the Symptoms line, units from the Product line.
@@ -110,7 +111,7 @@ const full = {
   K: { ...TITLES.K, pages: K },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, fieldNotes: fn, fieldNoteList: fnotes, faults,
+  nav, sizing, wiring, clearances, weatherComp, fieldNotes: fn, fieldNoteList: fnotes, faults,
 };
 const lite = {
   J: TITLES.J, K: TITLES.K, B2: TITLES.B2,

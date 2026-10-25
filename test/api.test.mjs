@@ -60,6 +60,17 @@ test("Baxi questions get the Baxi rules and both Baxi manuals", async () => {
   assert.match(body.messages.at(-1).content, /\[Baxi ASHP Control IM, p\.\d+\]/);
 });
 
+test("the HMG heating curve is in the rules, with the Baxi gradient and base worked out", async () => {
+  mock.seen.length = 0;
+  await events(await ask({ unit: "K", text: "What heating curve for radiators?" }));
+  await events(await ask({ unit: "B", text: "What heating curve for underfloor?" }));
+  const [k, b] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(k, /HMG WEATHER COMPENSATION GUIDANCE/);
+  assert.match(k, /steel radiators 45 °C flow at -3 °C outdoor, 35 °C at 15 °C outdoor/);
+  assert.match(k, /takes the four points directly/);
+  assert.match(b, /CP230 = 0\.6 with CP210 = 32 °C \(rads\) or 22 °C \(UFH\)/);
+});
+
 test("a photo is sent as an image block", async () => {
   mock.seen.length = 0;
   await events(await ask({ unit: "K", text: "", image: { media_type: "image/jpeg", data: "/9j/4AAQ" } }));

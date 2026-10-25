@@ -111,7 +111,7 @@ setting has a visible effect, it is listed below.
 | Bivalent (boiler) | System setup → Bivalent connection → Yes → Auto or SG ready → pattern | Alternative / Parallel / Advanced parallel; ON temp -5 °C default | Boiler icon on main screen (p.80) | pp.27-29, 80 |
 | Glycol | System setup → Circulation liquid | Water (default) / Glycol | Re-open item | pp.30, 82 |
 | Pump control mode | System setup → Pump flowrate | ΔT (default) / Max. duty | Re-open item | pp.31, 82 |
-| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve or Direct | Curve default: -5 °C → 55 °C, 15 °C → 35 °C. Direct default 35 °C. Range 20-60 °C | Main screen temp-setting icon (curve vs direct), re-open item | pp.31-32, 83 |
+| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve or Direct | Curve default: -5 °C → 55 °C, 15 °C → 35 °C. Direct default 35 °C. Range 20-60 °C. HMG recommends: steel rads -3 °C → 45 °C, 15 °C → 35 °C; UFH -3 °C → 35 °C, 15 °C → 25 °C (HMG weather compensation guidance) | Main screen temp-setting icon (curve vs direct), re-open item | pp.31-32, 83 |
 | Heating OFF outdoor temp | Operation setup → Heat → Outdoor temp. for heating OFF | 24 °C, range 5-35 °C | Re-open item | pp.32, 83 |
 | ΔT for heating | Operation setup → Heat → ΔT for heating ON | 5 °C, range 1-15 °C (not available if Pump flowrate = Max. duty) | Re-open item | pp.32, 83 |
 | Backup heater rules | Operation setup → Heat → Heater ON/OFF | Outdoor temp for heater ON 0 °C; delay 30 min; ON at -4 °C, OFF at -2 °C of target | Re-open item | pp.32-33, 83 |
@@ -227,7 +227,7 @@ item → change → [OK] → [Back].
 | Compressor strategy | System setup → Heating control | Comfort (default) / Efficiency | Re-open item | p.30 |
 | External meters | System setup → External meter | All No by default | Re-open item | p.30 |
 | Electrical anode | System setup → Electrical anode | Yes on K3E5AN/K6E5AN, No on others | Re-open item | p.30 |
-| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve / Direct | Curve default -5 °C → 55 °C, 15 °C → 35 °C | Main screen temp-setting icon; re-open | p.31 |
+| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve / Direct | Curve default -5 °C → 55 °C, 15 °C → 35 °C. HMG recommends: steel rads -3 °C → 45 °C, 15 °C → 35 °C; UFH -3 °C → 35 °C, 15 °C → 25 °C (HMG weather compensation guidance) | Main screen temp-setting icon; re-open | p.31 |
 | Heating OFF outdoor temp | Operation setup → Heat → Outdoor temp. for heating OFF | 24 °C, 5-35 °C | Re-open item | p.31 |
 | ΔT for heating | Operation setup → Heat → ΔT for heating ON | 5 °C, 1-15 °C | Re-open item | p.31 |
 | Backup heater rules | Operation setup → Heat → Heater ON/OFF | 0 °C / 30 min / -4 °C / -2 °C | Re-open item | p.31 |
