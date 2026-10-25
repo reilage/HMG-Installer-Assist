@@ -1166,7 +1166,7 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden){stopSpeaki
 /* ---------- Fault codes ---------- */
 let openCode=null;
 function renderFaults(){
-  const q=$("#fq").value.trim().toLowerCase(), box=$("#codes"), det=$("#fault-detail");
+  const q=$("#fq").value.trim().toLowerCase().replace(/^([a-z])[\s.-]+(\d)/,"$1$2"), box=$("#codes"), det=$("#fault-detail"); // "h 91" finds H91
   box.innerHTML="";
   if(unit==="B"){
     const ctl=KB.B.ctlFaults, odu=KB.B.faults;

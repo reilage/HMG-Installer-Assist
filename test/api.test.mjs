@@ -51,6 +51,27 @@ test("ask streams the answer and sends the rules, manual pages and history to Cl
   assert.match(last, /Installer's message: H62 after start-up/);
 });
 
+test("a code typed or dictated in Ask gets its table row and check pages, and never crosses units", async () => {
+  mock.seen.length = 0;
+  await events(await ask({ unit: "J", text: "Can you help with h 91" })); // speech recognition splits codes
+  let last = mock.seen[0].body.messages.at(-1).content;
+  assert.match(last, /^Manual excerpts for this question:\n\n\[J-series SM, p\.164\][\s\S]*\[J-series SM, p\.188\]/);
+  assert.match(last, /Error codes table row: H91 \| Tank heater OLP abnormality/);
+  assert.match(last, /Installer's message: Can you help with H91$/);
+
+  mock.seen.length = 0;
+  await events(await ask({ unit: "K", text: "help with H91" }));
+  last = mock.seen[0].body.messages.at(-1).content;
+  assert.doesNotMatch(last, /Tank heater OLP|J-series SM/);
+  assert.match(last, /K-series codes aren't covered yet/);
+
+  mock.seen.length = 0;
+  await events(await ask({ unit: "B", text: "A06 111 on the screen" }));
+  last = mock.seen[0].body.messages.at(-1).content;
+  assert.match(last, /^Manual excerpts for this question:\n\n\[Baxi ASHP Control IM, p\.\d+\]/);
+  assert.match(last, /ASHP Control error list row: A06\.111/);
+});
+
 test("Baxi questions get the Baxi rules and both Baxi manuals", async () => {
   mock.seen.length = 0;
   await events(await ask({ unit: "B", text: "H02.23 on the controller, what do I check?" }));
