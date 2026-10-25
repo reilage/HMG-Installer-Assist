@@ -169,3 +169,56 @@ test("installer accounts: admin adds an installer, their code signs them in and 
   assert.equal((await ask({ unit: "J", text: "H62" }, { "X-Access-Code": a2.code })).status, 401);
   assert.equal((await (await admin({ action: "list" })).json()).installers.length, 1);
 });
+
+test("installers can request access, and a request is approved from the email link or the admin page", async () => {
+  // the app from the previous test is still running with ADMIN_CODE set and email off
+  const apply = body => fetch(BASE + "/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const admin = body => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) });
+  const approve = body => fetch(BASE + "/api/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+  assert.equal((await apply({ name: "Ciarán", email: "not-an-email", mobile: "086" })).status, 400);
+  assert.deepEqual(await (await apply({ name: "Bot", email: "b@x.ie", mobile: "1", website: "spam" })).json(), { ok: true, emailed: false });
+  assert.deepEqual(await (await apply({ name: "Ciarán Walsh", company: "Walsh Plumbing", mobile: "086 555 1234", email: "ciaran@walsh.ie", note: "J and K series" })).json(), { ok: true, emailed: false });
+  await apply({ name: "Ciarán Walsh", mobile: "086 555 1234", email: "Ciaran@walsh.ie" }); // a repeat replaces the first
+  await apply({ name: "Niamh Kelly", mobile: "085 000 0000", email: "niamh@kelly.ie" });
+
+  let reqs = (await (await admin({ action: "list" })).json()).requests;
+  assert.deepEqual(reqs.map(r => r.name), ["Ciarán Walsh", "Niamh Kelly"]);
+  assert.equal(reqs[0].tokenHash, undefined, "the token never leaves the server");
+
+  // the email link needs the right token
+  assert.equal((await approve({ id: reqs[0].id, t: "wrong-token-xxxxxxxx", action: "view" })).status, 404);
+
+  // approve one from the admin page: it becomes an installer whose code works
+  const { installer, emailed } = await (await admin({ action: "approve", id: reqs[0].id })).json();
+  assert.equal(emailed, false); assert.equal(installer.company, "");
+  const c = await (await fetch(BASE + "/api/config", { headers: { "X-Access-Code": installer.code } })).json();
+  assert.equal(c.accessOk, true); assert.equal(c.installer.name, "Ciarán Walsh");
+
+  await admin({ action: "decline", id: reqs[1].id });
+  assert.equal((await (await admin({ action: "list" })).json()).requests.length, 0);
+
+  // five requests a day from one address, then no more
+  for (let i = 0; i < 2; i++) await apply({ name: "X" + i, mobile: "1", email: `x${i}@x.ie` });
+  assert.equal((await apply({ name: "Too many", mobile: "1", email: "y@x.ie" })).status, 429);
+});
+
+test("with email on, the approver gets a link that approves the request and emails the installer their code", async () => {
+  await stop(app);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", ADMIN_CODE: "admin-secret", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "",
+    RESEND_API_KEY: "re_test", ESCALATION_FROM: "Assist <assist@example.ie>", RESEND_API_URL: `http://localhost:${MOCK}`, APPROVAL_TO: "boss@example.ie" });
+  mock.seen.length = 0;
+  const r = await fetch(BASE + "/api/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: "Pádraig Doyle", mobile: "087 1", email: "pd@doyle.ie" }) });
+  assert.deepEqual(await r.json(), { ok: true, emailed: true });
+  const note = mock.seen.at(-1);
+  assert.equal(note.url, "/emails"); assert.deepEqual(note.body.to, ["boss@example.ie"]); assert.equal(note.body.reply_to, "pd@doyle.ie");
+  const link = new URL(note.body.text.match(/http:\/\/\S+approve\.html\S+/)[0]);
+  const id = link.searchParams.get("id"), t = link.searchParams.get("t");
+  const approve = action => fetch(BASE + "/api/approve", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, t, action }) });
+  assert.equal((await (await approve("view")).json()).request.name, "Pádraig Doyle");
+  const a = await (await approve("approve")).json();
+  assert.equal(a.emailed, true); assert.match(a.installer.code, /^HMG-/);
+  const sent = mock.seen.at(-1);
+  assert.deepEqual(sent.body.to, ["pd@doyle.ie"]); assert.ok(sent.body.text.includes(a.installer.code));
+  assert.equal((await approve("approve")).status, 404, "the link only works once");
+});

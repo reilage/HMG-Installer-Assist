@@ -86,6 +86,7 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
     <div style="display:flex;flex-direction:column;gap:16px">
       <div class="notice" id="mem-warn" hidden><b>Upstash isn't connected.</b> Accounts added now are only kept until Vercel restarts the server. Connect Upstash for Redis in Vercel (Project &gt; Storage), redeploy, then add installers.</div>
       <div class="totals" id="totals"></div>
+      <div class="panel" id="reqs" hidden></div>
 
       <form class="panel grid" id="add">
         <h2 class="full">Add an installer</h2>
@@ -131,6 +132,7 @@ async function load(){
   DATA=await admin({action:"list"});
   $("#login").hidden=true;$("#app").hidden=false;
   $("#mem-warn").hidden=DATA.store!=="memory";
+  renderRequests();
   $("#a-limit").placeholder=`Blank = standard (${DATA.defaultLimit||"no limit"})`;
   render();
 }
@@ -174,6 +176,31 @@ function render(){
   }).join(""):`<p class="src">${all.length?"No installers match.":"No installers yet. Add the first one above."}</p>`;
 }
 $("#q").oninput=render;
+
+/* Access requests installers sent from the app (api/apply). */
+let approved=null;
+function renderRequests(){
+  const rq=DATA.requests||[], box=$("#reqs");
+  box.hidden=!rq.length&&!approved;
+  box.innerHTML=(approved?`<div class="share"><b>${esc(approved.i.name)} is approved.</b>
+      <p class="src" style="margin:0">${approved.emailed?`Their code has been emailed to ${esc(approved.i.email)}.`:"Email isn't set up, so send them their code:"}</p>${approved.emailed?"":shareBox(approved.i)}</div>`:"")
+    +(rq.length?`<h2>Requests waiting (${rq.length})</h2>${DATA.email?"":`<p class="src">Email isn't set up, so new requests only show here. Check this page now and then.</p>`}`
+    +rq.map(r=>`<div class="inst" data-req="${r.id}">
+      <div class="top"><span class="name">${esc(r.name)}</span><span class="src">${new Date(r.created).toLocaleDateString("en-IE",{day:"numeric",month:"short"})}</span></div>
+      <div class="src">${[r.company,r.mobile,r.email].filter(Boolean).map(esc).join(" · ")}</div>
+      ${r.note?`<div class="src">${esc(r.note)}</div>`:""}
+      <div class="btnrow"><button class="btn sm" data-req-act="approve">Approve</button><button class="btn bad sm" data-req-act="decline">Decline</button></div></div>`).join(""):"");
+}
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("[data-req-act]"); if(!b) return;
+  const id=b.closest("[data-req]").dataset.req, r=DATA.requests.find(x=>x.id===id), act=b.dataset.reqAct;
+  if(act==="decline"&&!confirm(`Decline ${r.name}'s request?`)) return;
+  try{
+    const d=await admin({action:act,id});
+    approved=act==="approve"?{i:d.installer,emailed:d.emailed}:null;
+    await load();
+  }catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
+});
 
 document.addEventListener("click",async e=>{
   const c=e.target.closest("[data-copy]");
