@@ -9,7 +9,7 @@ const MOCK = 4311, APP = 4312, BASE = `http://localhost:${APP}`;
 let mock, app;
 
 async function startApp(env) {
-  const p = spawn(process.execPath, ["dev-server.mjs"], { env: { ...process.env, PORT: String(APP), ANTHROPIC_BASE_URL: `http://localhost:${MOCK}`, ...env }, stdio: ["ignore", "pipe", "inherit"] });
+  const p = spawn(process.execPath, ["dev-server.mjs"], { env: { ...process.env, PORT: String(APP), ANTHROPIC_BASE_URL: `http://localhost:${MOCK}`, STORED_ANSWERS: "off", ...env }, stdio: ["ignore", "pipe", "inherit"] });
   await new Promise(r => p.stdout.once("data", r));
   return p;
 }
@@ -317,4 +317,71 @@ test("fault trends: each question is saved, counted per unit and installer, and 
   assert.equal((await fetch(BASE + "/api/trends")).status, 401);
   const cron = await (await fetch(BASE + "/api/trends", { headers: { Authorization: "Bearer cron-xyz" } })).json();
   assert.equal(cron.empty, true); assert.equal(mock.seen.length, 1);
+});
+
+test("stored answers: a repeat question is answered from storage, free, until it didn't help", async () => {
+  await stop(app);
+  mock.server.close();
+  mock = await startMock(MOCK);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "2", STORED_ANSWERS: "on", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  const admin = body => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) });
+  const installer = async name => ({ "X-Access-Code": (await (await admin({ action: "add", name })).json()).installer.code });
+  const phone = await installer("Seán Murphy"), p2 = await installer("Aoife Byrne"), other = await installer("Ciarán Walsh"), p4 = await installer("Niamh Kelly");
+
+  // first time: Claude answers and it is stored
+  let ev = await events(await ask({ unit: "J", text: "H62, what do I check?" }, phone));
+  assert.deepEqual(ev[0], { t: "quota", left: 1 });
+  assert.equal(mock.seen.length, 1);
+  // same question in other words, and from the fault card: from storage, no Claude call, no question used
+  for (const body of [{ unit: "J", text: "what does h62 mean" }, { unit: "J", text: "H62 on the J-series. What do I check?", extra: { code: "H62", pages: [164] } }]) {
+    ev = await events(await ask(body, phone));
+    assert.equal(ev[0].t, "stored");
+    assert.match(ev.filter(e => e.t === "text").map(e => e.v).join(""), /\*\*Fault:\*\* H62 test answer/);
+    assert.deepEqual(ev.at(-1), { t: "done", truncated: false });
+  }
+  assert.equal(mock.seen.length, 1);
+  const id = ev[0].id;
+
+  // not the same question: other words, another unit, a follow-up, or a photo all go to Claude
+  await events(await ask({ unit: "J", text: "H62 after start-up, what do I check?" }, phone));
+  assert.equal(mock.seen.length, 2);
+  assert.equal((await ask({ unit: "K", text: "H62, what do I check?" }, phone)).status, 429, "the daily limit still applies to new questions");
+  ev = await events(await ask({ unit: "J", text: "H62, what do I check?", history: [{ role: "user", content: "hi" }, { role: "assistant", content: "Hello" }] }, p2));
+  assert.equal(ev[0].t, "quota"); assert.equal(mock.seen.length, 3);
+  // ...unless it is a button's ready-made question, which stands on its own
+  ev = await events(await ask({ unit: "J", text: "H62, what do I check?", standalone: true, history: [{ role: "user", content: "hi" }, { role: "assistant", content: "Hello" }] }, p2));
+  assert.equal(ev[0].t, "stored"); assert.equal(mock.seen.length, 3);
+  // numbers must match: a 9 kW answer isn't given for 7 kW
+  await events(await ask({ unit: "J", text: "What size primary pipe for a 9 kW?" }, p2));
+  assert.equal((await ask({ unit: "J", text: "What size primary pipe for a 7 kW?" }, p2)).status, 429);
+  ev = await events(await ask({ unit: "J", text: "what size primary pipe for a 9 kW" }, p2));
+  assert.equal(ev[0].t, "stored", "stored answers still work once the day's questions are used up");
+
+  // admin sees it with its reuse count, can edit it
+  let list = (await (await admin({ action: "answers" })).json()).answers;
+  const h62 = list.find(a => a.id === id);
+  assert.equal(h62.unit, "J"); assert.equal(h62.code, "H62"); assert.equal(h62.hits, 3); assert.equal(h62.q, "H62, what do I check?");
+
+  // "didn't help": Claude answers afresh, counted as a question, and that answer replaces the stored one
+  ev = await events(await ask({ unit: "J", text: "what does h62 mean", fresh: id }, other));
+  assert.equal(ev[0].t, "quota"); assert.equal(mock.seen.length, 5);
+  list = (await (await admin({ action: "answers" })).json()).answers;
+  assert.equal(list.find(a => a.id === id).bad, 1);
+  assert.equal(list.find(a => a.id === id).q, "what does h62 mean");
+
+  // an edited answer is what installers get, and it stays when an installer says it didn't help
+  await admin({ action: "answer_edit", id, text: "Edited by Donal: check the water pump." });
+  ev = await events(await ask({ unit: "J", text: "H62?" }, other));
+  assert.equal(ev.find(e => e.t === "text").v, "Edited by Donal: check the water pump.");
+  await events(await ask({ unit: "J", text: "H62?", fresh: id }, p4));
+  ev = await events(await ask({ unit: "J", text: "H62?" }, other));
+  assert.equal(ev.find(e => e.t === "text").v, "Edited by Donal: check the water pump.");
+
+  // reuse shows in the fault trends; delete and clear
+  const t = await (await admin({ action: "trends", week: (await (await admin({ action: "trends" })).json()).weeks[0].week })).json();
+  assert.equal(t.stats.stored, 6);
+  assert.equal((await (await admin({ action: "answer_delete", id })).json()).ok, true);
+  assert.equal((await (await admin({ action: "answers" })).json()).answers.some(a => a.id === id), false);
+  assert.ok((await (await admin({ action: "answers_clear", unit: "J" })).json()).cleared >= 1);
+  assert.deepEqual((await (await admin({ action: "answers" })).json()).answers, []);
 });

@@ -1,22 +1,35 @@
 // POST /api/ask  →  streams the assistant's answer as newline-delimited JSON events:
+//   {"t":"stored","id":"…","at":"…"}  this answer comes from storage (lib/answers.js): no Claude call, no question used
 //   {"t":"quota","left":4}   questions this phone has left today (only when DAILY_QUESTION_LIMIT is on)
 //   {"t":"text","v":"..."}   more answer text
 //   {"t":"reset"}            discard the text so far (Claude handed over to its fallback model mid-answer)
 //   {"t":"done","truncated":false}
 //   {"t":"error","code":"rate_limited"}
 // Over the daily limit it answers 429 {"error":"daily_limit","limit":5} instead (see lib/quota.js).
-// Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data} }
+// Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data}, fresh: id }
+// standalone: a ready-made question from a button (fault card, suggestion...), which can be answered from storage even
+// part-way through a chat. fresh: the installer tapped "Didn't help" on stored answer <id>, so ask Claude afresh and store that answer instead.
 import Anthropic from "@anthropic-ai/sdk";
 import { UNITS, pagesFor, excerpt } from "../lib/kb.js";
 import { rules } from "../lib/prompt.js";
 import { take, giveBack } from "../lib/quota.js";
 import { recordQuestion } from "../lib/trends.js";
+import { reusable, findAnswer, saveAnswer, notHelpful } from "../lib/answers.js";
 import { send, readJson, checkAccess, onlyPost, errorCode, clip } from "../lib/http.js";
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
 const EFFORT = process.env.CLAUDE_EFFORT || "medium";
 const FALLBACKS = process.env.CLAUDE_FALLBACKS !== "off";
 const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+
+/* Start the streamed reply; returns a function that sends one event. */
+function stream(res) {
+  res.statusCode = 200;
+  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Accel-Buffering", "no");
+  return o => res.write(JSON.stringify(o) + "\n");
+}
 
 /* Earlier turns from the app: text only, alternating, starting with the installer, ending with the assistant. */
 function cleanHistory(h) {
@@ -43,6 +56,24 @@ export default async function handler(req, res) {
     ? { code: clip(body.extra.code, 20), pages: Array.isArray(body.extra.pages) ? body.extra.pages.slice(0, 6) : [], note: clip(body.extra.note, 3000) } : null;
   const img = body.image && IMAGE_TYPES.has(body.image.media_type) && typeof body.image.data === "string" && body.image.data.length < 5_000_000 ? body.image : null;
   if (!text && !img) return send(res, 400, { error: "bad_request" });
+  const history = cleanHistory(body.history);
+  const reuse = reusable({ text, history: body.standalone === true ? [] : history, img }); // may come from storage
+  const keep = reuse && !history.length; // may be stored: only answers given without an earlier conversation
+  const fresh = typeof body.fresh === "string" ? body.fresh : "";
+  if (reuse && !fresh) {
+    const hit = await findAnswer(unit, text, extra?.code).catch(e => { console.error(JSON.stringify({ evt: "stored_error", message: e.message })); return null; });
+    if (hit) {
+      const emit = stream(res);
+      emit({ t: "stored", id: hit.id, at: hit.at });
+      emit({ t: "text", v: hit.a });
+      emit({ t: "done", truncated: false });
+      await recordQuestion({ unit, text, code: extra?.code, who, req, answer: hit.a, photo: false, stored: true })
+        .catch(e => console.error(JSON.stringify({ evt: "trends_error", message: e.message })));
+      console.log(JSON.stringify({ evt: "ask", unit, installer: who.installer?.name, chars: text.length, stored: hit.id }));
+      return res.end();
+    }
+  }
+  if (fresh) await notHelpful(fresh).catch(() => {});
   const quota = await take(req, who);
   if (!quota.ok) return send(res, 429, { error: "daily_limit", limit: quota.limit });
 
@@ -58,32 +89,31 @@ export default async function handler(req, res) {
     max_tokens: 16000,
     output_config: { effort: EFFORT },
     system: [{ type: "text", text: rules(unit), cache_control: { type: "ephemeral" } }],
-    messages: [...cleanHistory(body.history), { role: "user", content }],
+    messages: [...history, { role: "user", content }],
   };
   const client = new Anthropic();
-  const stream = FALLBACKS
+  const claude = FALLBACKS
     ? client.beta.messages.stream({ ...params, betas: ["server-side-fallback-2026-07-01"], fallbacks: "default" })
     : client.messages.stream(params);
 
-  res.statusCode = 200;
-  res.setHeader("Content-Type", "application/x-ndjson; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.setHeader("X-Accel-Buffering", "no");
-  const emit = o => res.write(JSON.stringify(o) + "\n");
+  const emit = stream(res);
   if (quota.left !== null) emit({ t: "quota", left: quota.left });
   let closed = false;
-  res.on("close", () => { if (!res.writableFinished) { closed = true; stream.abort(); } });
+  res.on("close", () => { if (!res.writableFinished) { closed = true; claude.abort(); } });
 
   const started = Date.now();
   let answer = "";
   try {
-    for await (const ev of stream) {
+    for await (const ev of claude) {
       if (ev.type === "content_block_start" && ev.content_block.type === "fallback") { emit({ t: "reset" }); answer = ""; }
       else if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") { emit({ t: "text", v: ev.delta.text }); answer += ev.delta.text; }
     }
-    const msg = await stream.finalMessage();
+    const msg = await claude.finalMessage();
     if (msg.stop_reason === "refusal") emit({ t: "error", code: "refused" });
     else emit({ t: "done", truncated: msg.stop_reason === "max_tokens" });
+    // A complete first answer is stored so the same question next time costs nothing (lib/answers.js).
+    if (keep && msg.stop_reason === "end_turn")
+      await saveAnswer({ unit, text, code: extra?.code, answer, who }).catch(e => console.error(JSON.stringify({ evt: "stored_error", message: e.message })));
     // Saved for the weekly fault trends (lib/trends.js); a hiccup there doesn't spoil the answer.
     await recordQuestion({ unit, text, code: extra?.code, who, req, answer, photo: !!img })
       .catch(e => console.error(JSON.stringify({ evt: "trends_error", message: e.message })));

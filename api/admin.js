@@ -7,6 +7,10 @@
 //       { action: "decline", id }   (an access request)       → { ok }
 //       { action: "trends", week? }   fault trends for a week (default last week, or this week if last week was empty) → { week, label, weeks, stats, summary }
 //       { action: "trends_write", week? }  (re)write that week's Claude summary → the same as "trends"
+//       { action: "answers" }                  stored answers (lib/answers.js) → { on, answers: [{id, unit, code, q, a, at, by, edited, hits, bad}] }
+//       { action: "answer_edit", id, text }    reword a stored answer (it then stays, even if an installer says it didn't help) → { answer }
+//       { action: "answer_delete", id }        → { ok }
+//       { action: "answers_clear", unit? }     clear all stored answers, or one unit's → { cleared }
 // "list" also returns the access requests waiting for approval, as requests: [...].
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
@@ -15,6 +19,7 @@ import { emailEnabled } from "../lib/email.js";
 import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
+import { storedOn, listAnswers, editAnswer, deleteAnswer, clearAnswers } from "../lib/answers.js";
 import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
 
 /* Counts for the week (free, from the saved questions) and its Claude summary if one has been written. */
@@ -30,7 +35,7 @@ export default async function handler(req, res) {
   if (!accountsOn()) return send(res, 503, { error: "accounts_off" });
   if (!sameSecret(req.headers["x-admin-code"] || "", process.env.ADMIN_CODE)) return send(res, 401, { error: "admin_code" });
   let b;
-  try { b = await readJson(req, 20_000); } catch { return send(res, 400, { error: "bad_request" }); }
+  try { b = await readJson(req, 60_000); } catch { return send(res, 400, { error: "bad_request" }); }
 
   try {
     switch (b.action) {
@@ -70,6 +75,18 @@ export default async function handler(req, res) {
         }
         return send(res, 200, await trends(w));
       }
+      case "answers":
+        return send(res, 200, { on: storedOn(), answers: await listAnswers() });
+      case "answer_edit": {
+        if (!String(b.text || "").trim()) return send(res, 400, { error: "bad_request" });
+        const answer = await editAnswer(String(b.id || ""), b.text);
+        return answer ? send(res, 200, { answer }) : send(res, 404, { error: "not_found" });
+      }
+      case "answer_delete":
+        await deleteAnswer(String(b.id || ""));
+        return send(res, 200, { ok: true });
+      case "answers_clear":
+        return send(res, 200, { cleared: await clearAnswers(b.unit) });
       case "decline":
         await deleteRequest(String(b.id || ""));
         return send(res, 200, { ok: true });
