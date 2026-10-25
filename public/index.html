@@ -221,7 +221,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <div class="gate" id="gate" hidden><form id="gate-f">
   <div class="brand"><img class="logo on-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div class="brand-t"><b>Installer Assistant</b><span>Technical support</span></div></div>
-  <p class="lede" style="margin:0">Enter the access code from Heat Merchants. You only need to do this once on this phone.</p>
+  <p class="lede" style="margin:0" id="gate-lede">Enter the access code from Heat Merchants. You only need to do this once on this phone.</p>
   <input id="gate-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access code" aria-label="Access code">
   <button class="btn" type="submit">Continue</button>
   <span class="src" id="gate-note"></span>
@@ -242,6 +242,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <div>
     <h2>Ask</h2>
     <p class="lede" id="ask-lede">Type a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
+    <p class="src" id="who" hidden></p>
     <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site.</p>
   </div>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
@@ -354,13 +355,17 @@ const store={get(k){try{return localStorage.getItem(k);}catch{return null;}},set
 const DEVICE=store.get("hmg-device")||(()=>{const id=(crypto.randomUUID?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2));store.set("hmg-device",id);return id;})();
 function api(path,body,opts={}){
   return fetch("api/"+path,{method:body?"POST":"GET",headers:{"Content-Type":"application/json","X-Access-Code":store.get("hmg-code")||"","X-Device-Id":DEVICE},body:body?JSON.stringify(body):undefined,signal:opts.signal})
-    .then(r=>{if(r.status===401){showGate("That access code wasn't accepted.");throw Object.assign(new Error("access"),{code:"access_code"});}return r;});
+    .then(async r=>{if(r.status===401){const e=await r.json().catch(()=>({}));showGate(GATE_NOTE[e.error]||GATE_NOTE.access_code);throw Object.assign(new Error("access"),{code:"access_code"});}return r;});
 }
-function showGate(note){$("#gate").hidden=false;$("#gate-note").textContent=note||"";$("#gate-code").focus();}
+const GATE_NOTE={access_code:"That code wasn't accepted.",account_off:"Your account has been switched off. Contact Heat Merchants."};
+function showGate(note){
+  $("#gate-lede").textContent=CFG.accounts?"Enter your installer code from Heat Merchants (it looks like HMG-ABC234). You only need to do this once on this phone.":"Enter the access code from Heat Merchants. You only need to do this once on this phone.";
+  $("#gate-code").placeholder=CFG.accounts?"Installer code":"Access code";
+  $("#gate").hidden=false;$("#gate-note").textContent=note||"";$("#gate-code").focus();}
 $("#gate-f").onsubmit=async e=>{
   e.preventDefault();store.set("hmg-code",$("#gate-code").value.trim());
   const c=await fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).catch(()=>null);
-  if(c&&c.accessOk){$("#gate").hidden=true;applyConfig(c);}else $("#gate-note").textContent=c?"That access code wasn't accepted.":"No connection. Try again.";
+  if(c&&c.accessOk){$("#gate").hidden=true;applyConfig(c);}else $("#gate-note").textContent=c?(GATE_NOTE[c.denied]||GATE_NOTE.access_code):"No connection. Try again.";
 };
 /* Photos are shrunk on the phone before sending (max 1568 px, JPEG): quicker on site signal and inside the upload limit. */
 async function photoData(file){
@@ -643,6 +648,7 @@ function renderSuggest(){
 }
 function bubble(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;$("#log").append(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;}
 const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The assistant's Claude key isn't working. Tell Heat Merchants.",access_code:"Enter the access code first.",rate_limited:"Too many questions in a short time. Wait a minute and try again.",busy:"Claude is busy right now. Try again in a minute.",refused:"The assistant couldn't answer that. Try rewording it.",image_rejected:"That photo couldn't be read. Try a JPEG or PNG.",prompt_too_large:"That was too much at once. Start a shorter question.",
+  unavailable:"The account check isn't responding. Try again in a minute.",
   get daily_limit(){return `You've used your ${CFG.dailyLimit||""} questions for today. They reset at midnight. Fault codes, controller steps, manuals and Escalate still work.`;}};
 
 async function ask(text,extra){
@@ -905,11 +911,18 @@ $("#fill").onclick=fillFromChat;
 function applyConfig(c){
   CFG=c;if(c.escalationTo){ESC_TO=c.escalationTo;document.querySelectorAll(".addr").forEach(a=>a.textContent=ESC_TO);}
   $("#photo-btn").hidden=!c.ai;$("#fill").hidden=!c.ai;$("#ai-off").hidden=c.ai;
+  /* Signed in with an installer code: show who, and fill their details into the escalation form. */
+  const me=c.installer;$("#who").hidden=!me;
+  if(me){
+    $("#who").innerHTML=`Signed in as <b>${esc(me.name)}</b>${me.company?" · "+esc(me.company):""} · <a href="#" id="who-x">Change code</a>`;
+    $("#who-x").onclick=e=>{e.preventDefault();showGate("");};
+    for(const [k,v] of [["name",me.name],["co",me.company],["mob",me.mobile],["email",me.email]]) if(v&&!F(k)) $("#e-"+k).value=v;
+  }
   if(c.email){$("#esc-send").hidden=false;$("#esc-how").innerHTML=`Tap <b>Send to Heat Merchants</b>. Or use <b>Open email</b> to send it from your own mail app.`;}
 }
 setUnit("J");
 fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).then(c=>{
-  applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(store.get("hmg-code")?"That access code no longer works. Ask Heat Merchants for the new one.":"");
+  applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(!store.get("hmg-code")?"":c.denied==="account_off"?GATE_NOTE.account_off:"That code no longer works. Ask Heat Merchants for a new one.");
 }).catch(()=>aiOff());
 
 /* Works offline once opened: screens, fault codes, diagrams and any manual already opened (sw.js). */

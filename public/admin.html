@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HMG Installer Accounts</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Admin page for installer accounts (api/admin.js). Same brand tokens as the app. */
+:root{
+  --hmg-cyan:#00a9e0;
+  --bg:#f3f4f5; --surface:#ffffff; --sunk:#e8eaeb; --line:#d3d6d8;
+  --fg:#26292c; --muted:#5f6367;
+  --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
+  --warn:#a85b00; --warn-soft:#fbecd6; --bad:#b42318; --bad-soft:#fbe1de;
+  --f-display:"Bree Serif",Georgia,serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44; --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44; --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body)}
+button,input{font:inherit;color:inherit}
+main{max-width:760px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px;display:flex;flex-direction:column;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:44px}
+.brand b{font:22px/1.1 var(--f-display);display:block}
+.brand span{color:var(--muted);font-size:14px}
+.logo-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo-light{display:none}:root:not([data-theme="light"]) .logo-dark{display:block}}
+h2{font:20px/1.2 var(--f-display);margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.lede,.src{color:var(--muted);margin:0}
+.src{font-size:14px}
+form.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+form.grid .full{grid-column:1/-1}
+@media (max-width:520px){form.grid{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;min-width:0;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;font-weight:600;text-decoration:none;display:inline-block}
+.btn.sec{background:var(--sunk);color:var(--fg)}
+.btn.bad{background:var(--bad-soft);color:var(--bad)}
+.btn.sm{padding:6px 10px;font-size:14px}
+.notice{background:var(--warn-soft);color:var(--fg);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px}
+.code{font:700 18px/1.2 var(--f-mono);letter-spacing:.04em}
+.totals{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;flex:1 1 140px}
+.stat b{display:block;font:22px/1.1 var(--f-display)}
+.stat span{color:var(--muted);font-size:13px}
+.inst{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.inst.off{opacity:.65}
+.inst .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.inst .name{font-weight:600;font-size:17px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--accent-soft);color:var(--accent)}
+.chip.off{background:var(--bad-soft);color:var(--bad)}
+.chip.full{background:var(--warn-soft);color:var(--warn)}
+.share{background:var(--accent-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+#list{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><img class="logo-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div><b>Installer accounts</b><span>HMG Installer Assistant admin</span></div></div>
+
+  <form class="panel" id="login">
+    <h2>Admin sign-in</h2>
+    <p class="lede">Enter the admin code (the ADMIN_CODE setting in Vercel).</p>
+    <input id="admin-code" type="password" autocomplete="current-password" placeholder="Admin code" aria-label="Admin code">
+    <div class="btnrow"><button class="btn" type="submit">Sign in</button><span class="src" id="login-note"></span></div>
+  </form>
+
+  <div id="app" hidden>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="notice" id="mem-warn" hidden><b>Upstash isn't connected.</b> Accounts added now are only kept until Vercel restarts the server. Connect Upstash for Redis in Vercel (Project &gt; Storage), redeploy, then add installers.</div>
+      <div class="totals" id="totals"></div>
+
+      <form class="panel grid" id="add">
+        <h2 class="full">Add an installer</h2>
+        <label>Name *<input id="a-name" required autocomplete="off"></label>
+        <label>Company<input id="a-company" autocomplete="off"></label>
+        <label>Mobile<input id="a-mobile" inputmode="tel" autocomplete="off"></label>
+        <label>Email<input id="a-email" type="email" inputmode="email" autocomplete="off"></label>
+        <label>Questions per day<input id="a-limit" inputmode="numeric" placeholder="Blank = standard"></label>
+        <div class="full btnrow"><button class="btn" type="submit">Add and create code</button><span class="src" id="add-note"></span></div>
+        <div class="full share" id="new-share" hidden></div>
+      </form>
+
+      <div class="btnrow" style="justify-content:space-between"><h2>Installers</h2><input id="q" placeholder="Search" aria-label="Search installers" style="max-width:220px"></div>
+      <div id="list"></div>
+      <div class="btnrow"><button class="btn sec sm" id="logout">Sign out of admin</button></div>
+    </div>
+  </div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const ss={get(k){try{return sessionStorage.getItem(k);}catch{return null;}},set(k,v){try{v==null?sessionStorage.removeItem(k):sessionStorage.setItem(k,v);}catch{}}};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const COST_PER_Q=0.10; // rough euro cost of one Ask question on Claude Opus 5.5
+let DATA=null, editing=null;
+
+async function admin(body){
+  const r=await fetch("api/admin",{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Code":ss.get("hmg-admin")||""},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401){ss.set("hmg-admin",null);showLogin("That admin code wasn't accepted.");throw new Error("admin");}
+  if(!r.ok) throw Object.assign(new Error("api"),{code:d.error});
+  return d;
+}
+const MSG={accounts_off:"Installer accounts aren't switched on. Add the ADMIN_CODE setting in Vercel and redeploy.",unavailable:"The account store isn't responding. Try again in a minute.",name_required:"Enter the installer's name."};
+function showLogin(note){$("#login").hidden=false;$("#app").hidden=true;$("#login-note").textContent=note||"";$("#admin-code").focus();}
+
+$("#login").onsubmit=async e=>{
+  e.preventDefault();ss.set("hmg-admin",$("#admin-code").value.trim());
+  try{await load();}catch(err){if(err.code) $("#login-note").textContent=MSG[err.code]||"Something went wrong. Try again.";}
+};
+$("#logout").onclick=()=>{ss.set("hmg-admin",null);showLogin("");};
+
+async function load(){
+  DATA=await admin({action:"list"});
+  $("#login").hidden=true;$("#app").hidden=false;
+  $("#mem-warn").hidden=DATA.store!=="memory";
+  $("#a-limit").placeholder=`Blank = standard (${DATA.defaultLimit||"no limit"})`;
+  render();
+}
+
+const limitOf=i=>i.limit===null||i.limit===undefined?DATA.defaultLimit:i.limit;
+const shareText=i=>`Your HMG Installer Assistant code is ${i.code}. Open ${location.origin}/ on your phone and enter it once. It's personal to you, so please don't share it.`;
+function shareBox(i){
+  const t=shareText(i);
+  return `<div class="code">${esc(i.code)}</div><p class="src">${esc(t)}</p>
+    <div class="btnrow"><button class="btn sm" type="button" data-copy="${esc(t)}">Copy message</button>
+    ${i.mobile?`<a class="btn sec sm" href="sms:${esc(i.mobile.replace(/[^+\d]/g,""))}?&body=${encodeURIComponent(t)}">Text it</a>`:""}
+    ${i.email?`<a class="btn sec sm" href="mailto:${esc(i.email)}?subject=${encodeURIComponent("Your HMG Installer Assistant code")}&body=${encodeURIComponent(t)}">Email it</a>`:""}</div>`;
+}
+
+function render(){
+  const all=DATA.installers, q=$("#q").value.trim().toLowerCase();
+  const today=all.reduce((n,i)=>n+i.today,0), month=all.reduce((n,i)=>n+i.month,0);
+  $("#totals").innerHTML=`<div class="stat"><b>${all.filter(i=>i.active).length}</b><span>active installer${all.filter(i=>i.active).length===1?"":"s"}${all.some(i=>!i.active)?` (${all.filter(i=>!i.active).length} switched off)`:""}</span></div>
+    <div class="stat"><b>${today}</b><span>question${today===1?"":"s"} today</span></div>
+    <div class="stat"><b>${month}</b><span>question${month===1?"":"s"} this month, about €${(month*COST_PER_Q).toFixed(month*COST_PER_Q<10?2:0)} on Claude</span></div>`;
+  const list=all.filter(i=>!q||[i.name,i.company,i.mobile,i.email,i.code].join(" ").toLowerCase().includes(q));
+  $("#list").innerHTML=list.length?list.map(i=>{
+    const lim=limitOf(i), full=lim&&i.today>=lim;
+    if(editing===i.id) return `<form class="inst grid" data-edit="${i.id}">
+      <label>Name<input name="name" value="${esc(i.name)}" required></label><label>Company<input name="company" value="${esc(i.company)}"></label>
+      <label>Mobile<input name="mobile" value="${esc(i.mobile)}" inputmode="tel"></label><label>Email<input name="email" value="${esc(i.email)}" type="email"></label>
+      <label>Questions per day<input name="limit" value="${i.limit??""}" inputmode="numeric" placeholder="Blank = standard (${DATA.defaultLimit||"no limit"})"></label>
+      <div class="btnrow" style="grid-column:1/-1"><button class="btn sm" type="submit">Save</button><button class="btn sec sm" type="button" data-act="cancel">Cancel</button></div></form>`;
+    return `<div class="inst${i.active?"":" off"}" data-id="${i.id}">
+      <div class="top"><span class="name">${esc(i.name)}</span>${i.active?(full?`<span class="chip full">Used today's questions</span>`:""):`<span class="chip off">Switched off</span>`}</div>
+      <div class="src">${[i.company,i.mobile,i.email].filter(Boolean).map(esc).join(" · ")||"No contact details"}</div>
+      <div class="src"><span class="code" style="font-size:15px;color:var(--fg)">${esc(i.code)}</span> · Today ${i.today}${lim?` of ${lim}`:""} · This month ${i.month}${i.limit!==null&&i.limit!==undefined?` · Own limit: ${i.limit||"none"}`:""}</div>
+      <div class="share" data-share hidden>${shareBox(i)}</div>
+      <div class="btnrow">
+        <button class="btn sec sm" data-act="share">Send code</button>
+        <button class="btn sec sm" data-act="edit">Edit</button>
+        <button class="btn sec sm" data-act="toggle">${i.active?"Switch off":"Switch on"}</button>
+        <button class="btn sec sm" data-act="code">New code</button>
+        <button class="btn bad sm" data-act="delete">Delete</button>
+      </div></div>`;
+  }).join(""):`<p class="src">${all.length?"No installers match.":"No installers yet. Add the first one above."}</p>`;
+}
+$("#q").oninput=render;
+
+document.addEventListener("click",async e=>{
+  const c=e.target.closest("[data-copy]");
+  if(c){try{await navigator.clipboard.writeText(c.dataset.copy);c.textContent="Copied";}catch{c.textContent="Copy failed: select the text";}return;}
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const card=b.closest("[data-id],[data-edit]"), id=card?.dataset.id||card?.dataset.edit, i=DATA.installers.find(x=>x.id===id);
+  const act=b.dataset.act;
+  if(act==="cancel"){editing=null;return render();}
+  if(act==="share"){const s=card.querySelector("[data-share]");s.hidden=!s.hidden;return;}
+  if(act==="edit"){editing=id;return render();}
+  try{
+    if(act==="toggle") await admin({action:"update",id,active:!i.active});
+    if(act==="code"){if(!confirm(`Give ${i.name} a new code? Their old code stops working straight away.`)) return;await admin({action:"update",id,newCode:true});}
+    if(act==="delete"){if(!confirm(`Delete ${i.name}? Their code stops working. To pause them instead, use Switch off.`)) return;await admin({action:"delete",id});}
+    await load();
+    if(act==="code"){const s=document.querySelector(`[data-id="${id}"] [data-share]`);if(s) s.hidden=false;}
+  }catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
+});
+document.addEventListener("submit",async e=>{
+  const f=e.target.closest("[data-edit]"); if(!f) return;
+  e.preventDefault();
+  const v=n=>f.elements[n].value;
+  try{await admin({action:"update",id:f.dataset.edit,name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit").trim()===""?null:v("limit")});editing=null;await load();}
+  catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
+});
+$("#add").onsubmit=async e=>{
+  e.preventDefault();
+  const v=id=>$("#a-"+id).value.trim();
+  try{
+    const {installer:i}=await admin({action:"add",name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit")===""?null:v("limit")});
+    for(const k of ["name","company","mobile","email","limit"]) $("#a-"+k).value="";
+    $("#add-note").textContent=`${i.name} added. Send them their code:`;
+    $("#new-share").innerHTML=shareBox(i);$("#new-share").hidden=false;
+    await load();
+  }catch(err){if(err.code) $("#add-note").textContent=MSG[err.code]||"Something went wrong. Try again.";}
+};
+
+if(ss.get("hmg-admin")) load().catch(()=>{}); else showLogin("");
+</script>
+</body>
+</html>

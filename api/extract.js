@@ -14,7 +14,7 @@ const SCHEMA = {
 };
 
 export default async function handler(req, res) {
-  if (!onlyPost(req, res) || !checkAccess(req, res)) return;
+  if (!onlyPost(req, res) || !(await checkAccess(req, res))) return;
   if (!process.env.ANTHROPIC_API_KEY) return send(res, 503, { error: "not_configured" });
   let body;
   try { body = await readJson(req, 200_000); } catch { return send(res, 400, { error: "bad_request" }); }

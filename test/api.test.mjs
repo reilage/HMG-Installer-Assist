@@ -128,3 +128,44 @@ test("each phone gets its daily question limit", async () => {
   assert.equal(mock.seen.length, 2, "Claude isn't called once the limit is reached");
   assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, phoneB)))[0], { t: "quota", left: 1 });
 });
+
+test("installer accounts: admin adds an installer, their code signs them in and has its own limit", async () => {
+  await stop(app);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "3", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  const admin = (body, code = "admin-secret") => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": code }, body: JSON.stringify(body) });
+  assert.equal((await admin({ action: "list" }, "wrong")).status, 401);
+  assert.equal((await admin({ action: "add", name: " " })).status, 400);
+
+  const { installer: a } = await (await admin({ action: "add", name: "Seán Murphy", company: "Murphy Heating", mobile: "087 123 4567", limit: "1" })).json();
+  const { installer: b } = await (await admin({ action: "add", name: "Aoife Byrne" })).json();
+  assert.match(a.code, /^HMG-[A-Z2-9]{6}$/);
+
+  // without a code the app asks for one; the installer's code works however it is typed
+  const c0 = await (await fetch(BASE + "/api/config")).json();
+  assert.equal(c0.accounts, true); assert.equal(c0.accessCode, true); assert.equal(c0.accessOk, false);
+  assert.equal((await ask({ unit: "J", text: "H62" })).status, 401);
+  const typed = a.code.toLowerCase().replace("-", " ");
+  const c1 = await (await fetch(BASE + "/api/config", { headers: { "X-Access-Code": typed } })).json();
+  assert.equal(c1.accessOk, true); assert.equal(c1.dailyLimit, 1);
+  assert.deepEqual(c1.installer, { name: "Seán Murphy", company: "Murphy Heating", mobile: "087 123 4567", email: "" });
+
+  // the limit is per installer, not per phone
+  assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, { "X-Access-Code": a.code, "X-Device-Id": "phone-1111111" })))[0], { t: "quota", left: 0 });
+  assert.equal((await ask({ unit: "J", text: "H62" }, { "X-Access-Code": a.code, "X-Device-Id": "phone-2222222" })).status, 429);
+  assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, { "X-Access-Code": b.code })))[0], { t: "quota", left: 2 });
+
+  const list = (await (await admin({ action: "list" })).json()).installers;
+  assert.deepEqual(list.map(i => [i.name, i.today, i.month]), [["Aoife Byrne", 1, 1], ["Seán Murphy", 1, 1]]);
+
+  // switched off, new code, deleted
+  await admin({ action: "update", id: b.id, active: false });
+  const off = await ask({ unit: "J", text: "H62" }, { "X-Access-Code": b.code });
+  assert.equal(off.status, 401); assert.equal((await off.json()).error, "account_off");
+  const { installer: a2 } = await (await admin({ action: "update", id: a.id, newCode: true, limit: null })).json();
+  assert.notEqual(a2.code, a.code);
+  assert.equal((await ask({ unit: "J", text: "H62" }, { "X-Access-Code": a.code })).status, 401);
+  assert.equal((await (await fetch(BASE + "/api/config", { headers: { "X-Access-Code": a2.code } })).json()).dailyLimit, 3);
+  await admin({ action: "delete", id: a.id });
+  assert.equal((await ask({ unit: "J", text: "H62" }, { "X-Access-Code": a2.code })).status, 401);
+  assert.equal((await (await admin({ action: "list" })).json()).installers.length, 1);
+});

@@ -29,7 +29,9 @@ function cleanHistory(h) {
 }
 
 export default async function handler(req, res) {
-  if (!onlyPost(req, res) || !checkAccess(req, res)) return;
+  if (!onlyPost(req, res)) return;
+  const who = await checkAccess(req, res);
+  if (!who) return;
   if (!process.env.ANTHROPIC_API_KEY) return send(res, 503, { error: "not_configured" });
   let body;
   try { body = await readJson(req); } catch (e) { return send(res, e.code === "too_large" ? 413 : 400, { error: e.code === "too_large" ? "prompt_too_large" : "bad_request" }); }
@@ -40,7 +42,7 @@ export default async function handler(req, res) {
     ? { code: clip(body.extra.code, 20), pages: Array.isArray(body.extra.pages) ? body.extra.pages.slice(0, 6) : [], note: clip(body.extra.note, 3000) } : null;
   const img = body.image && IMAGE_TYPES.has(body.image.media_type) && typeof body.image.data === "string" && body.image.data.length < 5_000_000 ? body.image : null;
   if (!text && !img) return send(res, 400, { error: "bad_request" });
-  const quota = await take(req);
+  const quota = await take(req, who);
   if (!quota.ok) return send(res, 429, { error: "daily_limit", limit: quota.limit });
 
   const pages = pagesFor(unit, text, extra);
@@ -81,11 +83,11 @@ export default async function handler(req, res) {
     if (msg.stop_reason === "refusal") emit({ t: "error", code: "refused" });
     else emit({ t: "done", truncated: msg.stop_reason === "max_tokens" });
     // One log line per question (Vercel > Logs). A proper question record needs a database: see README.
-    console.log(JSON.stringify({ evt: "ask", unit, chars: text.length, photo: !!img, pages: pages.map(x => `${x.m}:${x.p}`),
+    console.log(JSON.stringify({ evt: "ask", unit, installer: who.installer?.name, chars: text.length, photo: !!img, pages: pages.map(x => `${x.m}:${x.p}`),
       model: msg.model, stop: msg.stop_reason, ms: Date.now() - started, usage: msg.usage }));
   } catch (e) {
     if (closed) return;
-    await giveBack(quota);
+    await giveBack(quota, who);
     console.error(JSON.stringify({ evt: "ask_error", unit, status: e.status, message: e.message }));
     emit({ t: "error", code: errorCode(e, Anthropic) });
   }
