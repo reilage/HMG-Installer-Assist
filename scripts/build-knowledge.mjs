@@ -83,6 +83,20 @@ const sizing = read("hmg-primary-pipe-sizing.md");
 const clearances = read("hmg-outdoor-unit-clearances.md");
 const weatherComp = read("hmg-weather-compensation.md");
 const wiring = JSON.parse(read("wiring-index.json"));
+const commFile = read("hmg-commissioning-panasonic.md");
+
+// Commissioning tick list: "# Part A" = J-series, "# Part B" = K-series; "## " stages; each "- **Step.** text" is one tick box.
+// "HMG TO CONFIRM" marks a setting HMG hasn't given a value for yet.
+const commPart = l => commFile.split(/^(?=# Part [AB]\b)/m).find(t => t.startsWith("# Part " + l)).replace(/\n---\s*$/, "").trim();
+const commText = { J: commPart("A"), K: commPart("B") };
+const commissioning = Object.fromEntries(Object.entries(commText).map(([u, t]) => [u,
+  t.split(/^## /m).slice(1).map(sec => ({
+    stage: sec.split("\n", 1)[0].trim(),
+    steps: [...sec.matchAll(/^- \*\*(.+?)\*\* (.*)$/gm)].map((m, i) => ({
+      id: sec.split("\n", 1)[0].trim().split(".")[0] + "." + (i + 1),
+      title: m[1].replace(/\.$/, ""), text: m[2], confirm: m[2].includes("HMG TO CONFIRM"),
+    })),
+  }))]));
 
 // Field notes, structured for the fault cards: codes from the Symptoms line, units from the Product line.
 const fnotes = fn.split(/^## /m).slice(1).map(sec => {
@@ -111,15 +125,16 @@ const full = {
   K: { ...TITLES.K, pages: K },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, fieldNotes: fn, fieldNoteList: fnotes, faults,
+  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults,
 };
 const lite = {
   J: TITLES.J, K: TITLES.K, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, fieldNoteList: fnotes, faults,
+  nav, wiring, commissioning, fieldNoteList: fnotes, faults,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
 console.log(`Built knowledge: J ${Object.keys(J).length} pages, K ${Object.keys(K).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
-  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams.`);
+  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ` +
+  `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, K ${commissioning.K.flatMap(s => s.steps).length}.`);

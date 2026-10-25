@@ -163,6 +163,22 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .task details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
 .group-h{font:600 13px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
 
+/* Commissioning tick list */
+.cm-bar{height:8px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.cm-bar i{display:block;height:100%;background:var(--accent);border-radius:999px;transition:width .2s}
+.cm-stage h3{margin:0;font-size:16px;font-weight:600;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.cm-stage h3 span{font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap}
+.cm-stage.done h3 span{color:var(--accent)}
+.cm-step{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.cm-step input{flex:none;width:22px;height:22px;margin:1px 0 0;accent-color:var(--accent)}
+.cm-step>div{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.cm-step b{font-weight:600;font-size:15px}
+.cm-step p{margin:0;font-size:14px}
+.cm-step.ticked b,.cm-step.ticked p{color:var(--muted)}
+.cm-step.ticked b{text-decoration:line-through}
+.cm-step .how{align-self:flex-start;border:0;background:none;padding:2px 0;color:var(--accent);font-weight:600;font-size:13.5px}
+.cm-ask{font-size:13.5px;color:var(--muted)}
+
 /* Manuals */
 .doc{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
 .doc h3{margin:0;font-size:16px;font-weight:600;line-height:1.3}
@@ -332,8 +348,12 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <section class="view" id="v-ctrl" hidden>
   <div><h2>Controller</h2><p class="lede" id="ctrl-lede">Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.</p></div>
-  <input class="search" id="cq" placeholder="Find a setting, e.g. thermostat, flow rate" autocomplete="off">
-  <div class="view" id="tasks"></div>
+  <div class="seg" role="group" aria-label="Controller topic"><button data-c="set" aria-pressed="true">Settings</button><button data-c="comm" aria-pressed="false">Commissioning</button></div>
+  <div class="view" id="ctrl-set">
+    <input class="search" id="cq" placeholder="Find a setting, e.g. thermostat, flow rate" autocomplete="off">
+    <div class="view" id="tasks"></div>
+  </div>
+  <div class="view" id="comm-body" hidden></div>
 </section>
 
 <section class="view" id="v-docs" hidden>
@@ -400,7 +420,7 @@ let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=nu
 
 /* ---------- knowledge ---------- */
 /* knowledge.json here is the small part the screens need. The manual text stays on the server (api/ask). */
-const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();}).catch(()=>{
+const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();}).catch(()=>{
   $("#codes").textContent="Could not load the manuals for this page.";});
 const STOP=new Set("the and for with what how does when this that from have are can not but you your its into then than there which where why why should would could after before about unit heat pump showing show shows check checks".split(" "));
 function toks(s){return (s.toLowerCase().match(/[a-z]\d\d\.\d{2,3}|[a-z]\d{2}|[a-z][a-z0-9\-]{2,}|\b[a-z][a-z0-9]\b|\d+(?:\.\d+)?/g)||[]).filter(w=>!STOP.has(w)&&(w.length!==2||/^\d/.test(w)||FCODES.B.has(w)));}
@@ -546,7 +566,7 @@ function setUnit(u){
   unit=u;for(const k of ["J","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
   $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
-  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();}
+  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();}
 }
 $("#u-J").onclick=()=>setUnit("J");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
 function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
@@ -801,8 +821,8 @@ function calcSizing(){
 }
 
 /* ---------- Ask ---------- */
-const SUGGEST={J:["H62 after start-up, what do I check?","Where do I see the flow rate?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?","What clearances does the outdoor unit need?"],
-               K:["Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","How do I get into the maintenance menu?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
+const SUGGEST={J:["H62 after start-up, what do I check?","Talk me through commissioning","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?","What clearances does the outdoor unit need?"],
+               K:["Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","Talk me through commissioning","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
                B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
 /* Icon for a suggested question, picked from its wording. */
 const SICON={fault:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',gauge:'<path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/>',wire:'<path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
@@ -851,8 +871,11 @@ async function ask(text,extra){
   }finally{busy=null;setBusy(false);}
 }
 function addActions(b,text){
-  if(!/escalat|Technical Support/i.test(text)) return;
+  const comm=unit!=="B"&&/commissioning/i.test(text), escl=/escalat|Technical Support/i.test(text);
+  if(!comm&&!escl) return;
   const a=document.createElement("div");a.className="msg-actions";
+  if(comm){const c=document.createElement("button");c.className="ghost";c.textContent="Open commissioning checklist";c.onclick=()=>{show("ctrl");ctrlTopic("comm");};a.append(c);}
+  if(!escl){b.append(a);return;}
   const e=document.createElement("button");e.className="ghost";e.textContent="Escalate this job";e.onclick=()=>{show("esc");fillFromChat();};
   a.append(e);b.append(a);
 }
@@ -1014,6 +1037,45 @@ function renderTasks(){
   if(unit==="B"){const g=document.createElement("div");g.className="notice";g.textContent="Baxi buttons (manual p.15): [Back] on the left, [Menu] on the right, and the [Dial] knob in the centre (turn to scroll, press to confirm). Blue screen = normal, red = warning or blockage, flashing red = lockout. No need to switch the unit off for installer settings. Error history: highlight an error and press the dial for details, press and hold the dial to clear. Child lock: briefly press Menu and the dial together.";box.prepend(g);}
 }
 $("#cq").addEventListener("input",renderTasks);
+
+/* ---------- Commissioning (HMG procedure, source/hmg-commissioning-panasonic.md) ---------- */
+/* Ticks are kept on this phone only, per unit, until "Start a new job". */
+let ctrlC="set";
+function ctrlTopic(c){
+  ctrlC=c;document.querySelectorAll("#v-ctrl .seg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.c===c));
+  $("#ctrl-set").hidden=c!=="set";$("#comm-body").hidden=c!=="comm";
+}
+document.querySelectorAll("#v-ctrl .seg button").forEach(b=>b.onclick=()=>ctrlTopic(b.dataset.c));
+const commKey=()=>"hmg-comm-"+unit;
+function commTicks(){try{return new Set(JSON.parse(store.get(commKey())||"[]"));}catch{return new Set();}}
+function commText(t){
+  const i=t.indexOf("HMG TO CONFIRM");
+  if(i<0) return `<p>${inline(t)}</p>`;
+  return `<p>${inline(t.slice(0,i).trim())}</p><p><span class="chip warn">HMG value needed</span> <span class="src">${inline(t.slice(i+14).replace(/^:\s*/,"").replace(/^HMG values?\.$/,""))}</span></p>`;
+}
+function renderComm(){
+  const box=$("#comm-body");
+  if(unit==="B"){box.innerHTML=`<div class="notice">The HMG commissioning checklist is built for the Panasonic J-series and K-series so far. Baxi HP55 is coming. Ask can still talk you through Baxi settings from the manual.</div>`;return;}
+  const stages=(KB&&KB.commissioning&&KB.commissioning[unit])||[], ticks=commTicks();
+  const all=stages.flatMap(s=>s.steps), done=all.filter(x=>ticks.has(x.id)).length, need=all.filter(x=>x.confirm).length;
+  box.innerHTML=`<div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${UNITS[unit].pill} commissioning</b><span class="src">${done} of ${all.length} done</span></div>
+      <div class="cm-bar"><i style="width:${all.length?done/all.length*100:0}%"></i></div>
+      <p class="src" style="margin:0">Work down the list and tick each step as you go. Ticks stay on this phone until you start a new job. Steps tagged <span class="chip warn">HMG value needed</span> (${need}) don't have an HMG figure yet: the factory setting is shown.</p>
+      <div class="btnrow"><button class="btn sec" id="cm-new">Start a new job</button><button class="btn sec" id="cm-ask">Talk me through it</button></div>
+    </div>`+stages.map(s=>{
+      const n=s.steps.filter(x=>ticks.has(x.id)).length;
+      return `<div class="panel cm-stage${n===s.steps.length?" done":""}"><h3>${esc(s.stage)}<span>${n===s.steps.length?"✓ Done":`${n} / ${s.steps.length}`}</span></h3>
+        ${s.steps.map(x=>`<label class="cm-step${ticks.has(x.id)?" ticked":""}"><input type="checkbox" data-id="${x.id}"${ticks.has(x.id)?" checked":""}><div><b>${esc(x.title)}</b>${commText(x.text)}<button class="how" type="button" data-q="${esc(x.title)}">Step by step ›</button></div></label>`).join("")}</div>`;
+    }).join("")+`<p class="cm-ask">Source: HMG commissioning procedure, with the ${unit==="J"?"J-series SM":"K-series IM"} page on each step.</p>`;
+  box.querySelectorAll("input[data-id]").forEach(c=>c.onchange=()=>{
+    const t=commTicks();c.checked?t.add(c.dataset.id):t.delete(c.dataset.id);store.set(commKey(),JSON.stringify([...t]));
+    const y=$("#main").scrollTop;renderComm();$("#main").scrollTop=y;
+  });
+  box.querySelectorAll("button[data-q]").forEach(b=>b.onclick=e=>{e.preventDefault();show("ask");ask(`Commissioning step "${b.dataset.q}" on the ${UNITS[unit].short}: talk me through it on the controller.`);});
+  $("#cm-new").onclick=()=>{store.set(commKey(),"[]");renderComm();};
+  $("#cm-ask").onclick=()=>{show("ask");ask(`Talk me through commissioning the ${UNITS[unit].short}.`);};
+}
 
 /* ---------- Escalate ---------- */
 const F=id=>$("#e-"+id).value.trim();
