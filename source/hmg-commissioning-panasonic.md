@@ -68,7 +68,7 @@ How this file works (for editing on GitHub):
 - **Pressure while running.** Gauge reads between 0.05 and 0.3 MPa (0.5 to 3 bar) (J-series SM p.63).
 - **No leaks.** Check every water connection for leaks during the test run (J-series SM p.53).
 - **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (J-series SM p.24, p.63; HMG commissioning check, Donal Reilly 25/10/2026).
-- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the required flow rate (at least 15 l/min). HMG TO CONFIRM: the flow rate to set across the bypass (the 15 l/min minimum or the unit's nominal flow).
+- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new. Clear old install errors: [OK], [◄] to Yes, [OK] (J-series SM p.24, p.163).
 - **Water filter cleaned.** After the test run, clean the water filter and refit it (J-series SM p.63).
 
@@ -143,7 +143,7 @@ How this file works (for editing on GitHub):
 - **Heating normal, no leaks, no odd noise.** Heating works, no abnormal sound, no water leaks from the tank unit during the test run (K-series IM p.12 checklist).
 - **Safety relief valve.** The DHW safety relief valve knob has been turned to release air (K-series IM p.12 checklist).
 - **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (K-series IM p.12, p.34; HMG commissioning check, Donal Reilly 25/10/2026).
-- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the required flow rate (at least 15 l/min). HMG TO CONFIRM: the flow rate to set across the bypass (the 15 l/min minimum or the unit's nominal flow).
+- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new (K-series IM p.34).
 - **Filters cleaned.** After the test run, clean the magnetic water filter and the water filter and refit them (K-series IM p.12).
 
