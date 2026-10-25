@@ -213,6 +213,8 @@ table.cu+table.cu{margin-top:8px}
 table.cl td{white-space:nowrap}
 table.cl td:first-child{white-space:normal}
 table.cl td.bad{color:var(--warn);font-weight:700}
+#wc-e button{font:600 15px var(--f-body)}
+#wc-body table.cu td:first-child{font-family:var(--f-body)}
 
 /* Escalate */
 form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -342,10 +344,11 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-size" hidden>
-  <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances for the selected unit, and primary pipe sizing.</p></div>
-  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button></div>
+  <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances, primary pipe sizing and the HMG heating curve for the selected unit.</p></div>
+  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="wc" aria-pressed="false">Heating curve</button></div>
   <div id="cl-body"></div>
   <div id="size-body" hidden></div>
+  <div id="wc-body" hidden></div>
 </section>
 
 <section class="view" id="v-esc" hidden>
@@ -543,7 +546,7 @@ function setUnit(u){
   unit=u;for(const k of ["J","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
   $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
-  renderSuggest();renderDocs();renderSizing();renderClear();if(KB){renderFaults();renderTasks();renderWiring();}
+  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();}
 }
 $("#u-J").onclick=()=>setUnit("J");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
 function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
@@ -597,7 +600,7 @@ const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";});
+  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";$("#wc-body").hidden=b.dataset.s!=="wc";});
 function clFig(c,m){
   const lab=(k,x,y)=>{const bad=m&&m[k]>c[k];return `<text x="${x}" y="${y}" text-anchor="middle" class="${bad?"x":""}">${c[k]}${bad?" / "+m[k]:""}</text>`;};
   return `<svg class="cl-fig" viewBox="0 0 340 250" role="img" aria-label="Plan view of the outdoor unit with clearances">
@@ -657,6 +660,78 @@ function renderClear(){
   box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
   box.querySelectorAll("#cl-sz button").forEach(b=>b.onclick=()=>{clSize=b.dataset.s;renderClear();});
   $("#cl-ask").onclick=()=>{show("ask");ask(`What clearances do I need around the ${u.short} outdoor unit?`);};
+}
+
+/* ---------- Heating curve (HMG weather compensation, Donal Reilly 25/10/2026) ---------- */
+/* Flow °C at -3 °C and 15 °C outdoor. Baxi values from CM070 = (CM190 − CM210) × CP230 + CP210, ASHP Control IM p.74, 20 °C room. */
+const WC={rad:{name:"Steel radiators",cold:45,mild:35,base:32},ufh:{name:"Underfloor heating",cold:35,mild:25,base:22}};
+let wcE="rad";
+function wcFig(c){
+  const X=t=>40+(t+10)*9, Y=f=>200-(f-20)*5;
+  return `<svg class="cl-fig" viewBox="0 0 340 240" role="img" aria-label="Heating curve: ${c.cold} °C flow at -3 °C outdoor, ${c.mild} °C at 15 °C">
+    ${[20,30,40,50].map(f=>`<line class="w" x1="${X(-10)}" y1="${Y(f)}" x2="${X(20)}" y2="${Y(f)}"/><text class="l" x="${X(-10)-6}" y="${Y(f)+4}" text-anchor="end">${f}</text>`).join("")}
+    ${[-10,-3,0,10,15,20].map(t=>`<text class="l" x="${X(t)}" y="218" text-anchor="middle">${t}</text>`).join("")}
+    <line class="d" x1="${X(-3)}" y1="${Y(c.cold)}" x2="${X(15)}" y2="${Y(c.mild)}" stroke-width="3"/>
+    <circle cx="${X(-3)}" cy="${Y(c.cold)}" r="5" fill="var(--accent)"/><circle cx="${X(15)}" cy="${Y(c.mild)}" r="5" fill="var(--accent)"/>
+    <text x="${X(-3)+8}" y="${Y(c.cold)-10}">${c.cold}°C</text><text x="${X(15)-6}" y="${Y(c.mild)-12}" text-anchor="middle">${c.mild}°C</text>
+    <text class="l" x="${X(5)}" y="236" text-anchor="middle">Outdoor temperature °C</text>
+    <text class="l" x="12" y="${Y(37)}" text-anchor="middle" transform="rotate(-90 12 ${Y(37)})">Flow °C</text></svg>`;
+}
+function renderWC(){
+  const box=$("#wc-body"),c=WC[wcE],u=UNITS[unit];
+  const pick=`<div class="kw" id="wc-e">${Object.entries(WC).map(([k,v])=>`<button data-e="${k}" aria-pressed="${k===wcE}">${v.name}</button>`).join("")}</div>`;
+  const hmg=`<table class="cu"><thead><tr><th>HMG recommended</th><th>-3 °C outdoor</th><th>15 °C outdoor</th></tr></thead><tbody>
+      ${Object.entries(WC).map(([k,v])=>`<tr class="${k===wcE?"pick":""}"><td>${v.name}</td><td>${v.cold}°C</td><td>${v.mild}°C</td></tr>`).join("")}</tbody></table>`;
+  let how;
+  if(unit==="B"){
+    const at=t=>fmt((20-t)*0.6+c.base,1).replace(/\.0$/,"");
+    how=`<div class="panel">
+      <div class="src" style="font-weight:600">Set it on the Baxi ASHP Control</div>
+      <p class="src" style="margin:0">The Baxi takes a gradient and a base, not two points. These settings match the HMG curve with a 20 °C room setpoint:</p>
+      <table class="cu"><tbody><tr class="pick"><td>Gradient CP230</td><td>0.6</td></tr><tr class="pick"><td>Base, comfort CP210</td><td>${c.base}°C</td></tr>
+        <tr><td>Gives at -3 °C / 15 °C</td><td>${at(-3)}°C / ${at(15)}°C</td></tr></tbody></table>
+      <ol class="sz-notes">
+        <li>Press [Menu], go to Installer, enter code 0012.</li>
+        <li>Installation setup › Zone1 (or Zone3) › Heat curve.</li>
+        <li>Set Zone Heating Curve CP230 (Zone3 CP231) to <b>0.6</b>.</li>
+        <li>Set Zone HCZP Comfort CP210 (Zone3 CP211) to <b>${c.base} °C</b>. Set CP220 the same if you don't want a lower curve in reduced (eco) periods.</li>
+        <li>Check: Installer › Signals › Zone1 › Zone Tflow Setpoint CM070 should sit on the curve for today's outdoor temperature.</li>
+      </ol>
+      <ul class="sz-notes">
+        <li>Needs an outdoor sensor, and Control strategy CP780 (Zone1 › General) on Automatic, Outdoor temp based, or Outdoor &amp; room based (IM p.63).</li>
+        <li>Room setpoint moves the curve: each 1 °C above 20 °C adds about 0.6 °C of flow. For another room setpoint: CP210 = ${c.mild} − (room − 15) × 0.6.</li>
+        <li>Baxi's own guide says radiators about 1.5 and UFH 0.4-0.7 (IM p.43). HMG's flatter radiator curve is because HMG designs rads for 45 °C max flow. Use the HMG figures.</li>
+        <li>0.6 is the nearest 0.1 step to the HMG slope (0.56), so at -3 °C it runs about 1 °C above the HMG figure.</li>
+      </ul>
+      <div class="btnrow">${pageLink("B2",43)}${pageLink("B2",74)}</div>
+      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); Baxi ASHP Control IM pp.42-43, p.61, p.63, pp.73-75. Baxi settings worked out from the formula on p.74.</div>
+    </div>`;
+  }else{
+    const pg=unit==="J"?[31,83]:[31];
+    how=`<div class="panel">
+      <div class="src" style="font-weight:600">Set it on the Panasonic remote</div>
+      <ol class="sz-notes">
+        <li>Turn the heat pump off with [Operate] ⏻.</li>
+        <li>Press [Menu] (top right), then Installer setup › Operation setup › Heat.</li>
+        <li>Water temp. for heating ON › <b>Compensation curve</b> › [OK].</li>
+        <li>Outdoor low point <b>-3 °C</b>, flow <b>${c.cold} °C</b>.</li>
+        <li>Outdoor high point <b>15 °C</b>, flow <b>${c.mild} °C</b>. Confirm with [OK].</li>
+        <li>Press [Operate] to start the unit again.</li>
+      </ol>
+      <ul class="sz-notes">
+        <li>Factory curve is -5 °C → 55 °C, 15 °C → 35 °C. Range: outdoor -20 to 15 °C, flow 20 to 60 °C${unit==="J"?" (SM p.32)":""}.</li>
+        <li>2-zone system: enter the four points for Zone 1 and Zone 2 (e.g. rads on one, UFH on the other).</li>
+        <li>With a room thermostat or thermistor the unit shifts the curve up or down as the room warms (${unit==="J"?"SM p.65":"IM p.14"}).</li>
+      </ul>
+      <div class="btnrow">${pg.map(p=>pageLink(unit,p)).join("")}</div>
+      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); ${unit==="J"?"J-series SM pp.31-32, p.83":"K-series IM p.31"}.</div>
+    </div>`;
+  }
+  box.innerHTML=`<div class="panel">${pick}${wcFig(c)}${hmg}
+      <p class="src" style="margin:0">Same HMG curve for the J-series, K-series and Baxi HP55. These are starting points: fine-tune for the house a little at a time, and never go over the emitter or screed maker's maximum flow temperature.</p></div>
+    ${how}<div class="btnrow"><button class="btn sec" id="wc-ask">Ask about this</button></div>`;
+  box.querySelectorAll("#wc-e button").forEach(b=>b.onclick=()=>{wcE=b.dataset.e;renderWC();});
+  $("#wc-ask").onclick=()=>{show("ask");ask(`How do I set the HMG heating curve for ${c.name.toLowerCase()} on the ${u.short}?`);};
 }
 
 /* ---------- Pipe sizing (HMG method, Panasonic J/K only) ---------- */
@@ -723,7 +798,7 @@ function calcSizing(){
 }
 
 /* ---------- Ask ---------- */
-const SUGGEST={J:["H62 after start-up, what do I check?","Where do I see the flow rate?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What clearances does the outdoor unit need?"],
+const SUGGEST={J:["H62 after start-up, what do I check?","Where do I see the flow rate?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?","What clearances does the outdoor unit need?"],
                K:["Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","How do I get into the maintenance menu?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
                B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
 /* Icon for a suggested question, picked from its wording. */
