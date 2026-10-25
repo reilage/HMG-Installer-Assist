@@ -225,6 +225,20 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <input id="gate-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access code" aria-label="Access code">
   <button class="btn" type="submit">Continue</button>
   <span class="src" id="gate-note"></span>
+  <a href="#" class="src" id="gate-req" hidden>No code yet? Request access</a>
+</form>
+<form id="req-f" hidden>
+  <b style="font:24px/1.2 var(--f-display)">Request access</b>
+  <p class="lede" style="margin:0">Heat Merchants will check your details and email you your personal code.</p>
+  <input id="r-name" autocomplete="name" placeholder="Your name" aria-label="Your name" required>
+  <input id="r-co" autocomplete="organization" placeholder="Company" aria-label="Company">
+  <input id="r-mob" type="tel" inputmode="tel" autocomplete="tel" placeholder="Mobile" aria-label="Mobile" required>
+  <input id="r-email" type="email" inputmode="email" autocomplete="email" placeholder="Email (your code is sent here)" aria-label="Email" required>
+  <input id="r-note" placeholder="Anything else? (e.g. units you install)" aria-label="Note">
+  <input id="r-web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px">
+  <button class="btn" type="submit">Send request</button>
+  <span class="src" id="req-note"></span>
+  <a href="#" class="src" id="req-back">I have a code</a>
 </form></div>
 
 <header class="gut"><div class="wrap">
@@ -361,7 +375,20 @@ const GATE_NOTE={access_code:"That code wasn't accepted.",account_off:"Your acco
 function showGate(note){
   $("#gate-lede").textContent=CFG.accounts?"Enter your installer code from Heat Merchants (it looks like HMG-ABC234). You only need to do this once on this phone.":"Enter the access code from Heat Merchants. You only need to do this once on this phone.";
   $("#gate-code").placeholder=CFG.accounts?"Installer code":"Access code";
+  $("#gate-req").hidden=!CFG.accounts;$("#gate-f").hidden=false;$("#req-f").hidden=true;
   $("#gate").hidden=false;$("#gate-note").textContent=note||"";$("#gate-code").focus();}
+/* Installers without a code can ask for one (api/apply): it goes to Heat Merchants for approval. */
+$("#gate-req").onclick=e=>{e.preventDefault();$("#gate-f").hidden=true;$("#req-f").hidden=false;$("#req-note").textContent="";$("#r-name").focus();};
+$("#req-back").onclick=e=>{e.preventDefault();$("#req-f").hidden=true;$("#gate-f").hidden=false;$("#gate-code").focus();};
+$("#req-f").onsubmit=async e=>{
+  e.preventDefault();
+  const v=id=>$("#r-"+id).value.trim(), note=$("#req-note"), btn=$("#req-f button");
+  btn.disabled=true;note.textContent="Sending…";
+  const r=await fetch("api/apply",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:v("name"),company:v("co"),mobile:v("mob"),email:v("email"),note:v("note"),website:v("web")})}).catch(()=>null);
+  const d=r?await r.json().catch(()=>({})):null;btn.disabled=false;
+  if(r&&r.ok){$("#req-f").reset();note.textContent="Thanks, your request has gone to Heat Merchants. Once it's approved you'll get your code by email. Enter it here with \"I have a code\".";}
+  else note.textContent=!r?"No connection. Try again.":({details_missing:"Enter your name, mobile and a valid email.",too_many:"Too many requests from here today. Try again tomorrow."})[d.error]||"That didn't go through. Try again in a minute.";
+};
 $("#gate-f").onsubmit=async e=>{
   e.preventDefault();store.set("hmg-code",$("#gate-code").value.trim());
   const c=await fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).catch(()=>null);

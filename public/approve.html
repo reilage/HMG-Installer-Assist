@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en-IE">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HMG Access Request</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Approve or decline an access request from the link in the approval email (api/approve.js). Same styles as admin.html. */
+:root{
+  --hmg-cyan:#00a9e0;
+  --bg:#f3f4f5; --surface:#ffffff; --sunk:#e8eaeb; --line:#d3d6d8;
+  --fg:#26292c; --muted:#5f6367;
+  --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
+  --warn:#a85b00; --warn-soft:#fbecd6; --bad:#b42318; --bad-soft:#fbe1de;
+  --f-display:"Bree Serif",Georgia,serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44; --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44; --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
+  --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18; color-scheme:dark}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body)}
+button,input{font:inherit;color:inherit}
+main{max-width:760px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px;display:flex;flex-direction:column;gap:16px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand img{height:44px}
+.brand b{font:22px/1.1 var(--f-display);display:block}
+.brand span{color:var(--muted);font-size:14px}
+.logo-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo-light{display:none}:root:not([data-theme="light"]) .logo-dark{display:block}}
+h2{font:20px/1.2 var(--f-display);margin:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.lede,.src{color:var(--muted);margin:0}
+.src{font-size:14px}
+form.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+form.grid .full{grid-column:1/-1}
+@media (max-width:520px){form.grid{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;min-width:0;width:100%}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;padding:9px 14px;font-weight:600;text-decoration:none;display:inline-block}
+.btn.sec{background:var(--sunk);color:var(--fg)}
+.btn.bad{background:var(--bad-soft);color:var(--bad)}
+.btn.sm{padding:6px 10px;font-size:14px}
+.notice{background:var(--warn-soft);color:var(--fg);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px}
+.code{font:700 18px/1.2 var(--f-mono);letter-spacing:.04em}
+.totals{display:flex;flex-wrap:wrap;gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;flex:1 1 140px}
+.stat b{display:block;font:22px/1.1 var(--f-display)}
+.stat span{color:var(--muted);font-size:13px}
+.inst{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.inst.off{opacity:.65}
+.inst .top{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.inst .name{font-weight:600;font-size:17px}
+.chip{font-size:12px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--accent-soft);color:var(--accent)}
+.chip.off{background:var(--bad-soft);color:var(--bad)}
+.chip.full{background:var(--warn-soft);color:var(--warn)}
+.share{background:var(--accent-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
+#list{display:flex;flex-direction:column;gap:10px}
+</style>
+</head>
+<body>
+<main>
+  <div class="brand"><img class="logo-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div><b>Access request</b><span>HMG Installer Assistant</span></div></div>
+  <div class="panel" id="box"><p class="lede">Loading the request…</p></div>
+</main>
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const P=new URLSearchParams(location.search), ID=P.get("id")||"", T=P.get("t")||"";
+const box=$("#box");
+const call=action=>fetch("api/approve",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:ID,t:T,action})}).then(async r=>({ok:r.ok,status:r.status,d:await r.json().catch(()=>({}))}));
+const fail=r=>{box.innerHTML=r.status===404?`<h2>Already handled</h2><p class="lede">This request has already been approved or declined, or the link has expired. Check the <a href="admin.html">admin page</a>.</p>`
+  :`<h2>Something went wrong</h2><p class="lede">${r.d.error==="accounts_off"?"Installer accounts aren't switched on (ADMIN_CODE in Vercel).":"Try again in a minute, or use the <a href=\"admin.html\">admin page</a>."}</p>`;};
+
+call("view").then(r=>{
+  if(!r.ok) return fail(r);
+  const q=r.d.request;
+  box.innerHTML=`<h2>${esc(q.name)}</h2>
+    <p class="lede">${[q.company,q.mobile,q.email].filter(Boolean).map(esc).join(" · ")}</p>
+    ${q.note?`<p>${esc(q.note)}</p>`:""}
+    <p class="src">Asked ${new Date(q.created).toLocaleString("en-IE",{dateStyle:"medium",timeStyle:"short"})}</p>
+    <div class="btnrow"><button class="btn" id="yes">Approve</button><button class="btn bad" id="no">Decline</button></div>`;
+  $("#yes").onclick=async()=>{
+    $("#yes").disabled=$("#no").disabled=true;
+    const a=await call("approve"); if(!a.ok) return fail(a);
+    const i=a.d.installer, t=`Your HMG Installer Assistant code is ${i.code}. Open ${location.origin}/ on your phone and enter it once. It's personal to you, so please don't share it.`;
+    box.innerHTML=`<h2>${esc(i.name)} is approved</h2>
+      <p class="lede">${a.d.emailed?`Their code has been emailed to ${esc(i.email)}.`:"Email isn't set up, so send them their code yourself:"}</p>
+      <div class="share"><div class="code">${esc(i.code)}</div><p class="src">${esc(t)}</p>
+      <div class="btnrow"><button class="btn sm" id="cp">Copy message</button>
+      ${i.mobile?`<a class="btn sec sm" href="sms:${esc(i.mobile.replace(/[^+\d]/g,""))}?&body=${encodeURIComponent(t)}">Text it</a>`:""}
+      ${i.email?`<a class="btn sec sm" href="mailto:${esc(i.email)}?subject=${encodeURIComponent("Your HMG Installer Assistant code")}&body=${encodeURIComponent(t)}">Email it</a>`:""}</div></div>
+      <p class="src">Manage installers on the <a href="admin.html">admin page</a>.</p>`;
+    $("#cp").onclick=async e=>{try{await navigator.clipboard.writeText(t);e.target.textContent="Copied";}catch{e.target.textContent="Select the text to copy";}};
+  };
+  $("#no").onclick=async()=>{
+    if(!confirm(`Decline ${q.name}'s request?`)) return;
+    const a=await call("decline"); if(!a.ok) return fail(a);
+    box.innerHTML=`<h2>Declined</h2><p class="lede">${esc(q.name)}'s request has been removed. They haven't been told, so let them know if you want to.</p>`;
+  };
+});
+</script>
+</body>
+</html>
