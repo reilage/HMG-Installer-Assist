@@ -21,6 +21,7 @@
 :root{
   /* Heat Merchants Group brand: charcoal #53565A and cyan #00A9E0 (from the logo). --accent is a deeper cyan so text and white-on-cyan buttons stay readable outdoors. */
   --hmg-grey:#53565a; --hmg-cyan:#00a9e0; --picked:#53565a;
+  --r:16px; --card-line:transparent; --shadow:0 1px 2px rgba(20,24,28,.05),0 2px 8px rgba(20,24,28,.07);
   --bg:#f3f4f5; --surface:#ffffff; --sunk:#e8eaeb; --line:#d3d6d8;
   --fg:#26292c; --muted:#5f6367;
   --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
@@ -35,13 +36,13 @@
   --fg:#eceeef; --muted:#a2a7ac;
   --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; color-scheme:dark}}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44;
   --fg:#eceeef; --muted:#a2a7ac;
   --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; color-scheme:dark}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);display:flex;flex-direction:column}
@@ -53,7 +54,7 @@ button{cursor:pointer}
 .wrap{max-width:720px;margin:0 auto;width:100%}
 
 header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:3px solid var(--hmg-cyan);box-shadow:0 1px 6px rgba(0,0,0,.06)}
-header .wrap{display:flex;align-items:center;gap:10px 14px;padding-block:10px;flex-wrap:wrap}
+header .wrap{display:flex;align-items:center;gap:10px;padding-block:8px}
 .brand{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0}
 .logo{display:block;height:44px;width:auto;flex:none}
 .logo.on-dark{display:none}
@@ -62,13 +63,20 @@ header .wrap{display:flex;align-items:center;gap:10px 14px;padding-block:10px;fl
 .brand-t{display:flex;flex-direction:column;gap:3px;padding-left:12px;border-left:1px solid var(--line);line-height:1.1;min-width:0}
 .brand-t b{font:400 19px/1.05 var(--f-display);color:var(--fg)}
 .brand-t span{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
-.unit{display:flex;background:var(--sunk);border-radius:10px;padding:3px}
-.unit button{border:0;background:none;padding:7px 10px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap}
-.unit button[aria-pressed="true"]{background:var(--picked);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+/* Unit pill: shows the selected heat pump; tap for the list. */
+.unit-pick{position:relative;flex:none}
+.unit-btn{display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 12px 8px 14px;background:var(--picked);color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.unit-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
+.unit-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.unit{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:min(300px,calc(100vw - 32px));display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.unit button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;font-size:15px;font-weight:600;color:var(--fg)}
+.unit button small{font-size:12.5px;font-weight:400;color:var(--muted)}
+.unit button:hover{background:var(--sunk)}
+.unit button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
 
 main{flex:1;min-height:0;overflow-y:auto}
-main .wrap{padding-block:16px 24px}
-.view{display:flex;flex-direction:column;gap:14px}
+main .wrap{padding-block:20px 28px}
+.view{display:flex;flex-direction:column;gap:16px}
 h2{font:400 25px/1.15 var(--f-display);margin:0 0 2px;text-wrap:balance}
 h2::after{content:"";display:block;width:32px;height:3px;border-radius:2px;background:var(--hmg-cyan);margin-top:6px}
 .lede{color:var(--muted);margin:0;font-size:15px}
@@ -88,9 +96,9 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 
 /* Ask */
 #log{display:flex;flex-direction:column;gap:12px}
-.msg{max-width:92%;padding:10px 13px;border-radius:12px;min-width:0;overflow-wrap:anywhere}
+.msg{max-width:92%;padding:11px 14px;border-radius:var(--r);min-width:0;overflow-wrap:anywhere}
 .msg.me{align-self:flex-end;background:var(--bubble);color:var(--bubble-fg);border-bottom-right-radius:4px}
-.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msg.bot{align-self:flex-start;background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-bottom-left-radius:4px}
 .msg.bot p{margin:0 0 8px}.msg.bot p:last-child{margin:0}
 .msg.bot ol,.msg.bot ul{margin:4px 0 8px;padding-left:22px}
 .msg.bot li{margin:2px 0}
@@ -99,13 +107,27 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .msg .thinking{color:var(--muted);font-style:italic}
 .msg img{border-radius:8px;max-height:160px;display:block;margin-bottom:6px}
 .msg-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
-.suggest{display:flex;flex-wrap:wrap;gap:8px}
-.suggest button,.ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:14px;text-align:left}
-.suggest button:hover,.ghost:hover{border-color:var(--accent)}
+.hero{position:relative;overflow:hidden;border-radius:calc(var(--r) + 4px);padding:20px 18px 18px;color:#fff;background:linear-gradient(135deg,#53565a 0%,#3d4043 100%);box-shadow:var(--shadow)}
+.hero::after{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(0,169,224,.55),rgba(0,169,224,0) 70%)}
+.hero>*{position:relative;z-index:1}
+.hero h2{font-size:28px;color:#fff;margin:6px 0 8px}
+.hero h2::after{background:var(--hmg-cyan)}
+.hero p{margin:0;font-size:15px;color:rgba(255,255,255,.82)}
+.hero-k{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7fd6f2}
+.suggest{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:560px){.suggest{grid-template-columns:1fr 1fr}}
+.suggest button{display:flex;align-items:center;gap:12px;border:1px solid var(--card-line);background:var(--surface);border-radius:var(--r);padding:12px 12px 12px 12px;font-size:15px;text-align:left;box-shadow:var(--shadow);min-width:0}
+.suggest button .si{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.suggest button .si svg,.suggest button .chev{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.suggest button .st{flex:1;min-width:0}
+.suggest button .chev{flex:none;width:18px;height:18px;color:var(--muted)}
+.suggest button:hover{box-shadow:0 0 0 2px var(--accent)}
+.ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:14px;text-align:left}
+.ghost:hover{border-color:var(--accent)}
 .composer{position:sticky;bottom:0;background:var(--bg);padding-top:8px;display:flex;flex-direction:column;gap:6px}
 .composer .row{display:flex;gap:8px;align-items:flex-end}
-.composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 12px;min-height:46px;max-height:140px}
-.iconbtn{width:46px;height:46px;flex:none;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
+.composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;min-height:46px;max-height:140px}
+.iconbtn{width:46px;height:46px;flex:none;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
 .iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .iconbtn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .iconbtn:disabled{opacity:.5;cursor:default}
@@ -114,35 +136,44 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px}
 
 /* Fault codes */
-.search{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:16px}
-.codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
-.code{display:flex;flex-direction:column;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 11px;min-width:0}
-.code b{font:700 18px/1 var(--f-mono)}
+.search{position:sticky;top:-1px;z-index:3;border:1px solid var(--line);border-radius:999px;padding:12px 16px 12px 44px;width:100%;box-sizing:border-box;font-family:var(--f-body);font-size:16px;box-shadow:0 0 0 8px var(--bg),var(--shadow);
+  background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300a9e0' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 15px center/20px}
+.codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.code{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--card-line);border-left:5px solid var(--line);background:var(--surface);box-shadow:var(--shadow);border-radius:12px;padding:11px 12px;min-width:0}
+.code:has(b.H){border-left-color:var(--accent)}.code:has(b.F){border-left-color:var(--warn)}.code:has(b.E){border-left-color:var(--bad)}
+.code b{font:700 22px/1 var(--f-mono)}
 .code b.H{color:var(--accent)}.code b.F{color:var(--warn)}.code b.E{color:var(--bad)}
 .code span{font-size:13px;color:var(--muted);line-height:1.25}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
 .panel .big{font:700 40px/1 var(--f-mono)}
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px}
 .kv dt{color:var(--muted)}.kv dd{margin:0}
 .kv ul{margin:0;padding-left:18px}
-.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
 .btn:active{filter:brightness(.92)}
 .btn.sec{background:var(--sunk);color:var(--fg)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .src{font-size:13px;color:var(--muted)}
 
 /* Controller */
-.task{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.task{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .task h3{margin:0;font-size:16px;font-weight:600}
 .path{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
 .keys{font-family:var(--f-mono);font-size:13.5px}
 .task details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
-.group-h{font:600 13px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.group-h{font:600 13px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
 
 /* Manuals */
-.doc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
-.doc h3{margin:0;font-size:16px;font-weight:600}
+.doc{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.doc h3{margin:0;font-size:16px;font-weight:600;line-height:1.3}
 .doc .meta{font-size:13px;color:var(--muted)}
+.doc-top{display:flex;gap:14px;align-items:flex-start}
+.doc-top>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.pdf{flex:none;width:44px;height:54px;border-radius:6px 14px 6px 6px;background:#d93a2b;color:#fff;display:grid;place-items:end center;padding-bottom:8px;box-sizing:border-box;font:700 11px/1 var(--f-body);letter-spacing:.05em;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.saved{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:#e3f5e8;color:#1c7a3d}
+.saved svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .saved{background:#173322;color:#7fd99c}}
+:root[data-theme="dark"] .saved{background:#173322;color:#7fd99c}
 .doc .btnrow a{text-decoration:none;font-size:14.5px;padding:9px 14px}
 .doc .covers{font-size:14px;margin:0}
 a.pg{color:var(--accent);font-weight:600;font-size:14px}
@@ -187,14 +218,14 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 form label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
 form .full{grid-column:1/-1}
-form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font-weight:400;color:var(--fg);min-width:0}
+form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px;font-weight:400;color:var(--fg);min-width:0}
 form textarea{min-height:76px;resize:vertical}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
-@media (max-width:520px){form{grid-template-columns:1fr}.unit{flex:1 1 100%}.unit button{flex:1;padding:7px 6px}}
-@media (max-width:360px){.logo{height:38px}.brand-t b{font-size:17px}}
+@media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
+@media (max-width:360px){.logo{height:34px}.brand-t b{font-size:15px}.brand-t span{display:none}}
 @media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px);opacity:.6}}}
-.wfig{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.wfig{margin:10px 0 0;border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);overflow:hidden;background:var(--surface)}
 .wfig button{display:block;width:100%;padding:0;border:0;background:#fff;cursor:zoom-in}
 .wfig img{display:block;width:100%;height:auto;max-height:none;margin:0;border-radius:0}
 .wfig figcaption{padding:8px 10px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px;border-top:1px solid var(--line)}
@@ -218,10 +249,16 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .gate .brand-t b{font-size:26px}
 .gate input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px}
 .install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.disclaimer{font-size:12.5px;color:var(--muted);margin:0}
+.splash{position:fixed;inset:0;z-index:2000;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .35s ease,visibility .35s}
+.splash .logo{height:88px}
+.splash b{font:400 22px/1 var(--f-display);color:var(--fg);padding-top:14px;border-top:3px solid var(--hmg-cyan)}
+.splash.gone{opacity:0;visibility:hidden}
+@media (prefers-reduced-motion:reduce){.splash{transition:none}}
+.disclaimer{font-size:11.5px;line-height:1.35;color:var(--muted);margin:0;text-align:center}
 </style>
 </head>
 <body>
+<div class="splash" id="splash" aria-hidden="true"><img class="logo on-light" src="brand/hmg-logo.png" alt="" width="148" height="88"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="" width="148" height="88"><b>Installer Assistant</b></div>
 
 <div class="gate" id="gate" hidden><form id="gate-f">
   <div class="brand"><img class="logo on-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div class="brand-t"><b>Installer Assistant</b><span>Technical support</span></div></div>
@@ -247,22 +284,25 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <header class="gut"><div class="wrap">
   <div class="brand"><img class="logo on-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div class="brand-t"><b>Installer Assistant</b><span>Technical support</span></div></div>
-  <div class="unit" role="group" aria-label="Heat pump model">
-    <button id="u-J" aria-pressed="true" title="Panasonic J-series Mini Monobloc R32">J-series</button>
-    <button id="u-K" aria-pressed="false" title="Panasonic K-series split Hydromodule + Tank">K-series</button>
-    <button id="u-B" aria-pressed="false" title="Baxi Assure HP55 R290 monobloc">Baxi HP55</button>
+  <div class="unit-pick">
+    <button class="unit-btn" id="unit-btn" aria-haspopup="true" aria-expanded="false" aria-controls="unit-menu" aria-label="Heat pump model"><span id="unit-name">J-series</span><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+    <div class="unit" id="unit-menu" role="group" aria-label="Heat pump model" hidden>
+      <button id="u-J" aria-pressed="true">J-series<small>Panasonic Mini Monobloc R32</small></button>
+      <button id="u-K" aria-pressed="false">K-series<small>Panasonic split Hydromodule + Tank</small></button>
+      <button id="u-B" aria-pressed="false">Baxi HP55<small>Baxi Assure HP55 R290 monobloc</small></button>
+    </div>
   </div>
 </div></header>
 
 <main class="gut" id="main"><div class="wrap">
 
 <section class="view" id="v-ask">
-  <div>
-    <h2>Ask</h2>
-    <p class="lede" id="ask-lede">Type a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
-    <p class="src" id="who" hidden></p>
-    <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site.</p>
+  <div class="hero" id="hero">
+    <span class="hero-k" id="hero-unit">J-series</span>
+    <h2>How can we assist?</h2>
+    <p id="ask-lede">Type a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
   </div>
+  <p class="src" id="who" hidden></p>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
   <div class="panel install" id="install" hidden><span id="install-t">Add HMG Installer Assistant to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
   <div class="suggest" id="suggest"></div>
@@ -277,6 +317,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
       <textarea id="q" rows="1" placeholder="e.g. H62 after start-up, what do I check?"></textarea>
       <button class="iconbtn primary" id="send" title="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
+    <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site.</p>
   </div>
 </section>
 
@@ -349,9 +390,9 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 <script>
 const $=s=>document.querySelector(s);
 let ESC_TO="donal.reilly@heatmerchants.ie";
-const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc"},
-             K:{name:"Panasonic K-series split Hydromodule + Tank (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)",short:"K-series split"},
-             B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55"}};
+const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc",pill:"J-series"},
+             K:{name:"Panasonic K-series split Hydromodule + Tank (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)",short:"K-series split",pill:"K-series"},
+             B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55",pill:"Baxi HP55"}};
 let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=null;
 
 /* ---------- knowledge ---------- */
@@ -495,14 +536,20 @@ function show(v){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
   for(const id of ["ask","faults","ctrl","docs","size","esc"]) $("#v-"+id).hidden=id!==v;
   $("#main").scrollTop=0;
+  if(v==="docs") renderDocs();
 }
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
 function setUnit(u){
   unit=u;for(const k of ["J","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
+  $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
   renderSuggest();renderDocs();renderSizing();renderClear();if(KB){renderFaults();renderTasks();renderWiring();}
 }
 $("#u-J").onclick=()=>setUnit("J");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
+function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
+$("#unit-btn").onclick=e=>{e.stopPropagation();unitMenu($("#unit-menu").hidden);};
+document.addEventListener("click",e=>{if(!e.target.closest(".unit-pick")) unitMenu(false);});
+document.addEventListener("keydown",e=>{if(e.key==="Escape") unitMenu(false);});
 
 /* ---------- Manuals ---------- */
 /* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160. */
@@ -523,13 +570,20 @@ function pageLink(key,p){
   if(!d) return "";
   return `<a class="pg" href="${docUrl(d)}#page=${d.from?p-d.from+1:p}" target="_blank" rel="noopener">Open p.${p} in the manual</a>`;
 }
+/* "Saved on phone" when sw.js has kept this PDF, so it opens with no signal. */
+function savedBadge(el,url){
+  if(!("caches" in window)) return;
+  caches.match(url,{ignoreSearch:true}).then(r=>{if(r) el.querySelector(".saved").hidden=false;}).catch(()=>{});
+}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&!$("#v-docs").hidden) renderDocs();});
 function renderDocs(){
   const box=$("#docs"),u=DOCS[unit];box.innerHTML="";
   for(const d of u.docs){
     const el=document.createElement("div");el.className="doc";
-    el.innerHTML=`<h3>${esc(d.title)}</h3><div class="meta">${esc(d.meta)} · PDF</div><p class="covers">${esc(d.covers)}</p>
+    el.innerHTML=`<div class="doc-top"><span class="pdf" aria-hidden="true">PDF</span><div><h3>${esc(d.title)}</h3><div class="meta">${esc(d.meta)}${d.from?` · ${d.to-d.from+1} pages`:""}</div><span class="saved" hidden><svg viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Saved on phone</span></div></div><p class="covers">${esc(d.covers)}</p>
       <div class="btnrow"><a class="btn" href="${docUrl(d)}" target="_blank" rel="noopener" style="text-decoration:none">Open</a><a class="btn sec" href="${docUrl(d)}" download="${esc(d.file)}" style="text-decoration:none">Download</a></div>`;
     box.append(el);
+    savedBadge(el,docUrl(d));
   }
   if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
   if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
@@ -672,10 +726,20 @@ function calcSizing(){
 const SUGGEST={J:["H62 after start-up, what do I check?","Where do I see the flow rate?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What clearances does the outdoor unit need?"],
                K:["Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","How do I get into the maintenance menu?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
                B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
+/* Icon for a suggested question, picked from its wording. */
+const SICON={fault:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',gauge:'<path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/>',wire:'<path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
+  pipe:'<path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8"/>',space:'<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M3 3v4M3 3h4M21 3v4M21 3h-4M3 21v-4M3 21h4M21 21v-4M21 21h-4"/>',
+  set:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'};
+function sicon(s){
+  const t=s.toLowerCase();
+  const k=/^[a-z]\d|^e\d|\bcode\b/.test(t)?"fault":/flow rate|pressure/.test(t)?"gauge":/connect|wire|pcb/.test(t)?"wire":/pipe/.test(t)?"pipe":/clearance|perimeter/.test(t)?"space":"set";
+  return `<span class="si"><svg viewBox="0 0 24 24">${SICON[k]}</svg></span>`;
+}
 function renderSuggest(){
   const box=$("#suggest");box.innerHTML="";
+  $("#hero-unit").textContent=UNITS[unit].pill;$("#hero").hidden=!!turns.length;
   if(turns.length) return;
-  for(const s of SUGGEST[unit]){const b=document.createElement("button");b.textContent=s;b.onclick=()=>ask(s);box.append(b);}
+  for(const s of SUGGEST[unit]){const b=document.createElement("button");b.innerHTML=`${sicon(s)}<span class="st">${esc(s)}</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;b.onclick=()=>ask(s);box.append(b);}
 }
 function bubble(cls,html){const d=document.createElement("div");d.className="msg "+cls;d.innerHTML=html;$("#log").append(d);d.scrollIntoView({block:"end",behavior:"smooth"});return d;}
 const ERR={not_configured:"The assistant isn't switched on yet.",server_key:"The assistant's Claude key isn't working. Tell Heat Merchants.",access_code:"Enter the access code first.",rate_limited:"Too many questions in a short time. Wait a minute and try again.",busy:"Claude is busy right now. Try again in a minute.",refused:"The assistant couldn't answer that. Try rewording it.",image_rejected:"That photo couldn't be read. Try a JPEG or PNG.",prompt_too_large:"That was too much at once. Start a shorter question.",
@@ -686,7 +750,7 @@ async function ask(text,extra){
   text=(text||"").trim(); if(!text&&!photo) return;
   if(busy){return;}
   await kbReady;
-  $("#suggest").innerHTML="";
+  $("#suggest").innerHTML="";$("#hero").hidden=true;
   const img=photo; clearPhoto(); $("#q").value=""; autosize();
   bubble("me",(img?`<img src="${URL.createObjectURL(img)}" alt="Photo">`:"")+esc(text||"(photo)"));
   if(!CFG.ai){bubble("bot",`<p>The assistant isn't switched on yet. Try the <b>Fault codes</b> and <b>Controller</b> tabs.</p>`);return;}
@@ -952,6 +1016,9 @@ function applyConfig(c){
   if(c.email){$("#esc-send").hidden=false;$("#esc-how").innerHTML=`Tap <b>Send to Heat Merchants</b>. Or use <b>Open email</b> to send it from your own mail app.`;}
 }
 setUnit("J");
+/* Splash: logo while the app loads, at least half a second, never more than three. */
+(()=>{const t0=Date.now(),go=()=>setTimeout(()=>$("#splash").classList.add("gone"),Math.max(0,500-(Date.now()-t0)));
+  Promise.race([kbReady,new Promise(r=>setTimeout(r,3000))]).then(go);})();
 fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).then(c=>{
   applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(!store.get("hmg-code")?"":c.denied==="account_off"?GATE_NOTE.account_off:"That code no longer works. Ask Heat Merchants for a new one.");
 }).catch(()=>aiOff());
