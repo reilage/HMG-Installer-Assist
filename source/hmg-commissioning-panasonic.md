@@ -1,0 +1,149 @@
+# HMG Commissioning Procedure: Panasonic
+
+Cite as **"HMG commissioning procedure"**, plus the manual page given on the step.
+
+Step-by-step commissioning on site, in order, for the Panasonic J-series monobloc (Part A) and the K-series split (Part B). The two parts are kept separate: never use one unit's steps for the other. The app shows this as a tick list under Controller › Commissioning.
+
+How this file works (for editing on GitHub):
+- `# Part A` / `# Part B` start each unit. `## ` lines are the stages. Each `- **Step.**` line is one tick box; the text after it is what the installer sees.
+- **HMG TO CONFIRM** marks a setting where HMG hasn't given a recommended value yet. The app shows a "HMG value needed" tag on it and gives the factory setting. When Donal confirms a value, replace the HMG TO CONFIRM text with "HMG: <value> (Donal Reilly, <date>)".
+- Recommended values that are already HMG's: heating curve and maximum flow (HMG weather compensation guidance, 25/10/2026), flow rates (HMG sizing guidance), and the F12 site checks (HMG Field Notes).
+
+---
+
+# Part A: J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)
+
+## 1. Before you switch on
+
+- **Pipework and wiring finished.** All water pipework and electrical cable connections are properly done before filling or test run (J-series SM p.63).
+- **Pipe duct sealed and dry.** The duct carrying the flow and return pipes between the outdoor and indoor unit is sealed and has no water in it. A wet duct makes the unit run constantly and trip on F12 (HMG Field Notes – F12 high pressure trips on site).
+- **Cylinder sensor in place.** If there is a DHW cylinder: the cylinder sensor is fully in the sensor pocket at the correct position, so it reads the real cylinder temperature. A misplaced sensor causes F12 trips (HMG Field Notes – F12 high pressure trips on site).
+- **Fill and purge the water circuit.** Remove the cover (2 screws). Turn the air purge valve plug anticlockwise one full turn. Set the pressure relief valve lever DOWN. Fill at more than 1 bar through the water inlet until water flows freely from the pressure relief valve drain hose (J-series SM p.62).
+- **Antifreeze decided.** The manual says antifreeze must be added to the water circuit to stop it freezing at low outdoor temperatures; recommended propylene glycol 40% (to -20 °C) (J-series SM p.63). HMG TO CONFIRM: does HMG fill with glycol, or use water with anti-freeze valves? Whatever goes in, set Circulation liquid to match in stage 3.
+- **Expansion vessel big enough.** Built-in vessel is 6 L at 1 bar pre-charge, good for up to 150 L of system water without antifreeze. Over 150 L, or with glycol, add a vessel. If the highest point is more than 7 m above the unit, set the pre-charge to (height in m × 10 + 30) kPa (J-series SM p.62).
+- **Water pressure.** With all power off, the unit's water pressure gauge must read no lower than 0.05 MPa (0.5 bar); top up if needed (J-series SM p.62). HMG TO CONFIRM: HMG cold fill pressure.
+- **Pressure relief valve tested.** Turn the lever horizontal and listen for the clack of water draining, then push the lever back down. If water keeps draining, switch off and escalate (J-series SM p.62).
+
+## 2. First power-up
+
+- **Power on, pump running, no leaks.** Switch on the supply and check the water pump runs and there are no leaks at the pipe connections. Refit the cover (J-series SM p.62).
+- **RCCB tested.** With power on, press TEST on the RCCB: the lever drops to 0. Touch nothing else inside. Set the lever back ON (J-series SM p.63).
+- **Language, clock and date set.** About 10 s after power-up, press any button: choose the language, clock format (24h) and date and time, [OK] after each. The controller won't open the menus until this is done (J-series SM p.22, p.75).
+
+## 3. System setup (unit OFF)
+
+- **Get into Installer setup.** Press [Operate] ⏻ so the operation light goes out, then [Menu] (top right) › Installer setup › System setup. Installer setup is locked while the unit runs (J-series SM p.23; HMG Field Notes – Can't get into Installer setup).
+- **Optional PCB connectivity.** Yes only if the optional PCB (CZ-NS4P) is fitted, e.g. for 2 zones, solar or SG ready. Otherwise leave No (J-series SM p.26, p.66).
+- **Zone & Sensor.** Set it to what's wired: Water temperature, Room thermostat (Internal or External) or Room thermistor; 1 or 2 zones with the optional PCB (J-series SM p.26, p.78). HMG TO CONFIRM: HMG's preferred control on a standard job.
+- **Heater capacity.** Set to the backup heater size: 3, 6 or 9 kW depending on model (J-series SM p.26, p.78). HMG TO CONFIRM: which setting HMG uses.
+- **Anti freezing.** Factory setting is Yes (J-series SM p.26). HMG TO CONFIRM: keep Yes.
+- **Tank connection and tank heater.** If a DHW cylinder is fitted: Tank connection = Yes, then Tank heater = Internal or External (factory Internal, ON time 0:20). To use the tank heater also set Function setup › Tank heater ON (J-series SM pp.26-27, p.79).
+- **Bivalent connection.** Only if a boiler is connected: Yes › Auto or SG ready › pattern (Alternative, Parallel, Advanced parallel). Otherwise leave No (J-series SM pp.27-29, p.80).
+- **Circulation liquid.** Water or Glycol, to match what's in the system (J-series SM p.30, p.82).
+- **Pump flowrate.** ΔT (factory) or Max. duty (J-series SM p.31, p.82). HMG TO CONFIRM: which mode HMG uses.
+
+## 4. Operation setup › Heat
+
+- **Heating curve (HMG).** Operation setup › Heat › Water temp. for heating ON › Compensation curve. HMG: steel radiators -3 °C outdoor → 45 °C flow, 15 °C → 35 °C. Underfloor -3 °C → 35 °C, 15 °C → 25 °C. The factory curve (-5 °C → 55 °C) is over the HMG maximum, so always change it. On 2 zones set Zone 1 and Zone 2 (HMG weather compensation guidance; J-series SM pp.31-32, p.83).
+- **Maximum flow (HMG).** Never above 45 °C on radiators or 35 °C on underfloor. On the Panasonic the -3 °C curve point is the maximum: there is no separate maximum flow setting in the manual (HMG weather compensation guidance).
+- **Outdoor temp. for heating OFF.** Factory 24 °C, range 5-35 °C (J-series SM p.32, p.83). HMG TO CONFIRM: HMG value.
+- **ΔT for heating ON.** Factory 5 °C, range 1-15 °C. Not shown if Pump flowrate is Max. duty (J-series SM p.32, p.83). HMG TO CONFIRM: HMG value (HMG pipe sizing assumes a 5 °C ΔT).
+- **Heater ON/OFF.** Factory: outdoor temp for heater ON 0 °C, delay 30 min, heater ON at 4 °C below target and OFF at 2 °C below (J-series SM pp.32-33, p.83). HMG TO CONFIRM: HMG values.
+
+## 5. Operation setup › Tank (cylinder only)
+
+- **Tank timings.** Floor operation time (factory 8:00), Tank heat up time (1:00), Tank re-heat temp (-8 °C) (J-series SM pp.34-35, p.84). HMG TO CONFIRM: HMG values.
+- **Sterilization (legionella).** Operation setup › Tank › Sterilization: factory 65 °C for 10 min. Set the day and time in Function setup › Sterilization (J-series SM pp.23, 34-35, p.84). HMG TO CONFIRM: HMG temperature, hold time and day.
+
+## 6. Service setup
+
+- **Air purge.** Service setup › Pump maximum speed › [►] to Operation › [▲]/[▼] to Air Purge › [OK]. Run it until the flow reading is steady. [Operate] stops the pump (J-series SM p.35, pp.151-152).
+- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (J-series SM p.63). Nominal flow: 5 kW 14.3, 7 kW 20, 9 kW 25.8 l/min (HMG sizing guidance; J-series SM p.12). HMG TO CONFIRM: HMG pump Max. Duty setting.
+- **Service contact.** Service setup › Service contact › Contact 1 / Contact 2: name and phone number (J-series SM p.36). HMG TO CONFIRM: installer's own number, Heat Merchants Technical Support, or both.
+- **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit, set stages and temperatures (25-55 °C), then ON. Follow the screed maker's schedule (J-series SM p.36, pp.155-156).
+
+## 7. Test run
+
+- **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (J-series SM p.63).
+- **Pressure while running.** Gauge reads between 0.05 and 0.3 MPa (0.5 to 3 bar) (J-series SM p.63).
+- **No leaks.** Check every water connection for leaks during the test run (J-series SM p.53).
+- **No errors.** [Menu] › System check › Error history: nothing new. Clear old install errors: [OK], [◄] to Yes, [OK] (J-series SM p.24, p.163).
+- **Water filter cleaned.** After the test run, clean the water filter and refit it (J-series SM p.63).
+
+## 8. Handover
+
+- **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit (J-series SM p.4).
+- **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.
+
+---
+
+# Part B: K-series split Hydromodule + Tank (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)
+
+## 1. Before you switch on
+
+- **Pipework and wiring finished.** All water and refrigerant pipework and electrical cable connections are properly done (K-series IM p.12).
+- **Tank unit and pipework checked.** Tank unit properly installed on a concrete floor, no gas leak at the flare nuts, flare nut connections insulated, water drainage properly done (K-series IM p.12 checklist).
+- **Refrigerant side.** Refrigerant pipework, leak test and evacuation by an F-Gas certified installer. R32 is mildly flammable (A2L). The outdoor unit manual isn't on file, so the app has no step-by-step for this.
+- **Fill the DHW tank first.** Drain tap CLOSED, all taps and showers OPEN, fill through the tank connector: water should flow from the taps after 20-40 min. Open the drain tap for 10 s to release air, then close it. Turn the safety relief valve knob anticlockwise and hold 10 s, then back (K-series IM p.9).
+- **Fill and purge the heating circuit.** Turn the air purge valve plug anticlockwise one full turn. Pressure relief valve lever DOWN. Fill at more than 1 bar until water flows freely from the pressure relief valve hose. Don't block the hose outlet (K-series IM p.9).
+- **Expansion vessel big enough.** Built-in vessel is 10 L at 1 bar, good for up to 200 L of system water (tank unit piping is about 5 L). Over 200 L, add a vessel. Keep the height difference of the water circuit within 10 m (K-series IM p.10).
+- **Pressure relief valve tested.** With power off, turn the lever horizontal and listen for the clack, then push it back down. If water keeps draining, switch off and escalate (K-series IM p.10).
+- **Antifreeze decided.** HMG TO CONFIRM: water or glycol on the K-series. The K-series manual on file doesn't give a glycol recommendation. Set Circulation liquid to match in stage 3.
+
+## 2. First power-up
+
+- **Power on, pump running, no leaks.** Switch on the tank unit and check the water pump runs and there are no leaks at the connections (K-series IM p.9).
+- **RCCB/ELCB tested.** With power on, test the RCCB/ELCB and set it back ON (K-series IM pp.10-11).
+- **Winter warm-up.** In winter, leave the unit powered on standby for at least 15 minutes before the test run, so the refrigerant warms up and no wrong error code shows (K-series IM p.12).
+- **Language, clock, date and front grille.** Press any button: language, clock format, date and time, [OK] after each. When asked "Is O/D front grille fixed?" select Yes. With two controllers, the first to confirm a language becomes the main one (K-series IM p.22).
+- **Water pressure on the controller.** [Menu] › System check › System information › [▼] to Water pressure. Not lower than 0.05 MPa (0.5 bar) (K-series IM p.10, p.34). HMG TO CONFIRM: HMG cold fill pressure.
+
+## 3. System setup (unit OFF)
+
+- **Get into Installer setup.** Press [Operate] ⏻ so the operation light goes out, then [Menu] (top right) › Installer setup › System setup (HMG Field Notes – Can't get into Installer setup).
+- **Optional PCB connectivity.** Yes only if the optional PCB (CZ-NS5P) is fitted. Otherwise leave No (K-series IM p.13, p.25).
+- **Zone & Sensor.** Set it to what's wired: Water temperature, Room thermostat (Internal or External) or Room thermistor (K-series IM pp.13-14, p.25). HMG TO CONFIRM: HMG's preferred control on a standard job.
+- **Heater capacity.** Set to the backup heater size; options depend on model (K-series IM p.25). HMG TO CONFIRM: which setting HMG uses.
+- **Anti freezing.** Factory setting is Yes (K-series IM p.25). HMG TO CONFIRM: keep Yes.
+- **DHW capacity.** Variable (factory) or Standard (K-series IM p.25). HMG TO CONFIRM: HMG setting.
+- **Bivalent connection.** Only if a boiler is connected: Yes › SG ready, Auto or Smart. Otherwise leave No (K-series IM pp.26-27).
+- **Circulation liquid.** Water or Glycol, to match what's in the system (K-series IM p.29).
+- **Pump flowrate.** ΔT (factory) or Max. duty (K-series IM p.30). HMG TO CONFIRM: which mode HMG uses.
+- **DHW defrost.** Yes (factory) uses the DHW tank for defrost (K-series IM p.30). HMG TO CONFIRM: HMG setting.
+- **Heating control.** Comfort (factory) or Efficiency (K-series IM p.30). HMG TO CONFIRM: HMG setting.
+- **Electrical anode.** Yes on K3E5AN/K6E5AN models, No on the others: check it matches the model on the rating label (K-series IM p.30).
+- **Two controllers.** Only if two remotes are fitted: Installer setup › Remote control setup › RC selection = Dual (K-series IM p.33).
+
+## 4. Operation setup › Heat
+
+- **Heating curve (HMG).** Operation setup › Heat › Water temp. for heating ON › Compensation curve. HMG: steel radiators -3 °C outdoor → 45 °C flow, 15 °C → 35 °C. Underfloor -3 °C → 35 °C, 15 °C → 25 °C. The factory curve (-5 °C → 55 °C) is over the HMG maximum, so always change it. On 2 zones set both (HMG weather compensation guidance; K-series IM p.31).
+- **Maximum flow (HMG).** Never above 45 °C on radiators or 35 °C on underfloor. On the Panasonic the -3 °C curve point is the maximum: there is no separate maximum flow setting in the manual (HMG weather compensation guidance).
+- **Outdoor temp. for heating OFF.** Factory 24 °C, range 5-35 °C (K-series IM p.31). HMG TO CONFIRM: HMG value.
+- **ΔT for heating ON.** Factory 5 °C, range 1-15 °C (K-series IM p.31). HMG TO CONFIRM: HMG value (HMG pipe sizing assumes a 5 °C ΔT).
+- **Heater ON/OFF.** Factory: outdoor temp for heater ON 0 °C, delay 30 min, heater ON at 4 °C below target and OFF at 2 °C below (K-series IM p.31). HMG TO CONFIRM: HMG values.
+
+## 5. Operation setup › Tank
+
+- **Tank timings.** Floor operation time (factory 8 h), Tank heat up time (60 min), Tank re-heat temp (-8 °C) (K-series IM pp.32-33). HMG TO CONFIRM: HMG values.
+- **Sterilization (legionella).** Factory 65 °C for 10 min (K-series IM pp.32-33). HMG TO CONFIRM: HMG temperature, hold time and day.
+
+## 6. Service setup
+
+- **Air purge.** Service setup › Pump maximum speed, [◄]/[►] to Operation, [▲]/[▼] to Air Purge, [OK]. Run it until the flow reading is steady (K-series IM p.33).
+- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (K-series IM p.12). Rated flow: 3 kW 9.2, 5 kW 14.3, 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; K-series IM p.8). HMG TO CONFIRM: HMG pump Max. Duty setting.
+- **Service contact.** Service setup › Service contact › Contact 1 / Contact 2: name and phone number (K-series IM p.33). HMG TO CONFIRM: installer's own number, Heat Merchants Technical Support, or both.
+- **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit (25-55 °C, 1-99 stages), then ON. Follow the screed maker's schedule (K-series IM p.33).
+
+## 7. Test run
+
+- **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (K-series IM p.12).
+- **Pressure while running.** System check › System information › Water pressure reads 0.05-0.3 MPa (0.5-3 bar). If not, adjust the pump speed; if that doesn't fix it, escalate (K-series IM p.12, p.34).
+- **Heating normal, no leaks, no odd noise.** Heating works, no abnormal sound, no water leaks from the tank unit during the test run (K-series IM p.12 checklist).
+- **Safety relief valve.** The DHW safety relief valve knob has been turned to release air (K-series IM p.12 checklist).
+- **No errors.** [Menu] › System check › Error history: nothing new (K-series IM p.34).
+- **Filters cleaned.** After the test run, clean the magnetic water filter and the water filter and refit them (K-series IM p.12).
+
+## 8. Handover
+
+- **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit (K-series IM p.1).
+- **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.

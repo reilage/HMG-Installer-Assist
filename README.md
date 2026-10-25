@@ -4,7 +4,7 @@ The Heat Merchants technical assistant for heat pump installers, as a web app th
 
 - **Ask**: type a question or send a photo of the controller or rating label. Claude answers only from the manufacturer manuals and HMG Field Notes, in the HMG answer format, with the page. Wiring questions show the matching PCB/terminal diagram.
 - **Fault codes**: Panasonic J-series (52 codes) and Baxi HP55 (controller and outdoor unit codes), with HMG field notes on the cards.
-- **Controller**: menu paths and button-by-button steps.
+- **Controller**: menu paths and button-by-button steps, plus **Commissioning**: the HMG step-by-step commissioning checklist for the Panasonic J-series and K-series, ticked off on site.
 - **Manuals**: the original PDFs, plus 38 wiring and PCB diagrams.
 - **Install**: outdoor unit clearances (HMG figures) and primary pipe sizing (Panasonic only).
 - **Escalate**: builds the escalation to Technical Support, filled in from the chat.
@@ -44,6 +44,7 @@ Everything the assistant knows is in `source/`:
 | `source/hmg-field-notes.md` | HMG Field Notes. Add a new fix here, in the same format as the others. Fault codes in the Symptoms line make the note show on that fault card. |
 | `source/hmg-outdoor-unit-clearances.md` | HMG clearance guidance |
 | `source/hmg-primary-pipe-sizing.md` | HMG pipe sizing guidance |
+| `source/hmg-commissioning-panasonic.md` | HMG commissioning procedure (Controller › Commissioning). Each `- **Step.**` line is one tick box. Replace "HMG TO CONFIRM" with the HMG value once it is decided. |
 | `source/manuals/` | Manual text (one `--- Page N ---` marker per printed page) and the controller navigation references |
 | `source/j-series-faults.json` | J-series error codes table (SM pp.164-165) |
 | `source/wiring-index.json` | Catalogue of the diagrams in `public/wiring/` |

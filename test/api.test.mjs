@@ -73,6 +73,19 @@ test("the HMG heating curve is in the rules, with the Baxi gradient and base wor
   assert.match(b, /CP000 max flow = 45 °C \(rads\) or 35 °C \(UFH\)/);
 });
 
+test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi gets none", async () => {
+  mock.seen.length = 0;
+  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "Talk me through commissioning" }));
+  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(j, /HMG COMMISSIONING PROCEDURE \(J-series\)[\s\S]*Built-in vessel is 6 L/);
+  assert.doesNotMatch(j, /Built-in vessel is 10 L/);
+  assert.match(k, /HMG COMMISSIONING PROCEDURE \(K-series\)[\s\S]*Built-in vessel is 10 L/);
+  assert.doesNotMatch(k, /Built-in vessel is 6 L/);
+  for (const t of [j, k]) assert.match(t, /never invent an HMG value/);
+  assert.doesNotMatch(b, /HMG COMMISSIONING PROCEDURE/);
+  assert.match(b, /HMG has no Baxi commissioning procedure yet/);
+});
+
 test("a photo is sent as an image block", async () => {
   mock.seen.length = 0;
   await events(await ask({ unit: "K", text: "", image: { media_type: "image/jpeg", data: "/9j/4AAQ" } }));
