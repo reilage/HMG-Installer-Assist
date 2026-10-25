@@ -9,7 +9,7 @@ export const emailEnabled = () => !!(process.env.RESEND_API_KEY && process.env.E
 const EMAIL = /^[^\s@<>,;]+@[^\s@<>,;]+\.[^\s@<>,;]+$/;
 
 export default async function handler(req, res) {
-  if (!onlyPost(req, res) || !checkAccess(req, res)) return;
+  if (!onlyPost(req, res) || !(await checkAccess(req, res))) return;
   if (!emailEnabled()) return send(res, 501, { error: "email_off" });
   let b;
   try { b = await readJson(req, 100_000); } catch { return send(res, 400, { error: "bad_request" }); }

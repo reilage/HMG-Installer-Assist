@@ -20,7 +20,8 @@ A switch at the top keeps the Panasonic J-series, K-series and Baxi HP55 separat
    - `ANTHROPIC_API_KEY`: the key from step 1. Without it everything works except Ask and "Fill from chat".
    - `APP_ACCESS_CODE`: a code you give your installers (for example `heatpump2026`). They type it once on each phone. Strongly recommended: without it anyone who finds the link can use Ask on your bill.
 5. **Make the daily question limit firm (recommended).** Each phone gets 5 Ask questions a day, resetting at midnight. To count them reliably across all of Vercel's servers, connect a free Upstash Redis store: in Vercel, Project > Storage > Create Database > Upstash (Redis) > Free plan > connect it to this project, then Redeploy. Vercel adds the settings itself. Without it the limit still works, but loosely, because each Vercel server keeps its own count. To change the number, add `DAILY_QUESTION_LIMIT` (for example `10`, or `0` for no limit).
-6. **Open the link Vercel gives you** (for example `hmg-installer-assist.vercel.app`) on your phone. On Android, tap Install when it offers; on iPhone, Share > Add to Home Screen. Later you can point a Heat Merchants address at it (for example `assist.heatmerchants.ie`) under Project > Settings > Domains.
+6. **Turn on installer accounts (recommended).** Add `ADMIN_CODE` in Vercel (a long password only you know), then Redeploy. Open `/admin.html` on the app's link (for example `hmg-installer-assist.vercel.app/admin.html`) and sign in with it. Add each installer there: the page makes them a personal code (like `HMG-7K4P2Q`) and a message to text or email them. They enter it once on their phone instead of the shared access code. On the same page you can see each installer's questions today and this month, switch an installer off, give them a new code, or give one installer a bigger or smaller daily limit. Needs Upstash (step 5). The shared `APP_ACCESS_CODE` keeps working alongside personal codes; remove it once everyone has their own code.
+7. **Open the link Vercel gives you** (for example `hmg-installer-assist.vercel.app`) on your phone. On Android, tap Install when it offers; on iPhone, Share > Add to Home Screen. Later you can point a Heat Merchants address at it (for example `assist.heatmerchants.ie`) under Project > Settings > Domains.
 
 ### Optional: escalations that send themselves
 
@@ -56,7 +57,7 @@ Edit a file on GitHub and commit: Vercel rebuilds and the app updates within a m
 - `scripts/build-knowledge.mjs` turns `source/` into `data/knowledge.json` (server only, includes the manual text) and `public/knowledge.json`. Vercel runs it on every deploy (`npm run build`).
 - Each question writes one line to Vercel > Logs (unit, pages used, tokens). A proper record of questions needs a database (see below).
 
-Optional settings: `DAILY_QUESTION_LIMIT` (default `5` Ask questions per phone per day, `0` for no limit; see `lib/quota.js`), `CLAUDE_MODEL` (default `claude-opus-5-5`), `CLAUDE_EFFORT` (default `medium`), `CLAUDE_EXTRACT_MODEL` (default `claude-haiku-5-5`), and `CLAUDE_FALLBACKS=off` if Anthropic ever rejects the automatic fallback setting on your account.
+Optional settings: `ADMIN_CODE` (turns on installer accounts and the admin page; see `lib/accounts.js`), `DAILY_QUESTION_LIMIT` (default `5` Ask questions per installer, or per phone without an account, per day; `0` for no limit; see `lib/quota.js`), `CLAUDE_MODEL` (default `claude-opus-5-5`), `CLAUDE_EFFORT` (default `medium`), `CLAUDE_EXTRACT_MODEL` (default `claude-haiku-5-5`), and `CLAUDE_FALLBACKS=off` if Anthropic ever rejects the automatic fallback setting on your account.
 
 ### Run it on a computer
 
@@ -71,7 +72,7 @@ npm test                 # tests against a stand-in Claude, no key needed
 
 ## Not built yet (from the plan)
 
-- **Installer accounts.** For now there is one shared access code. Individual logins (so you can see who asked what, and switch off one installer) need a sign-in service such as Clerk or Supabase.
+- **Paid plans.** Installer accounts are in (see step 6). Charging for a bigger daily limit would add Stripe subscriptions that set the installer's limit.
 - **A record of every question**, to see what installers ask and where the manuals have no answer. Needs a small database (for example Vercel Postgres or Supabase).
 - **Photos attached to escalation emails.**
 - **An admin page to upload manuals.** For now, new manuals are converted to text and added to `source/`.
