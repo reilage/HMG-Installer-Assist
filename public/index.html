@@ -1130,9 +1130,15 @@ function speechChunks(t){
   const out=[];for(const s of t.split(/(?<=[.!?])\s+/)){const last=out.length-1;if(last>=0&&(out[last]+s).length<180) out[last]+=" "+s;else out.push(s);}
   return out.map(s=>s.trim()).filter(Boolean);
 }
+/* A male English voice. Browsers don't say which voices are male, so this goes by the names phones and computers use for theirs. */
+const MALE_VOICE=/\b(male|daniel|arthur|oliver|aaron|alex|fred|tom|reed|rishi|gordon|lee|ryan|george|thomas|guy|eric|christopher|roger|steffan|connor|liam|brian|davis|andrew|jason|tony)\b/i,
+  FEMALE_VOICE=/\b(female|woman|samantha|karen|moira|tessa|kate|serena|fiona|martha|stephanie|susan|hazel|libby|sonia|emily|aria|jenny|zira|catherine)\b/i;
 function pickVoice(){
-  const vs=synth?.getVoices()||[];const by=l=>vs.filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(l));
-  return by("en-ie")[0]||by("en-gb").find(v=>v.localService)||by("en-gb")[0]||by("en")[0]||null;
+  const vs=(synth?.getVoices()||[]).filter(v=>/^en/i.test(v.lang));
+  const male=v=>MALE_VOICE.test(v.name)&&!FEMALE_VOICE.test(v.name);
+  for(const l of ["en-gb","en-ie","en-au","en-us","en"]){const v=vs.filter(v=>v.lang.replace("_","-").toLowerCase().startsWith(l)).filter(male);
+    if(v.length) return v.find(v=>/enhanced|premium|natural|neural/i.test(v.name))||v.find(v=>v.localService)||v[0];}
+  return vs.find(v=>/^en.gb/i.test(v.lang))||vs[0]||null;
 }
 /* iPhones only speak after a tap, so say nothing once while the mic tap is still the current gesture. */
 function unlockSpeech(){try{if(synth&&!synth.speaking){const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}}catch{}}
@@ -1143,7 +1149,7 @@ function speak(text,btn){
   if(!synth||!window.SpeechSynthesisUtterance){btn.remove();voiceNote("This browser can't read answers aloud. The answer is on screen.");return;}
   const parts=speechChunks(speechText(text));if(!parts.length) return;
   const v=pickVoice();speakingBtn=btn;btn.textContent="Stop reading";
-  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang=v?.lang||"en-IE";if(v) u.voice=v;u.rate=1;
+  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang=v?.lang||"en-GB";if(v) u.voice=v;u.rate=1;
     if(i===parts.length-1) u.onend=()=>{if(speakingBtn===btn) stopSpeaking();};
     u.onerror=e=>{if(e.error!=="canceled"&&e.error!=="interrupted"&&speakingBtn===btn){stopSpeaking();voiceNote("The answer couldn't be read aloud. It's on screen.");}};
     synth.speak(u);});
