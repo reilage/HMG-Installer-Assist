@@ -59,7 +59,7 @@ How this file works (for editing on GitHub):
 
 - **Air purge.** Service setup › Pump maximum speed › [►] to Operation › [▲]/[▼] to Air Purge › [OK]. Run it until the flow reading is steady. [Operate] stops the pump (J-series SM p.35, pp.151-152).
 - **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (J-series SM p.63). Nominal flow: 5 kW 14.3, 7 kW 20, 9 kW 25.8 l/min (HMG sizing guidance; J-series SM p.12). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
-- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (J-series SM p.36). HMG TO CONFIRM: the Technical Support phone number to enter.
+- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (J-series SM p.36). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit, set stages and temperatures (25-55 °C), then ON. Follow the screed maker's schedule (J-series SM p.36, pp.155-156).
 
 ## 7. Test run
@@ -105,7 +105,7 @@ How this file works (for editing on GitHub):
 - **Get into Installer setup.** Press [Operate] ⏻ so the operation light goes out, then [Menu] (top right) › Installer setup › System setup (HMG Field Notes – Can't get into Installer setup).
 - **Optional PCB connectivity.** Yes only if the optional PCB (CZ-NS5P) is fitted. Otherwise leave No (K-series IM p.13, p.25).
 - **Zone & Sensor.** HMG: **Room thermostat, External**, with the weather compensation curve (HMG, Donal Reilly 25/10/2026). Options are Water temperature, Room thermostat (Internal or External) or Room thermistor (K-series IM pp.13-14, p.25).
-- **Heater capacity.** HMG: **3 kW** backup heater on the 5, 7 and 9 kW models, **6 kW** on the 12 kW (HMG, Donal Reilly 25/10/2026). Options depend on model (K-series IM p.25).
+- **Heater capacity.** HMG: **3 kW** backup heater on the 3, 5, 7 and 9 kW models, **6 kW** on the 12 kW (HMG, Donal Reilly 25/10/2026). Options depend on model (K-series IM p.25).
 - **Anti freezing.** HMG: **Yes** (also the factory setting) (HMG, Donal Reilly 25/10/2026) (K-series IM p.25).
 - **DHW capacity.** HMG: **Standard** (factory is Variable, so change it) (HMG, Donal Reilly 25/10/2026) (K-series IM p.25).
 - **Bivalent connection.** Only if a boiler is connected: Yes › SG ready, Auto or Smart. Otherwise leave No (K-series IM pp.26-27).
@@ -133,7 +133,7 @@ How this file works (for editing on GitHub):
 
 - **Air purge.** Service setup › Pump maximum speed, [◄]/[►] to Operation, [▲]/[▼] to Air Purge, [OK]. Run it until the flow reading is steady (K-series IM p.33).
 - **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (K-series IM p.12). Rated flow: 3 kW 9.2, 5 kW 14.3, 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; K-series IM p.8). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
-- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (K-series IM p.33). HMG TO CONFIRM: the Technical Support phone number to enter.
+- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (K-series IM p.33). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit (25-55 °C, 1-99 stages), then ON. Follow the screed maker's schedule (K-series IM p.33).
 
 ## 7. Test run
