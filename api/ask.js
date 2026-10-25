@@ -10,6 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { UNITS, pagesFor, excerpt } from "../lib/kb.js";
 import { rules } from "../lib/prompt.js";
 import { take, giveBack } from "../lib/quota.js";
+import { recordQuestion } from "../lib/trends.js";
 import { send, readJson, checkAccess, onlyPost, errorCode, clip } from "../lib/http.js";
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
@@ -74,15 +75,19 @@ export default async function handler(req, res) {
   res.on("close", () => { if (!res.writableFinished) { closed = true; stream.abort(); } });
 
   const started = Date.now();
+  let answer = "";
   try {
     for await (const ev of stream) {
-      if (ev.type === "content_block_start" && ev.content_block.type === "fallback") emit({ t: "reset" });
-      else if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") emit({ t: "text", v: ev.delta.text });
+      if (ev.type === "content_block_start" && ev.content_block.type === "fallback") { emit({ t: "reset" }); answer = ""; }
+      else if (ev.type === "content_block_delta" && ev.delta.type === "text_delta") { emit({ t: "text", v: ev.delta.text }); answer += ev.delta.text; }
     }
     const msg = await stream.finalMessage();
     if (msg.stop_reason === "refusal") emit({ t: "error", code: "refused" });
     else emit({ t: "done", truncated: msg.stop_reason === "max_tokens" });
-    // One log line per question (Vercel > Logs). A proper question record needs a database: see README.
+    // Saved for the weekly fault trends (lib/trends.js); a hiccup there doesn't spoil the answer.
+    await recordQuestion({ unit, text, code: extra?.code, who, req, answer, photo: !!img })
+      .catch(e => console.error(JSON.stringify({ evt: "trends_error", message: e.message })));
+    // One log line per question (Vercel > Logs).
     console.log(JSON.stringify({ evt: "ask", unit, installer: who.installer?.name, chars: text.length, photo: !!img, pages: pages.map(x => `${x.m}:${x.p}`),
       model: msg.model, stop: msg.stop_reason, ms: Date.now() - started, usage: msg.usage }));
   } catch (e) {

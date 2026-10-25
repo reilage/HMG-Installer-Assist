@@ -5,6 +5,9 @@
   "functions": {
     "api/*.js": { "maxDuration": 60, "includeFiles": "data/**" }
   },
+  "crons": [
+    { "path": "/api/trends", "schedule": "0 7 * * 1" }
+  ],
   "headers": [
     { "source": "/sw.js", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },
     { "source": "/", "headers": [{ "key": "Cache-Control", "value": "no-cache" }] },

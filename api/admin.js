@@ -5,6 +5,8 @@
 //       { action: "delete", id }                              → { ok }
 //       { action: "approve", id }   (an access request)       → { installer, emailed }
 //       { action: "decline", id }   (an access request)       → { ok }
+//       { action: "trends", week? }   fault trends for a week (default last week, or this week if last week was empty) → { week, label, weeks, stats, summary }
+//       { action: "trends_write", week? }  (re)write that week's Claude summary → the same as "trends"
 // "list" also returns the access requests waiting for approval, as requests: [...].
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
@@ -13,6 +15,15 @@ import { emailEnabled } from "../lib/email.js";
 import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
+import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
+
+/* Counts for the week (free, from the saved questions) and its Claude summary if one has been written. */
+async function trends(w) {
+  const [qs, prev, summary] = await Promise.all([weekQuestions(w), weekQuestions(prevWeek(w)), getSummary(w)]);
+  const weeks = [];
+  for (let x = weekOf(), n = 0; n < 12; n++, x = prevWeek(x)) weeks.push({ week: x, label: weekLabel(x), current: n === 0 });
+  return { week: w, label: weekLabel(w), current: w === weekOf(), weeks, stats: weekStats(qs, prev), summary, ai: !!process.env.ANTHROPIC_API_KEY };
+}
 
 export default async function handler(req, res) {
   if (!onlyPost(req, res)) return;
@@ -48,6 +59,16 @@ export default async function handler(req, res) {
         const emailed = await sendCode(req, installer);
         console.log(JSON.stringify({ evt: "approve", name: installer.name, emailed }));
         return send(res, 200, { installer, emailed });
+      }
+      case "trends":
+      case "trends_write": {
+        // with no week asked for: last week once it has questions, else this week so far
+        const w = validWeek(b.week) ? b.week : (await weekQuestions(lastWeek())).length ? lastWeek() : weekOf();
+        if (b.action === "trends_write") {
+          if (!process.env.ANTHROPIC_API_KEY) return send(res, 503, { error: "not_configured" });
+          await writeSummary(w, "admin");
+        }
+        return send(res, 200, await trends(w));
       }
       case "decline":
         await deleteRequest(String(b.id || ""));

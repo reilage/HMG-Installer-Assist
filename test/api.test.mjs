@@ -248,3 +248,39 @@ test("with email on, the approver gets a link that approves the request and emai
   assert.deepEqual(sent.body.to, ["pd@doyle.ie"]); assert.ok(sent.body.text.includes(a.installer.code));
   assert.equal((await approve("approve")).status, 404, "the link only works once");
 });
+
+test("fault trends: each question is saved, counted per unit and installer, and Claude writes the weekly summary", async () => {
+  await stop(app);
+  mock.server.close();
+  mock = await startMock(MOCK, { reply: "**Fault:** H62. That isn't covered in the manuals on file.\nContact Heat Merchants Technical Support with the model, serial number, fault code, and the checks completed so far." });
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "shared1", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "0", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "", CRON_SECRET: "cron-xyz" });
+  const admin = body => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) });
+  const { installer: a } = await (await admin({ action: "add", name: "Seán Murphy" })).json();
+  for (let i = 0; i < 3; i++) await events(await ask({ unit: "J", text: "h62 again after start-up" }, { "X-Access-Code": a.code }));
+  await events(await ask({ unit: "B", text: "Pd showing on the outdoor unit" }, { "X-Access-Code": a.code }));
+  await events(await ask({ unit: "B", text: "What does it mean?", extra: { code: "H02.23" } }, { "X-Access-Code": "shared1", "X-Device-Id": "abcd1234-phone" }));
+
+  const thisWeek = (await (await admin({ action: "trends" })).json()).weeks[0].week;
+  const t = await (await admin({ action: "trends", week: thisWeek })).json();
+  assert.equal(t.current, true); assert.equal(t.summary, null);
+  assert.equal(t.stats.total, 5); assert.equal(t.stats.installers, 2); assert.equal(t.stats.unanswered, 5); assert.equal(t.stats.escalated, 5);
+  assert.deepEqual(t.stats.codes.map(c => [c.unit, c.code, c.n]), [["J", "H62", 3], ["B", "H02.23", 1], ["B", "Pd", 1]]);
+  assert.deepEqual(t.stats.units.map(u => [u.unit, u.n]), [["J", 3], ["K", 0], ["B", 2]]);
+  const sean = t.stats.people.find(p => p.name === "Seán Murphy");
+  assert.equal(sean.n, 4); assert.deepEqual(sean.repeats, [{ unit: "J", code: "H62", n: 3 }]);
+  assert.ok(t.stats.people.some(p => p.name === "Phone abcd (no account)"));
+  assert.equal(t.stats.unansweredList[0].q, "What does it mean?");
+
+  mock.seen.length = 0;
+  const w = await (await admin({ action: "trends_write", week: thisWeek })).json();
+  assert.equal(w.summary.questions, 5); assert.ok(w.summary.text.length > 0);
+  const { body } = mock.seen[0];
+  assert.equal(body.model, "claude-opus-5-5"); assert.deepEqual(body.output_config, { effort: "low" });
+  assert.match(body.system, /weekly report/);
+  assert.match(body.messages[0].content, /J \| H62 \| Seán Murphy \| covered: no \| escalated \| h62 again/);
+
+  // the Monday job: refused without Vercel's secret; last week had no questions, so nothing is written
+  assert.equal((await fetch(BASE + "/api/trends")).status, 401);
+  const cron = await (await fetch(BASE + "/api/trends", { headers: { Authorization: "Bearer cron-xyz" } })).json();
+  assert.equal(cron.empty, true); assert.equal(mock.seen.length, 1);
+});
