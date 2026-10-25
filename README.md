@@ -56,7 +56,7 @@ Edit a file on GitHub and commit: Vercel rebuilds and the app updates within a m
 - `public/` is the app installers see: `index.html` (all screens), `knowledge.json` (fault lists, controller tasks, diagram catalogue), the PDFs, diagrams, icons, and `sw.js` (offline: screens, fault codes, diagrams and any manual already opened work with no signal; Ask needs signal).
 - `api/` are small server functions on Vercel. `ask` finds the relevant manual pages, adds the HMG rules for the selected unit, and streams Claude's answer back. The API key stays on the server and is never sent to phones. `extract` fills the escalation form from the chat. `escalate` sends the email when Resend is set up. `apply` takes access requests from the app and `approve` handles the approval link (`public/approve.html`); `admin` runs the admin page. `config` tells the app what is switched on.
 - `scripts/build-knowledge.mjs` turns `source/` into `data/knowledge.json` (server only, includes the manual text) and `public/knowledge.json`. Vercel runs it on every deploy (`npm run build`).
-- Each question writes one line to Vercel > Logs (unit, pages used, tokens). A proper record of questions needs a database (see below).
+- Each question writes one line to Vercel > Logs (unit, pages used, tokens), and is saved in Upstash for **fault trends** (`lib/trends.js`): unit, fault code, installer, date, the question, and whether the app could answer it from the manuals. The admin page's **Fault trends** tab counts them per week, overall, per unit and per installer, lists the questions the app couldn't answer, and shows a short summary Claude writes every Monday at about 7am (`api/trends.js`, a Vercel cron job in `vercel.json`; about 5 cent a week) or when you tap **Write summary now**. Questions are kept 100 days, summaries about a year. Installers are told on the code screen and under the Ask box that questions are saved to improve the service. Optional: set `CRON_SECRET` in Vercel so only Vercel can start the Monday job (without it, a repeat call does nothing because each week is only written once), and `TRENDS_MODEL` to use a different Claude model for the summary.
 
 Optional settings: `ADMIN_CODE` (turns on installer accounts and the admin page; see `lib/accounts.js`), `DAILY_QUESTION_LIMIT` (default `5` Ask questions per installer, or per phone without an account, per day; `0` for no limit; see `lib/quota.js`), `CLAUDE_MODEL` (default `claude-opus-5-5`), `CLAUDE_EFFORT` (default `medium`), `CLAUDE_EXTRACT_MODEL` (default `claude-haiku-5-5`), and `CLAUDE_FALLBACKS=off` if Anthropic ever rejects the automatic fallback setting on your account.
 
@@ -74,7 +74,7 @@ npm test                 # tests against a stand-in Claude, no key needed
 ## Not built yet (from the plan)
 
 - **Paid plans.** Installer accounts are in (see step 6). Charging for a bigger daily limit would add Stripe subscriptions that set the installer's limit.
-- **A record of every question**, to see what installers ask and where the manuals have no answer. Needs a small database (for example Vercel Postgres or Supabase).
+- **Fault trends by email** each Monday. The summary is on the admin page; emailing it needs Resend (above).
 - **Photos attached to escalation emails.**
 - **An admin page to upload manuals.** For now, new manuals are converted to text and added to `source/`.
 - **Voice**: phones' own dictation (the microphone on the keyboard) already works in the Ask box.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HMG Installer Accounts</title>
+<title>HMG Installer Admin</title>
 <meta name="robots" content="noindex">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -69,11 +69,24 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
 .chip.full{background:var(--warn-soft);color:var(--warn)}
 .share{background:var(--accent-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px}
 #list{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--hmg-cyan)}
+select{font:inherit;color:inherit;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;max-width:100%}
+.summary p{margin:0 0 6px}.summary ul{margin:0 0 10px;padding-left:20px}.summary li{margin:2px 0}
+.rows{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.rows li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--sunk);padding:4px 0}
+.rows li:last-child{border-bottom:0}
+.up{color:var(--warn);font-size:13px}.down{color:var(--muted);font-size:13px}
+.qtext{font-size:15px}
+details.inst summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+details.inst summary::-webkit-details-marker{display:none}
+.mono{font-family:var(--f-mono);font-weight:700}
 </style>
 </head>
 <body>
 <main>
-  <div class="brand"><img class="logo-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div><b>Installer accounts</b><span>HMG Installer Assistant admin</span></div></div>
+  <div class="brand"><img class="logo-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div><b>Installer admin</b><span>HMG Installer Assistant</span></div></div>
 
   <form class="panel" id="login">
     <h2>Admin sign-in</h2>
@@ -83,7 +96,18 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
   </form>
 
   <div id="app" hidden>
-    <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button></div>
+    <div id="t-trends" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
+      <div class="btnrow" style="justify-content:space-between"><h2>Fault trends</h2><select id="tr-week" aria-label="Week"></select></div>
+      <p class="src">What installers asked in the app, overall and per installer. The counts are worked out live. Each Monday morning Claude writes a short summary of the week before (about 5 cent each).</p>
+      <div class="totals" id="tr-totals"></div>
+      <div class="panel"><div class="btnrow" style="justify-content:space-between"><h2>Claude's summary</h2><button class="btn sm" id="tr-write">Write summary now</button></div><div id="tr-summary" class="summary"></div></div>
+      <div class="panel"><h2>Top fault codes</h2><div id="tr-codes"></div></div>
+      <div class="panel"><h2>By unit</h2><div id="tr-units"></div></div>
+      <div class="panel"><h2>By installer</h2><div id="tr-people" style="display:flex;flex-direction:column;gap:8px"></div></div>
+      <div class="panel"><h2>Questions the app couldn't answer</h2><p class="src">Gaps to fill with a manual or a field note.</p><div id="tr-gaps"></div></div>
+    </div>
+    <div id="t-accounts" style="display:flex;flex-direction:column;gap:16px;margin-top:16px">
       <div class="notice" id="mem-warn" hidden><b>Upstash isn't connected.</b> Accounts added now are only kept until Vercel restarts the server. Connect Upstash for Redis in Vercel (Project &gt; Storage), redeploy, then add installers.</div>
       <div class="totals" id="totals"></div>
       <div class="panel" id="reqs" hidden></div>
@@ -119,7 +143,7 @@ async function admin(body){
   if(!r.ok) throw Object.assign(new Error("api"),{code:d.error});
   return d;
 }
-const MSG={accounts_off:"Installer accounts aren't switched on. Add the ADMIN_CODE setting in Vercel and redeploy.",unavailable:"The account store isn't responding. Try again in a minute.",name_required:"Enter the installer's name."};
+const MSG={not_configured:"Claude isn't switched on (no ANTHROPIC_API_KEY), so the summary can't be written.",accounts_off:"Installer accounts aren't switched on. Add the ADMIN_CODE setting in Vercel and redeploy.",unavailable:"The account store isn't responding. Try again in a minute.",name_required:"Enter the installer's name."};
 function showLogin(note){$("#login").hidden=false;$("#app").hidden=true;$("#login-note").textContent=note||"";$("#admin-code").focus();}
 
 $("#login").onsubmit=async e=>{
@@ -237,6 +261,56 @@ $("#add").onsubmit=async e=>{
     await load();
   }catch(err){if(err.code) $("#add-note").textContent=MSG[err.code]||"Something went wrong. Try again.";}
 };
+
+/* ---------- Fault trends (lib/trends.js) ---------- */
+let TR=null, trWeek=null;
+const UNIT={J:"J-series",K:"K-series",B:"Baxi HP55"};
+const change=(n,last)=>n===last?"":n>last?`<span class="up">▲ ${n-last} on last week</span>`:`<span class="down">▼ ${last-n} on last week</span>`;
+const day=d=>new Date(d).toLocaleDateString("en-IE",{weekday:"short",day:"numeric",month:"short"});
+function mdLite(t){
+  const out=[];let list=false;
+  for(const raw of t.split("\n")){
+    const l=raw.trim(), inl=esc(l.replace(/^[-*•]\s+/,"")).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+    if(/^[-*•]\s+/.test(l)){if(!list){out.push("<ul>");list=true;}out.push(`<li>${inl}</li>`);continue;}
+    if(list){out.push("</ul>");list=false;}
+    if(l) out.push(`<p>${inl}</p>`);
+  }
+  if(list) out.push("</ul>");
+  return out.join("");
+}
+async function loadTrends(action="trends"){
+  TR=await admin({action,week:trWeek});trWeek=TR.week;renderTrends();
+}
+function renderTrends(){
+  const s=TR.stats;
+  $("#tr-week").innerHTML=TR.weeks.map(w=>`<option value="${w.week}"${w.week===TR.week?" selected":""}>${w.current?"This week so far":"Week of "+w.label}</option>`).join("");
+  $("#tr-totals").innerHTML=`<div class="stat"><b>${s.total}</b><span>question${s.total===1?"":"s"} ${s.last||s.total?`(${s.last} the week before)`:""}</span></div>
+    <div class="stat"><b>${s.installers}</b><span>installer${s.installers===1?"":"s"} asking</span></div>
+    <div class="stat"><b>${s.unanswered}</b><span>not answered from the manuals</span></div>
+    <div class="stat"><b>${s.escalated}</b><span>told to escalate</span></div>`;
+  const sm=TR.summary;
+  $("#tr-summary").innerHTML=sm&&sm.text?mdLite(sm.text)+`<p class="src">Written ${new Date(sm.generated).toLocaleString("en-IE",{weekday:"short",day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}${sm.by==="weekly"?" (weekly)":""} from ${sm.questions} question${sm.questions===1?"":"s"}${sm.questions!==s.total?`. ${s.total-sm.questions} more since: write it again to include them`:""}.</p>`
+    :`<p class="src">${!s.total?"No questions this week, so there's nothing to summarise.":TR.current?"The weekly summary is written on Monday morning. Tap Write summary now for one on the week so far.":"No summary for this week yet. Tap Write summary now."}</p>`;
+  $("#tr-write").hidden=!s.total||!TR.ai;$("#tr-write").textContent=sm&&sm.text?"Write it again":"Write summary now";
+  $("#tr-codes").innerHTML=s.codes.length?`<ul class="rows">${s.codes.map(c=>`<li><span><span class="mono">${esc(c.code)}</span> · ${UNIT[c.unit]}</span><span>${c.n}× ${change(c.n,c.last)}</span></li>`).join("")}</ul>`:`<p class="src">No fault codes asked about.</p>`;
+  $("#tr-units").innerHTML=`<ul class="rows">${s.units.map(u=>`<li><span><b>${esc(u.name)}</b>${u.codes.length?`<br><span class="src">${u.codes.map(c=>`${esc(c.code)} ×${c.n}`).join(", ")}</span>`:""}</span><span style="text-align:right">${u.n} question${u.n===1?"":"s"} ${change(u.n,u.last)}${u.unanswered?`<br><span class="src">${u.unanswered} not answered</span>`:""}</span></li>`).join("")}</ul>`;
+  $("#tr-people").innerHTML=s.people.length?s.people.map(p=>`<details class="inst"><summary><span class="name">${esc(p.name)}</span><span>${p.n} question${p.n===1?"":"s"} ${change(p.n,p.last)}</span></summary>
+    <div class="src">${p.units.map(u=>UNIT[u]).join(", ")}${p.unanswered?` · ${p.unanswered} not answered`:""}${p.escalated?` · ${p.escalated} told to escalate`:""}</div>
+    ${p.codes.length?`<div class="src">Codes: ${p.codes.map(c=>`<span class="mono">${esc(c.code)}</span> ×${c.n}`).join(", ")}</div>`:""}
+    ${p.repeats.length?`<div class="chip full" style="align-self:flex-start">Keeps coming back to ${p.repeats.map(c=>esc(c.code)).join(", ")}</div>`:""}</details>`).join(""):`<p class="src">Nobody asked anything this week.</p>`;
+  $("#tr-gaps").innerHTML=s.unansweredList.length?`<ul class="rows">${s.unansweredList.map(q=>`<li style="flex-direction:column;gap:2px"><span class="qtext">${esc(q.q)||"(photo)"}</span><span class="src">${UNIT[q.unit]}${q.code?` · ${esc(q.code)}`:""} · ${esc(q.name)} · ${day(q.at)}</span></li>`).join("")}</ul>`:`<p class="src">None this week.</p>`;
+}
+$("#tr-week").onchange=async e=>{trWeek=e.target.value;try{await loadTrends();}catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}};
+$("#tr-write").onclick=async e=>{
+  const b=e.target;b.disabled=true;b.textContent="Writing… (up to a minute)";
+  try{await loadTrends("trends_write");}catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");renderTrends();}
+  finally{b.disabled=false;}
+};
+document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=async()=>{
+  document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
+  const tr=t.dataset.tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tr;
+  if(tr&&!TR){$("#tr-summary").innerHTML=`<p class="src">Loading…</p>`;try{await loadTrends();}catch(err){if(err.code) $("#tr-summary").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
+});
 
 if(ss.get("hmg-admin")) load().catch(()=>{}); else showLogin("");
 </script>
