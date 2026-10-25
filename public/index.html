@@ -27,6 +27,7 @@
   --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
   --warn:#a85b00; --warn-soft:#fbecd6; --bad:#b42318; --bad-soft:#fbe1de;
   --bubble:#53565a; --bubble-fg:#ffffff;
+  --compose:#d6edf7; --compose-line:#00a9e0; --esc:#c62828; --esc-fg:#ffffff;
   --f-display:"Bree Serif",Georgia,serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -36,13 +37,13 @@
   --fg:#eceeef; --muted:#a2a7ac;
   --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --compose:#123a49; --compose-line:#00a9e0; --esc:#d32f2f; --esc-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44;
   --fg:#eceeef; --muted:#a2a7ac;
   --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --compose:#123a49; --compose-line:#00a9e0; --esc:#d32f2f; --esc-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);display:flex;flex-direction:column}
@@ -124,7 +125,7 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .suggest button:hover{box-shadow:0 0 0 2px var(--accent)}
 .ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:14px;text-align:left}
 .ghost:hover{border-color:var(--accent)}
-.composer{position:sticky;bottom:0;background:var(--bg);padding-top:8px;display:flex;flex-direction:column;gap:6px}
+.composer{position:sticky;bottom:0;background:var(--compose);border-top:3px solid var(--compose-line);border-radius:var(--r) var(--r) 0 0;margin:8px -8px 0;padding:12px 8px 10px;display:flex;flex-direction:column;gap:6px}
 .composer .row{display:flex;gap:8px;align-items:flex-end}
 .composer textarea{flex:1;min-width:0;resize:none;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;min-height:46px;max-height:140px}
 .iconbtn{width:46px;height:46px;flex:none;border-radius:var(--r);border:1px solid var(--line);background:var(--surface);display:grid;place-items:center}
@@ -155,6 +156,10 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
 .btn:active{filter:brightness(.92)}
 .btn.sec{background:var(--sunk);color:var(--fg)}
+.btn.esc,.ghost.esc{background:var(--esc);border-color:var(--esc);color:var(--esc-fg);font-weight:600}
+.ghost.esc:hover{border-color:var(--esc);filter:brightness(1.1)}
+nav.tabs button[data-v="esc"]{background:var(--esc)}
+nav.tabs button[data-v="esc"][aria-selected="true"]{background:var(--hmg-grey)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .src{font-size:13px;color:var(--muted)}
 
@@ -360,7 +365,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <div class="hero" id="hero">
     <span class="hero-k" id="hero-unit">J-series</span>
     <h2>How can we assist?</h2>
-    <p id="ask-lede">Type or speak a fault, a symptom or a setting question. Answers come only from the manufacturer manuals and HMG field notes, with the page.</p>
+    <p id="ask-lede">Type or speak a fault, a symptom or a setting question.</p>
   </div>
   <p class="src" id="who" hidden></p>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
@@ -1068,7 +1073,7 @@ function addActions(b,text){
   const a=document.createElement("div");a.className="msg-actions";
   if(comm){const c=document.createElement("button");c.className="ghost";c.textContent="Open commissioning checklist";c.onclick=()=>{show("ctrl");ctrlTopic("comm");};a.append(c);}
   if(!escl){b.append(a);return;}
-  const e=document.createElement("button");e.className="ghost";e.textContent="Escalate this job";e.onclick=()=>{show("esc");fillFromChat();};
+  const e=document.createElement("button");e.className="ghost esc";e.textContent="Escalate this job";e.onclick=()=>{show("esc");fillFromChat();};
   a.append(e);b.append(a);
 }
 function setBusy(on){
@@ -1235,7 +1240,7 @@ function faultDetail(){
         <dt>Check first</dt><dd>${c.checks?esc(c.checks):"No checks listed in the manual."}</dd></dl>
         ${c.odu?`<div class="notice">Generated by the outdoor unit. Open Installer › Error history, highlight this error and press the dial to read the outdoor unit code in the details, then look that code up under Outdoor unit.</div>`:""}
         <div class="src">Source: Baxi ASHP Control IM p.${c.tablePage} (error codes) · ${pageLink("B2",c.tablePage)}</div>
-        <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+        <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn esc" id="fd-esc">Escalate</button></div>
       </div>`;
       $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
       $("#fd-go").onclick=()=>{show("ask");ask(`${c.code} on the Baxi controller. What do I check?`,{code:c.code,pages:[{m:"B2",p:c.tablePage}],note:`Controller error code ${c.code} (${c.type}): ${c.meaning}. Checks in the manual: ${c.checks||"none listed"}.${c.odu?" The manual says this error is generated by the outdoor unit; the outdoor code is in the error details.":""} (Baxi ASHP Control IM p.${c.tablePage}).`});};
@@ -1252,7 +1257,7 @@ function faultDetail(){
       <dt>Shown on</dt><dd>${f.shownOn==="PCB"?"Outdoor Main Control PCB display only":"User interface and outdoor Main Control PCB"}</dd></dl>
       ${twin.length?`<div class="notice">${f.code} is also listed as “${esc(twin[0].meaning)}” (p.${twin[0].tablePage}). Check where it shows to tell them apart.</div>`:""}
       <div class="src">Source: Baxi HP55 IM p.${f.tablePage} (error codes). No check procedure for this code in the manual. ${pageLink("B",f.tablePage)}</div>
-      <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+      <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn esc" id="fd-esc">Escalate</button></div>
     </div>`;
     $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
     $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the Baxi HP55 outdoor unit. What do I check?`,{code:f.code,pages:[f.tablePage],note:`Error code list row: ${f.code} | ${f.meaning} | ${f.group} | shown on: ${f.shownOn} (Baxi HP55 IM p.${f.tablePage}).${twin.length?` Note: ${f.code} is also listed as "${twin[0].meaning}" on p.${twin[0].tablePage}.`:""}`});};
@@ -1270,7 +1275,7 @@ function faultDetail(){
     ${fnBlock(f.code,"J")}
     <div class="src">Source: J-series SM p.${f.tablePage} (error codes table); self-diagnosis ${diag}</div>
     <div class="btnrow">${pageLink("J",f.tablePage)}${f.diagPages.length?pageLink("J",f.diagPages[0]).replace(/Open p\.(\d+) in the manual/,"Open check procedure (p.$1)"):""}</div>
-    <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
+    <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn esc" id="fd-esc">Escalate</button></div>
   </div>`;
   $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
   $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the J-series. What do I check?`,{code:f.code,pages:[f.tablePage,...f.diagPages],note:`Error codes table row: ${f.code} | ${f.meaning} | judgement: ${f.judgement} | verify: ${f.verify.join("; ")} (J-series SM p.${f.tablePage}).${fnNote(f.code,"J")}`});};
