@@ -406,3 +406,40 @@ test("stored answers: a repeat question is answered from storage, free, until it
   assert.ok((await (await admin({ action: "answers_clear", unit: "J" })).json()).cleared >= 1);
   assert.deepEqual((await (await admin({ action: "answers" })).json()).answers, []);
 });
+
+test("my questions: each installer's questions and answers are kept on their account, by chat, and open free", async () => {
+  await stop(app);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "shared-code", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "0", STORED_ANSWERS: "on", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  const admin = body => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) });
+  const add = async name => (await (await admin({ action: "add", name })).json()).installer;
+  const a = await add("Seán Murphy"), b = await add("Aoife Byrne");
+  const A = { "X-Access-Code": a.code }, B = { "X-Access-Code": b.code };
+  const hist = (body, h) => fetch(BASE + "/api/history", { method: "POST", headers: { "Content-Type": "application/json", ...h }, body: JSON.stringify(body) });
+
+  await events(await ask({ unit: "J", text: "H62, what do I check?", chat: "chat-1" }, A));
+  await events(await ask({ unit: "J", text: "and the pump?", chat: "chat-1", history: [{ role: "user", content: "H62, what do I check?" }, { role: "assistant", content: "x" }] }, A));
+  await events(await ask({ unit: "J", text: "what does h62 mean", chat: "chat-2" }, A)); // from stored answers: kept too
+  await events(await ask({ unit: "B", text: "E0 on the outdoor unit", chat: "chat-3" }, B));
+
+  // each installer sees only their own, newest first, with the unit, code and the start of the answer
+  const seen = mock.seen.length;
+  let items = (await (await hist({ action: "list" }, A)).json()).items;
+  assert.deepEqual(items.map(e => [e.chat, e.unit, e.code, e.q]), [["chat-2", "J", "H62", "what does h62 mean"], ["chat-1", "J", "", "and the pump?"], ["chat-1", "J", "H62", "H62, what do I check?"]]);
+  assert.match(items[2].s, /^Fault: H62 test answer/);
+  assert.equal(items[0].a, undefined, "the list leaves out the full answers");
+  assert.deepEqual((await (await hist({ action: "list" }, B)).json()).items.map(e => e.unit), ["B"]);
+
+  // opening a chat gives the whole conversation with full answers, without calling Claude
+  items = (await (await hist({ action: "open", chat: "chat-1" }, A)).json()).items;
+  assert.deepEqual(items.map(e => e.q), ["H62, what do I check?", "and the pump?"]);
+  assert.match(items[0].a, /\*\*Fault:\*\* H62 test answer/);
+  assert.deepEqual((await (await hist({ action: "open", chat: "chat-3" }, A)).json()).items, [], "not another installer's chat");
+  assert.equal(mock.seen.length, seen);
+
+  // delete a chat; the shared code has no account; a code that isn't accepted gets nothing
+  assert.equal((await (await hist({ action: "delete", chat: "chat-1" }, A)).json()).ok, true);
+  assert.deepEqual((await (await hist({ action: "list" }, A)).json()).items.map(e => e.chat), ["chat-2"]);
+  const shared = await hist({ action: "list" }, { "X-Access-Code": "shared-code" });
+  assert.equal(shared.status, 409); assert.equal((await shared.json()).error, "no_account");
+  assert.equal((await hist({ action: "list" })).status, 401);
+});

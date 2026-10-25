@@ -6,15 +6,16 @@
 //   {"t":"done","truncated":false}
 //   {"t":"error","code":"rate_limited"}
 // Over the daily limit it answers 429 {"error":"daily_limit","limit":5} instead (see lib/quota.js).
-// Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data}, fresh: id }
+// Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data}, fresh: id, chat: id }
 // standalone: a ready-made question from a button (fault card, suggestion...), which can be answered from storage even
-// part-way through a chat. fresh: the installer tapped "Didn't help" on stored answer <id>, so ask Claude afresh and store that answer instead.
+// part-way through a chat. chat: the app's id for this chat, so the installer's "My questions" (lib/history.js) keeps a chat together. fresh: the installer tapped "Didn't help" on stored answer <id>, so ask Claude afresh and store that answer instead.
 import Anthropic from "@anthropic-ai/sdk";
 import { UNITS, pagesFor, excerpt, normCodes, faultContext } from "../lib/kb.js";
 import { rules } from "../lib/prompt.js";
 import { take, giveBack } from "../lib/quota.js";
 import { recordQuestion } from "../lib/trends.js";
 import { reusable, findAnswer, saveAnswer, notHelpful } from "../lib/answers.js";
+import { saveHistory } from "../lib/history.js";
 import { send, readJson, checkAccess, onlyPost, errorCode, clip } from "../lib/http.js";
 
 const MODEL = process.env.CLAUDE_MODEL || "claude-opus-5-5";
@@ -70,6 +71,8 @@ export default async function handler(req, res) {
       emit({ t: "stored", id: hit.id, at: hit.at });
       emit({ t: "text", v: hit.a });
       emit({ t: "done", truncated: false });
+      await saveHistory({ who, chat: body.chat, unit, text, code: extra?.code, answer: hit.a })
+        .catch(e => console.error(JSON.stringify({ evt: "history_error", message: e.message })));
       await recordQuestion({ unit, text, code: extra?.code, who, req, answer: hit.a, photo: false, stored: true })
         .catch(e => console.error(JSON.stringify({ evt: "trends_error", message: e.message })));
       console.log(JSON.stringify({ evt: "ask", unit, installer: who.installer?.name, chars: text.length, stored: hit.id }));
@@ -117,6 +120,10 @@ export default async function handler(req, res) {
     // A complete first answer is stored so the same question next time costs nothing (lib/answers.js).
     if (keep && msg.stop_reason === "end_turn")
       await saveAnswer({ unit, text, code: extra?.code, answer, who }).catch(e => console.error(JSON.stringify({ evt: "stored_error", message: e.message })));
+    // Kept on the installer's account for "My questions" (lib/history.js).
+    if (msg.stop_reason !== "refusal")
+      await saveHistory({ who, chat: body.chat, unit, text, code: extra?.code, answer, photo: !!img })
+        .catch(e => console.error(JSON.stringify({ evt: "history_error", message: e.message })));
     // Saved for the weekly fault trends (lib/trends.js); a hiccup there doesn't spoil the answer.
     await recordQuestion({ unit, text, code: extra?.code, who, req, answer, photo: !!img })
       .catch(e => console.error(JSON.stringify({ evt: "trends_error", message: e.message })));
