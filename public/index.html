@@ -267,7 +267,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .gate .brand-t b{font-size:26px}
 .gate input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px}
 .install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.splash{position:fixed;inset:0;z-index:2000;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .35s ease,visibility .35s}
+.splash{position:fixed;inset:0;z-index:2000;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .5s ease,visibility .5s}
 .splash .logo{height:88px}
 .splash b{font:400 22px/1 var(--f-display);color:var(--fg);padding-top:14px;border-top:3px solid var(--hmg-cyan)}
 .splash.gone{opacity:0;visibility:hidden}
@@ -1156,9 +1156,9 @@ function applyConfig(c){
   if(c.email){$("#esc-send").hidden=false;$("#esc-how").innerHTML=`Tap <b>Send to Heat Merchants</b>. Or use <b>Open email</b> to send it from your own mail app.`;}
 }
 setUnit("J");
-/* Splash: logo while the app loads, at least half a second, never more than three. */
-(()=>{const t0=Date.now(),go=()=>setTimeout(()=>$("#splash").classList.add("gone"),Math.max(0,500-(Date.now()-t0)));
-  Promise.race([kbReady,new Promise(r=>setTimeout(r,3000))]).then(go);})();
+/* Splash: logo shows for about two seconds at launch (longer only if loading is slow, never more than four). */
+(()=>{const t0=Date.now(),go=()=>setTimeout(()=>$("#splash").classList.add("gone"),Math.max(0,1800-(Date.now()-t0)));
+  Promise.race([kbReady,new Promise(r=>setTimeout(r,4000))]).then(go);})();
 fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).then(c=>{
   applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(!store.get("hmg-code")?"":c.denied==="account_off"?GATE_NOTE.account_off:"That code no longer works. Ask Heat Merchants for a new one.");
 }).catch(()=>aiOff());
