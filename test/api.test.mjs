@@ -69,6 +69,8 @@ test("the HMG heating curve is in the rules, with the Baxi gradient and base wor
   assert.match(k, /steel radiators 45 °C flow at -3 °C outdoor, 35 °C at 15 °C outdoor/);
   assert.match(k, /takes the four points directly/);
   assert.match(b, /CP230 = 0\.6 with CP210 = 32 °C \(rads\) or 22 °C \(UFH\)/);
+  for (const t of [k, b]) assert.match(t, /maximum flow temperature 45 °C on radiators and 35 °C on underfloor/);
+  assert.match(b, /CP000 max flow = 45 °C \(rads\) or 35 °C \(UFH\)/);
 });
 
 test("a photo is sent as an image block", async () => {

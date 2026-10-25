@@ -664,7 +664,7 @@ function renderClear(){
 
 /* ---------- Heating curve (HMG weather compensation, Donal Reilly 25/10/2026) ---------- */
 /* Flow °C at -3 °C and 15 °C outdoor. Baxi values from CM070 = (CM190 − CM210) × CP230 + CP210, ASHP Control IM p.74, 20 °C room. */
-const WC={rad:{name:"Steel radiators",cold:45,mild:35,base:32},ufh:{name:"Underfloor heating",cold:35,mild:25,base:22}};
+const WC={rad:{name:"Steel radiators",cold:45,mild:35,base:32,max:45},ufh:{name:"Underfloor heating",cold:35,mild:25,base:22,max:35}};
 let wcE="rad";
 function wcFig(c){
   const X=t=>40+(t+10)*9, Y=f=>200-(f-20)*5;
@@ -680,31 +680,33 @@ function wcFig(c){
 function renderWC(){
   const box=$("#wc-body"),c=WC[wcE],u=UNITS[unit];
   const pick=`<div class="kw" id="wc-e">${Object.entries(WC).map(([k,v])=>`<button data-e="${k}" aria-pressed="${k===wcE}">${v.name}</button>`).join("")}</div>`;
-  const hmg=`<table class="cu"><thead><tr><th>HMG recommended</th><th>-3 °C outdoor</th><th>15 °C outdoor</th></tr></thead><tbody>
-      ${Object.entries(WC).map(([k,v])=>`<tr class="${k===wcE?"pick":""}"><td>${v.name}</td><td>${v.cold}°C</td><td>${v.mild}°C</td></tr>`).join("")}</tbody></table>`;
+  const hmg=`<table class="cu"><thead><tr><th>HMG recommended</th><th>-3 °C outdoor</th><th>15 °C outdoor</th><th>Max flow</th></tr></thead><tbody>
+      ${Object.entries(WC).map(([k,v])=>`<tr class="${k===wcE?"pick":""}"><td>${v.name}</td><td>${v.cold}°C</td><td>${v.mild}°C</td><td>${v.max}°C</td></tr>`).join("")}</tbody></table>`;
   let how;
   if(unit==="B"){
-    const at=t=>fmt((20-t)*0.6+c.base,1).replace(/\.0$/,"");
+    const at=t=>fmt(Math.min(c.max,(20-t)*0.6+c.base),1).replace(/\.0$/,"");
     how=`<div class="panel">
       <div class="src" style="font-weight:600">Set it on the Baxi ASHP Control</div>
       <p class="src" style="margin:0">The Baxi takes a gradient and a base, not two points. These settings match the HMG curve with a 20 °C room setpoint:</p>
-      <table class="cu"><tbody><tr class="pick"><td>Gradient CP230</td><td>0.6</td></tr><tr class="pick"><td>Base, comfort CP210</td><td>${c.base}°C</td></tr>
+      <table class="cu"><tbody><tr class="pick"><td>Gradient CP230</td><td>0.6</td></tr><tr class="pick"><td>Base, comfort CP210</td><td>${c.base}°C</td></tr><tr class="pick"><td>Max flow CP000</td><td>${c.max}°C</td></tr>
         <tr><td>Gives at -3 °C / 15 °C</td><td>${at(-3)}°C / ${at(15)}°C</td></tr></tbody></table>
       <ol class="sz-notes">
         <li>Press [Menu], go to Installer, enter code 0012.</li>
         <li>Installation setup › Zone1 (or Zone3) › Heat curve.</li>
         <li>Set Zone Heating Curve CP230 (Zone3 CP231) to <b>0.6</b>.</li>
         <li>Set Zone HCZP Comfort CP210 (Zone3 CP211) to <b>${c.base} °C</b>. Set CP220 the same if you don't want a lower curve in reduced (eco) periods.</li>
+        <li>Set MaxZoneTFlowSetpoint CP000 (Zone3 CP001) to <b>${c.max} °C</b>. Factory setting is 75 °C, so always change it.</li>
         <li>Check: Installer › Signals › Zone1 › Zone Tflow Setpoint CM070 should sit on the curve for today's outdoor temperature.</li>
       </ol>
       <ul class="sz-notes">
         <li>Needs an outdoor sensor, and Control strategy CP780 (Zone1 › General) on Automatic, Outdoor temp based, or Outdoor &amp; room based (IM p.63).</li>
         <li>Room setpoint moves the curve: each 1 °C above 20 °C adds about 0.6 °C of flow. For another room setpoint: CP210 = ${c.mild} − (room − 15) × 0.6.</li>
         <li>Baxi's own guide says radiators about 1.5 and UFH 0.4-0.7 (IM p.43). HMG's flatter radiator curve is because HMG designs rads for 45 °C max flow. Use the HMG figures.</li>
-        <li>0.6 is the nearest 0.1 step to the HMG slope (0.56), so at -3 °C it runs about 1 °C above the HMG figure.</li>
+        <li>0.6 is the nearest 0.1 step to the HMG slope (0.56). On its own it would give about ${c.cold+0.8} °C at -3 °C; CP000 caps it at ${c.max} °C.</li>
+        <li>On a single-circuit system you can also set the heat pump's Max CH flow setpoint AP063 (Heat Pump › General) to ${c.max} °C (IM p.56).</li>
       </ul>
       <div class="btnrow">${pageLink("B2",43)}${pageLink("B2",74)}</div>
-      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); Baxi ASHP Control IM pp.42-43, p.61, p.63, pp.73-75. Baxi settings worked out from the formula on p.74.</div>
+      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); Baxi ASHP Control IM pp.42-43, p.56, p.61, p.63, pp.73-75. Baxi settings worked out from the formula on p.74.</div>
     </div>`;
   }else{
     const pg=unit==="J"?[31,83]:[31];
@@ -719,6 +721,7 @@ function renderWC(){
         <li>Press [Operate] to start the unit again.</li>
       </ol>
       <ul class="sz-notes">
+        <li>The -3 °C point is the maximum flow: never above <b>${c.max} °C</b> on ${c.name.toLowerCase()}. The factory curve (55 °C at -5 °C) is over the HMG maximum, so always change it. The manuals on file have no separate max flow setting.</li>
         <li>Factory curve is -5 °C → 55 °C, 15 °C → 35 °C. Range: outdoor -20 to 15 °C, flow 20 to 60 °C${unit==="J"?" (SM p.32)":""}.</li>
         <li>2-zone system: enter the four points for Zone 1 and Zone 2 (e.g. rads on one, UFH on the other).</li>
         <li>With a room thermostat or thermistor the unit shifts the curve up or down as the room warms (${unit==="J"?"SM p.65":"IM p.14"}).</li>
@@ -728,7 +731,7 @@ function renderWC(){
     </div>`;
   }
   box.innerHTML=`<div class="panel">${pick}${wcFig(c)}${hmg}
-      <p class="src" style="margin:0">Same HMG curve for the J-series, K-series and Baxi HP55. These are starting points: fine-tune for the house a little at a time, and never go over the emitter or screed maker's maximum flow temperature.</p></div>
+      <p class="src" style="margin:0">Same HMG curve for the J-series, K-series and Baxi HP55. <b>Maximum flow on any heat pump: 45 °C radiators, 35 °C underfloor.</b> The curves are starting points: fine-tune for the house a little at a time, but never above the maximum.</p></div>
     ${how}<div class="btnrow"><button class="btn sec" id="wc-ask">Ask about this</button></div>`;
   box.querySelectorAll("#wc-e button").forEach(b=>b.onclick=()=>{wcE=b.dataset.e;renderWC();});
   $("#wc-ask").onclick=()=>{show("ask");ask(`How do I set the HMG heating curve for ${c.name.toLowerCase()} on the ${u.short}?`);};
