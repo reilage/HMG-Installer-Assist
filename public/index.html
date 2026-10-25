@@ -208,6 +208,22 @@ a.pg{color:var(--accent);font-weight:600;font-size:14px}
 .pt-tag.diff{background:var(--warn-soft)}
 .pt-none{color:var(--muted);font-style:italic}
 
+/* Component identifier (Install › Components) */
+.cp-draw{display:flex;flex-wrap:wrap;gap:8px}
+.cp-draw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font:600 14px var(--f-body);text-align:left}
+.cp-draw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+#cp-fig .wfig{margin:0}
+.cp{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
+.cp-top{display:flex;gap:10px;align-items:center}
+.cp-n{flex:none;min-width:30px;height:30px;padding:0 6px;box-sizing:border-box;border:2px solid var(--fg);border-radius:999px;display:grid;place-items:center;font:700 13px var(--f-mono)}
+.cp-n.lab{border-style:dashed;color:var(--muted);border-color:var(--muted)}
+.cp-name{font-weight:600;font-size:15.5px;line-height:1.3;min-width:0}
+.cp p{margin:0;font-size:14.5px;line-height:1.45}
+.cp-meta{display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
+.cp-meta button{border:0;background:none;padding:2px 0;color:var(--accent);font-weight:600;font-size:13.5px;text-align:left}
+.cp-meta button.code{font:700 13px var(--f-mono);padding:3px 9px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.cp-meta code{font:600 13.5px var(--f-mono);color:var(--fg)}
+
 /* Sizing */
 .sz-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sz-in label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
@@ -382,11 +398,12 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-size" hidden>
-  <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances, primary pipe sizing and the HMG heating curve for the selected unit.</p></div>
-  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="wc" aria-pressed="false">Heating curve</button></div>
+  <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances, primary pipe sizing, the HMG heating curve and what each component inside the unit is, for the selected unit.</p></div>
+  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="cp" aria-pressed="false">Components</button></div>
   <div id="cl-body"></div>
   <div id="size-body" hidden></div>
   <div id="wc-body" hidden></div>
+  <div id="cp-body" class="view" hidden></div>
 </section>
 
 <section class="view" id="v-esc" hidden>
@@ -438,7 +455,7 @@ let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=nu
 
 /* ---------- knowledge ---------- */
 /* knowledge.json here is the small part the screens need. The manual text stays on the server (api/ask). */
-const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();}).catch(()=>{
+const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}).catch(()=>{
   $("#codes").textContent="Could not load the manuals for this page.";});
 const STOP=new Set("the and for with what how does when this that from have are can not but you your its into then than there which where why why should would could after before about unit heat pump showing show shows check checks".split(" "));
 function toks(s){return (s.toLowerCase().match(/[a-z]\d\d\.\d{2,3}|[a-z]\d{2}|[a-z][a-z0-9\-]{2,}|\b[a-z][a-z0-9]\b|\d+(?:\.\d+)?/g)||[]).filter(w=>!STOP.has(w)&&(w.length!==2||/^\d/.test(w)||FCODES.B.has(w)));}
@@ -548,7 +565,7 @@ function renderWiring(){
   for(const w of ws) box.append(wireFig(w));
 }
 function addDiagrams(b,ids,q){
-  const all=[...wiringFor(unit),...(KB?.parts?.[unit]?.views||[])];
+  const all=[...wiringFor(unit),...(KB?.parts?.[unit]?.views||[]),...(KB?.components?.[unit]?.drawings||[])];
   let ws=ids.map(id=>all.find(w=>w.id===id)).filter(Boolean);
   if(!ws.length&&WIRE_Q.test(q)) ws=wiringMatch(q);
   for(const w of ws.slice(0,2)) b.append(wireFig(w));
@@ -584,7 +601,7 @@ function setUnit(u){
   unit=u;for(const k of ["J","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
   $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
-  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();}
+  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}
 }
 $("#u-J").onclick=()=>setUnit("J");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
 function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
@@ -685,7 +702,7 @@ const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
 document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{
   b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";$("#wc-body").hidden=b.dataset.s!=="wc";});
+  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";$("#wc-body").hidden=b.dataset.s!=="wc";$("#cp-body").hidden=b.dataset.s!=="cp";});
 function clFig(c,m){
   const lab=(k,x,y)=>{const bad=m&&m[k]>c[k];return `<text x="${x}" y="${y}" text-anchor="middle" class="${bad?"x":""}">${c[k]}${bad?" / "+m[k]:""}</text>`;};
   return `<svg class="cl-fig" viewBox="0 0 340 250" role="img" aria-label="Plan view of the outdoor unit with clearances">
@@ -745,6 +762,68 @@ function renderClear(){
   box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
   box.querySelectorAll("#cl-sz button").forEach(b=>b.onclick=()=>{clSize=b.dataset.s;renderClear();});
   $("#cl-ask").onclick=()=>{show("ask");ask(`What clearances do I need around the ${u.short} outdoor unit?`);};
+}
+
+/* ---------- Component identifier (catalogue in knowledge.json "components", from source/components.json) ---------- */
+/* Pick a drawing from the manual, then match the numbers on it to the list. Search covers every drawing for the unit. */
+let cpDraw={}, cpQuery="";
+const cpDrawings=()=>KB?.components?.[unit]?.drawings||[];
+function cpPart(ref){
+  const x=KB.parts?.[unit]?.parts.find(p=>p.ref===ref);if(!x) return "";
+  const same=x.part05===x.part07&&x.part07===x.part09;
+  return `<span>Part ${x.ref}: <code>${esc(same?x.part05:`05 ${x.part05||"n/a"} · 07 ${x.part07} · 09 ${x.part09}`)}</code></span>`;
+}
+function goFault(code){
+  if(unit==="B"){const f=KB.B.faults.find(x=>x.code===code);if(!f) return;openCode="o:"+f.code+"@"+f.tablePage;}else openCode=code;
+  $("#fq").value="";show("faults");renderFaults();$("#fault-detail").scrollIntoView({block:"start"});
+}
+function cpCard(c,here){
+  const D=Object.fromEntries(cpDrawings().map(d=>[d.id,d])), W=Object.fromEntries(wiringFor(unit).map(w=>[w.id,w]));
+  const at=here?c.at.find(a=>a[0]===here):c.at[0], n=at?at[1]:null;
+  const others=c.at.filter(a=>a!==at&&a[0]!==here);
+  const el=document.createElement("div");el.className="cp";
+  el.innerHTML=`<div class="cp-top"><span class="cp-n${n?"":" lab"}" aria-hidden="true">${n?esc(n):"•"}</span><div class="cp-name">${esc(c.name)}</div></div>
+    <p>${esc(c.does)}</p>
+    <div class="cp-meta">${(c.faults||[]).map(f=>`<button type="button" class="code" data-f="${esc(f)}">${esc(f)}</button>`).join("")}${(c.parts||[]).map(cpPart).join("")}</div>
+    <div class="cp-meta">${!here&&at?`<button type="button" data-d="${at[0]}">See it: ${esc(D[at[0]].tab)}${n?` no. ${esc(n)}`:""}</button>`:""}
+      ${others.map(a=>`<button type="button" data-d="${a[0]}">Also on: ${esc(D[a[0]].tab)}${a[1]?` no. ${esc(a[1])}`:""}</button>`).join("")}
+      ${(c.wiring||[]).filter(id=>W[id]).map(id=>`<button type="button" data-w="${id}">Wiring: ${esc(W[id].title)}</button>`).join("")}</div>
+    <div class="cp-meta"><span>Source: ${({J:"Panasonic J-series",K:"Panasonic K-series",B:"Baxi"})[unit]} ${esc(c.src)}</span><button type="button" data-ask>Ask about this</button></div>`;
+  el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>goFault(b.dataset.f));
+  el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{cpDraw[unit]=b.dataset.d;cpQuery="";renderComp();$("#cp-fig").scrollIntoView({block:"start"});});
+  el.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>openZoom(W[b.dataset.w]));
+  el.querySelector("[data-ask]").onclick=()=>{show("ask");ask(`On the ${UNITS[unit].short}, what does the ${c.name.toLowerCase()} do, and what should I check on it?`);};
+  return el;
+}
+function renderComp(){
+  const box=$("#cp-body");if(!box||!KB) return;
+  const C=KB.components?.[unit];
+  if(!C){box.innerHTML=`<div class="notice">There's no component drawing on file for the ${esc(UNITS[unit].short)} yet.</div>`;return;}
+  if(!C.drawings.some(d=>d.id===cpDraw[unit])) cpDraw[unit]=C.drawings[0].id;
+  box.innerHTML=`<p class="src" style="margin:0">Labelled drawings from the ${unit==="B"?"Baxi manuals":"Panasonic manual"}. Pick a drawing, tap it to enlarge, and match the numbers to the list. Or search for a part or fault code.</p>
+    <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",K:"flow sensor, expansion vessel, 3-way",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
+    <div class="cp-draw" id="cp-draw" role="group" aria-label="Drawing">${C.drawings.map(d=>`<button type="button" data-d="${d.id}" aria-pressed="${d.id===cpDraw[unit]}">${esc(d.tab)}</button>`).join("")}</div>
+    <div id="cp-fig"></div><div class="view" id="cp-list"></div>
+    ${C.note?`<div class="notice">${esc(C.note)}</div>`:""}
+    <p class="src" style="margin:0">The "what it does" lines are a plain-words summary of the manual pages given on each card. Part numbers are from the 2020 parts list: confirm with the supplier when ordering.</p>`;
+  box.querySelectorAll("#cp-draw button").forEach(b=>b.onclick=()=>{cpDraw[unit]=b.dataset.d;cpQuery="";renderComp();});
+  $("#cpq").oninput=e=>{cpQuery=e.target.value;listComp();};
+  listComp();
+}
+function listComp(){
+  const C=KB.components[unit], q=cpQuery.toLowerCase().trim(), ws=q.split(/\s+/).filter(Boolean), list=$("#cp-list"), fig=$("#cp-fig");
+  list.innerHTML="";fig.innerHTML="";$("#cp-draw").hidden=!!ws.length;
+  if(ws.length){
+    const hits=C.components.filter(c=>{const hay=`${c.name} ${c.does} ${(c.faults||[]).join(" ")} ${c.at.map(a=>a[1]||"").join(" ")}`.toLowerCase();return ws.every(w=>hay.includes(w));});
+    if(!hits.length) list.innerHTML=`<p class="src">Nothing matches “${esc(cpQuery)}”. Try another word, e.g. pump, sensor or valve.</p>`;
+    for(const c of hits) list.append(cpCard(c,null));
+    return;
+  }
+  const d=C.drawings.find(x=>x.id===cpDraw[unit]);
+  fig.append(wireFig(d));
+  const on=C.components.filter(c=>c.at.some(a=>a[0]===d.id));
+  const num=c=>{const v=c.at.find(a=>a[0]===d.id)[1];return v==null?1e9:(parseFloat(v)||(v.charCodeAt(0)+1000))+(/-\d$/.test(v)?+v.slice(-1)/10:0);};
+  for(const c of on.sort((a,b)=>num(a)-num(b))) list.append(cpCard(c,d.id));
 }
 
 /* ---------- Heating curve (HMG weather compensation, Donal Reilly 25/10/2026) ---------- */

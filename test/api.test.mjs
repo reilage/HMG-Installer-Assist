@@ -98,6 +98,16 @@ test("the J-series parts list is in the J rules only, with the part number per m
   for (const t of [k, b]) { assert.doesNotMatch(t, /J-SERIES PARTS LIST/); assert.match(t, /no parts list on file/); }
 });
 
+test("each unit's rules list only its own components, with drawing numbers and fault codes", async () => {
+  mock.seen.length = 0;
+  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "What is the valve on top of the unit?" }));
+  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(j, /^j-comp-main no\.8, j-comp-cycle \(labelled\) \| Flow sensor \(water flow switch\) \| .* \| codes H62 \| SM p\.37, p\.140$/m);
+  assert.match(k, /^k-comp-main no\.13 \| Expansion vessel \| .*10 L/m);
+  assert.match(b, /^b-comp-hydro-small no\.7, b-comp-hydro-large no\.7, b-comp-refrigerant no\.23 \| Flow switch \| .* \| codes E0 E8 PF \|/m);
+  assert.doesNotMatch(j, /k-comp-main|b-comp-/); assert.doesNotMatch(k, /j-comp-|b-comp-/); assert.doesNotMatch(b, /j-comp-|k-comp-main/);
+});
+
 test("a photo is sent as an image block", async () => {
   mock.seen.length = 0;
   await events(await ask({ unit: "K", text: "", image: { media_type: "image/jpeg", data: "/9j/4AAQ" } }));
@@ -132,6 +142,11 @@ test("static files are served", async () => {
   assert.equal(k.faults.length, 52);
   assert.equal(k.parts.J.parts.length, 100);
   for (const v of k.parts.J.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);
+  for (const u of ["J", "K", "B"]) {
+    const C = k.components[u], ids = new Set(C.drawings.map(d => d.id));
+    for (const d of C.drawings) assert.equal((await fetch(BASE + "/" + d.file)).status, 200, d.file);
+    for (const c of C.components) for (const [d] of c.at) assert.ok(ids.has(d), `${u} ${c.name}: ${d}`);
+  }
 });
 
 test("access code, fallback reset and missing key", async () => {

@@ -90,6 +90,11 @@ const commFile = read("hmg-commissioning-panasonic.md");
 const jparts = JSON.parse(read("j-series-parts.json"));
 const parts = { J: { views: jparts.views.map(v => ({ ...v, unit: "J", key: "J" })), parts: jparts.parts } };
 
+// Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
+// Drawings get unit so the app can show them like the wiring diagrams.
+const { _about, ...compSrc } = JSON.parse(read("components.json"));
+const components = Object.fromEntries(Object.entries(compSrc).map(([u, c]) => [u, { ...c, drawings: c.drawings.map(d => ({ ...d, unit: u })) }]));
+
 // Commissioning tick list: "# Part A" = J-series, "# Part B" = K-series; "## " stages; each "- **Step.** text" is one tick box.
 // "HMG TO CONFIRM" marks a setting HMG hasn't given a value for yet.
 const commPart = l => commFile.split(/^(?=# Part [AB]\b)/m).find(t => t.startsWith("# Part " + l)).replace(/\n---\s*$/, "").trim();
@@ -130,16 +135,17 @@ const full = {
   K: { ...TITLES.K, pages: K },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, parts,
+  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, parts, components,
 };
 const lite = {
   J: TITLES.J, K: TITLES.K, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, fieldNoteList: fnotes, faults, parts,
+  nav, wiring, commissioning, fieldNoteList: fnotes, faults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
 console.log(`Built knowledge: J ${Object.keys(J).length} pages, K ${Object.keys(K).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
   `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ` +
+  `components J ${components.J.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
   `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, K ${commissioning.K.flatMap(s => s.steps).length}.`);

@@ -6,7 +6,7 @@ The Heat Merchants technical assistant for heat pump installers, as a web app th
 - **Fault codes**: Panasonic J-series (52 codes) and Baxi HP55 (controller and outdoor unit codes), with HMG field notes on the cards.
 - **Controller**: menu paths and button-by-button steps, plus **Commissioning**: the HMG step-by-step commissioning checklist for the Panasonic J-series and K-series, ticked off on site.
 - **Manuals**: the original PDFs, 38 wiring and PCB diagrams, and **Spare parts** for the Panasonic J-series: the service manual's 4 exploded views and parts list (100 parts), searchable by name, ref number or part number, with the part number for the 5, 7 or 9 kW model. Ask gives part numbers too.
-- **Install**: outdoor unit clearances (HMG figures) and primary pipe sizing (Panasonic only).
+- **Install**: outdoor unit clearances (HMG figures), primary pipe sizing (Panasonic only), the HMG heating curve, and **Components**: labelled drawings from the manuals of what's inside each unit (J-series main components and refrigerant/water cycle, K-series tank unit, Baxi HP55 outdoor unit, hydraulic module, refrigerant circuit and indoor control unit). Each numbered part says what it does, with its fault codes (tap to open the fault card), J-series part number and wiring diagram. Ask knows them too and shows the drawing.
 - **Escalate**: builds the escalation to Technical Support, filled in from the chat.
 
 A switch at the top keeps the Panasonic J-series, K-series and Baxi HP55 separate.
@@ -49,6 +49,7 @@ Everything the assistant knows is in `source/`:
 | `source/j-series-faults.json` | J-series error codes table (SM pp.164-165) |
 | `source/wiring-index.json` | Catalogue of the diagrams in `public/wiring/` |
 | `source/j-series-parts.json` | J-series spare parts (SM pp.237-246): one line per part, with the part number for each model. Correct a superseded number here. Exploded view images are in `public/parts/`. |
+| `source/components.json` | Component identifier (Install › Components): the drawings (images in `public/components/`) and, for each component, its number on the drawing, what it does, fault codes, J-series parts list refs, wiring diagrams and manual pages. Edit a description or add a fault code here. To use your own photo instead of a manual drawing, put the image in `public/components/` and change the drawing's `file`, `w` and `h`. |
 
 Edit a file on GitHub and commit: Vercel rebuilds and the app updates within a minute or two. The answer rules themselves are in `lib/prompt.js`, and the screens are `public/index.html`.
 
