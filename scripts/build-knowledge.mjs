@@ -85,6 +85,11 @@ const weatherComp = read("hmg-weather-compensation.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");
 
+// J-series spare parts (SM section 22, pp.237-246): one entry per ref number, with the part number for each model
+// and the exploded views it's drawn in. The views get unit/key so the app can show them like the wiring diagrams.
+const jparts = JSON.parse(read("j-series-parts.json"));
+const parts = { J: { views: jparts.views.map(v => ({ ...v, unit: "J", key: "J" })), parts: jparts.parts } };
+
 // Commissioning tick list: "# Part A" = J-series, "# Part B" = K-series; "## " stages; each "- **Step.** text" is one tick box.
 // "HMG TO CONFIRM" marks a setting HMG hasn't given a value for yet.
 const commPart = l => commFile.split(/^(?=# Part [AB]\b)/m).find(t => t.startsWith("# Part " + l)).replace(/\n---\s*$/, "").trim();
@@ -125,16 +130,16 @@ const full = {
   K: { ...TITLES.K, pages: K },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults,
+  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, parts,
 };
 const lite = {
   J: TITLES.J, K: TITLES.K, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, fieldNoteList: fnotes, faults,
+  nav, wiring, commissioning, fieldNoteList: fnotes, faults, parts,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
 console.log(`Built knowledge: J ${Object.keys(J).length} pages, K ${Object.keys(K).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
-  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ` +
+  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ` +
   `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, K ${commissioning.K.flatMap(s => s.steps).length}.`);
