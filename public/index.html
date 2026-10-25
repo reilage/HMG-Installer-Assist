@@ -1140,23 +1140,36 @@ function pickVoice(){
     if(v.length) return v.find(v=>/enhanced|premium|natural|neural/i.test(v.name))||v.find(v=>v.localService)||v[0];}
   return vs.find(v=>/^en.gb/i.test(v.lang))||vs[0]||null;
 }
-/* iPhones only speak after a tap, so say nothing once while the mic tap is still the current gesture. */
-function unlockSpeech(){try{if(synth&&!synth.speaking){const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}}catch{}}
-let speakingBtn=null;
-function stopSpeaking(){if(synth&&(synth.speaking||synth.pending)) synth.cancel();if(speakingBtn){speakingBtn.textContent="Read aloud again";speakingBtn=null;}}
+/* iPhones only speak after a tap, so say nothing once while the mic tap is still the current gesture. Only on iPhone/iPad:
+   on Android that silent line can leave Chrome's speech stuck. */
+const IOS=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+function unlockSpeech(){try{if(IOS&&synth&&!synth.speaking){const u=new SpeechSynthesisUtterance(" ");u.volume=0;synth.speak(u);}}catch{}}
+let speakingBtn=null,utters=[];
+function stopSpeaking(){if(synth&&(synth.speaking||synth.pending)) synth.cancel();utters=[];if(speakingBtn){speakingBtn.textContent="Read aloud again";speakingBtn=null;}}
+/* Chrome drops speech queued straight after a cancel and can sit paused, so it waits a moment and resumes first. If reading
+   still hasn't started after a few seconds, the button asks for a tap, which phones always allow. */
 function speak(text,btn){
   stopSpeaking();
   if(!synth||!window.SpeechSynthesisUtterance){btn.remove();voiceNote("This browser can't read answers aloud. The answer is on screen.");return;}
   const parts=speechChunks(speechText(text));if(!parts.length) return;
-  const v=pickVoice();speakingBtn=btn;btn.textContent="Stop reading";
-  parts.forEach((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang=v?.lang||"en-GB";if(v) u.voice=v;u.rate=1;
-    if(i===parts.length-1) u.onend=()=>{if(speakingBtn===btn) stopSpeaking();};
-    u.onerror=e=>{if(e.error!=="canceled"&&e.error!=="interrupted"&&speakingBtn===btn){stopSpeaking();voiceNote("The answer couldn't be read aloud. It's on screen.");}};
-    synth.speak(u);});
+  speakingBtn=btn;btn.textContent="Stop reading";
+  setTimeout(()=>{
+    if(speakingBtn!==btn) return;
+    const v=pickVoice();let started=false;
+    try{synth.resume();}catch{}
+    utters=parts.map((p,i)=>{const u=new SpeechSynthesisUtterance(p);u.lang=v?.lang?.replace("_","-")||"en-GB";if(v) u.voice=v;u.rate=1;
+      u.onstart=()=>{started=true;};
+      if(i===parts.length-1) u.onend=()=>{if(speakingBtn===btn) stopSpeaking();};
+      u.onerror=e=>{if(e.error!=="canceled"&&e.error!=="interrupted"&&speakingBtn===btn) notStarted(btn);};
+      return u;});
+    for(const u of utters) synth.speak(u);
+    setTimeout(()=>{if(speakingBtn===btn&&!started&&!synth.speaking) notStarted(btn);},3000);
+  },250);
 }
+function notStarted(btn){stopSpeaking();btn.textContent="Tap to hear the answer";voiceNote("The phone didn't start reading the answer. Tap “Tap to hear the answer”.");}
 function addReadAloud(b,text){
   const a=document.createElement("div");a.className="msg-actions";
-  const r=document.createElement("button");r.className="ghost";r.textContent="Read aloud";r.onclick=()=>speakingBtn===r?stopSpeaking():speak(text,r);
+  const r=document.createElement("button");r.className="ghost";r.textContent="Read aloud";r.onclick=()=>{voiceNote("");speakingBtn===r?stopSpeaking():speak(text,r);};
   a.append(r);b.append(a);speak(text,r);
 }
 synth?.getVoices(); // starts loading the voices list in Chrome
