@@ -2,7 +2,7 @@
   "name": "hmg-installer-assist",
   "version": "1.0.0",
   "private": true,
-  "description": "HMG Site Assist: Heat Merchants technical assistant web app for installers",
+  "description": "HMG Installer Assistant: Heat Merchants technical assistant web app for installers",
   "type": "module",
   "scripts": {
     "build": "node scripts/build-knowledge.mjs",

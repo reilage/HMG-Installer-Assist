@@ -1,4 +1,4 @@
-# HMG Site Assist
+# HMG Installer Assistant
 
 The Heat Merchants technical assistant for heat pump installers, as a web app that works on any phone and can be added to the home screen like an app. It has the same screens as the demo:
 
@@ -26,7 +26,7 @@ A switch at the top keeps the Panasonic J-series, K-series and Baxi HP55 separat
 Until this is set up, Escalate opens the installer's own email app with everything filled in (as in the demo). To have the app send it directly, with a copy to the installer:
 
 1. Create an account at https://resend.com and verify the `heatmerchants.ie` domain (your IT person adds a few DNS records).
-2. Add to Vercel: `RESEND_API_KEY`, and `ESCALATION_FROM` (for example `Site Assist <siteassist@heatmerchants.ie>`). Optionally `ESCALATION_TO` if escalations should go somewhere other than donal.reilly@heatmerchants.ie.
+2. Add to Vercel: `RESEND_API_KEY`, and `ESCALATION_FROM` (for example `HMG Installer Assistant <siteassist@heatmerchants.ie>`). Optionally `ESCALATION_TO` if escalations should go somewhere other than donal.reilly@heatmerchants.ie.
 
 ## Running costs
 

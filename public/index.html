@@ -3,42 +3,45 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>HMG Site Assist</title>
+<title>HMG Installer Assistant</title>
 <meta name="description" content="Heat Merchants technical assistant for heat pump installers.">
-<meta name="theme-color" content="#0b6e74">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#212427" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Site Assist">
+<meta name="apple-mobile-web-app-title" content="HMG Assist">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* Layout: one-screen phone app. Sticky header with unit switch, scrolling view, fixed bottom tab bar. */
 :root{
-  --bg:#eef2f3; --surface:#ffffff; --sunk:#e2e8ea; --line:#c9d3d6;
-  --fg:#16232a; --muted:#56666d;
-  --accent:#0b6e74; --accent-fg:#ffffff; --accent-soft:#d5ecec;
+  /* Heat Merchants Group brand: charcoal #53565A and cyan #00A9E0 (from the logo). --accent is a deeper cyan so text and white-on-cyan buttons stay readable outdoors. */
+  --hmg-grey:#53565a; --hmg-cyan:#00a9e0; --picked:#53565a;
+  --bg:#f3f4f5; --surface:#ffffff; --sunk:#e8eaeb; --line:#d3d6d8;
+  --fg:#26292c; --muted:#5f6367;
+  --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
   --warn:#a85b00; --warn-soft:#fbecd6; --bad:#b42318; --bad-soft:#fbe1de;
-  --bubble:#0b6e74; --bubble-fg:#ffffff;
-  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --bubble:#53565a; --bubble-fg:#ffffff;
+  --f-display:"Bree Serif",Georgia,serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f171a; --surface:#172227; --sunk:#1f2d33; --line:#2c3d44;
-  --fg:#e3ecee; --muted:#93a6ad;
-  --accent:#4cc1c3; --accent-fg:#06282a; --accent-soft:#163a3d;
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44;
+  --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#1d5e62; --bubble-fg:#eaf7f7; color-scheme:dark}}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0f171a; --surface:#172227; --sunk:#1f2d33; --line:#2c3d44;
-  --fg:#e3ecee; --muted:#93a6ad;
-  --accent:#4cc1c3; --accent-fg:#06282a; --accent-soft:#163a3d;
+  --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44;
+  --fg:#eceeef; --muted:#a2a7ac;
+  --accent:#33bdec; --accent-fg:#04222e; --accent-soft:#12313d;
   --warn:#f0a845; --warn-soft:#3a2a12; --bad:#ff8a7a; --bad-soft:#3d1c18;
-  --bubble:#1d5e62; --bubble-fg:#eaf7f7; color-scheme:dark}
+  --bubble:#4a4e53; --bubble-fg:#ffffff; --picked:#6b7076; color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
 body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);display:flex;flex-direction:column}
@@ -49,28 +52,35 @@ button{cursor:pointer}
 .gut{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 .wrap{max-width:720px;margin:0 auto;width:100%}
 
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
-header .wrap{display:flex;align-items:center;gap:12px;padding-block:10px;flex-wrap:wrap}
-.brand{display:flex;flex-direction:column;line-height:1.05;margin-right:auto}
-.brand b{font:700 22px/1 var(--f-display);letter-spacing:.02em;text-transform:uppercase}
-.brand span{font-size:12.5px;color:var(--muted)}
-.unit{display:flex;background:var(--sunk);border-radius:8px;padding:3px}
-.unit button{border:0;background:none;padding:6px 10px;border-radius:6px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap}
-.unit button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--surface);border-bottom:3px solid var(--hmg-cyan);box-shadow:0 1px 6px rgba(0,0,0,.06)}
+header .wrap{display:flex;align-items:center;gap:10px 14px;padding-block:10px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;margin-right:auto;min-width:0}
+.logo{display:block;height:44px;width:auto;flex:none}
+.logo.on-dark{display:none}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .logo.on-light{display:none}:root:not([data-theme="light"]) .logo.on-dark{display:block}}
+:root[data-theme="dark"] .logo.on-light{display:none}:root[data-theme="dark"] .logo.on-dark{display:block}
+.brand-t{display:flex;flex-direction:column;gap:3px;padding-left:12px;border-left:1px solid var(--line);line-height:1.1;min-width:0}
+.brand-t b{font:400 19px/1.05 var(--f-display);color:var(--fg)}
+.brand-t span{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.unit{display:flex;background:var(--sunk);border-radius:10px;padding:3px}
+.unit button{border:0;background:none;padding:7px 10px;border-radius:8px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap}
+.unit button[aria-pressed="true"]{background:var(--picked);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
 
 main{flex:1;min-height:0;overflow-y:auto}
 main .wrap{padding-block:16px 24px}
 .view{display:flex;flex-direction:column;gap:14px}
-h2{font:700 24px/1.1 var(--f-display);text-transform:uppercase;letter-spacing:.02em;margin:0;text-wrap:balance}
+h2{font:400 25px/1.15 var(--f-display);margin:0 0 2px;text-wrap:balance}
+h2::after{content:"";display:block;width:32px;height:3px;border-radius:2px;background:var(--hmg-cyan);margin-top:6px}
 .lede{color:var(--muted);margin:0;font-size:15px}
 .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
 .chip.warn{background:var(--warn-soft);color:var(--warn)}
 
 nav.tabs{background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav.tabs .wrap{display:grid;grid-template-columns:repeat(6,1fr)}
-nav.tabs button{border:0;background:none;padding:8px 2px 10px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
+nav.tabs button{position:relative;border:0;background:none;padding:9px 2px 10px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12.5px;font-weight:600;color:var(--muted)}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button[aria-selected="true"]{color:var(--accent)}
+nav.tabs button[aria-selected="true"]::before{content:"";position:absolute;top:-1px;left:22%;right:22%;height:3px;border-radius:0 0 3px 3px;background:var(--hmg-cyan)}
 
 /* Ask */
 #log{display:flex;flex-direction:column;gap:12px}
@@ -112,6 +122,7 @@ nav.tabs button[aria-selected="true"]{color:var(--accent)}
 .kv dt{color:var(--muted)}.kv dd{margin:0}
 .kv ul{margin:0;padding-left:18px}
 .btn{border:0;border-radius:10px;padding:11px 16px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
+.btn:active{filter:brightness(.92)}
 .btn.sec{background:var(--sunk);color:var(--fg)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .src{font-size:13px;color:var(--muted)}
@@ -122,7 +133,7 @@ nav.tabs button[aria-selected="true"]{color:var(--accent)}
 .path{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
 .keys{font-family:var(--f-mono);font-size:13.5px}
 .task details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
-.group-h{font:700 15px/1 var(--f-display);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+.group-h{font:600 13px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:6px}
 
 /* Manuals */
 .doc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
@@ -176,7 +187,8 @@ form input,form textarea{border:1px solid var(--line);background:var(--surface);
 form textarea{min-height:76px;resize:vertical}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
-@media (max-width:460px){form{grid-template-columns:1fr}.unit button{padding:6px 8px}}
+@media (max-width:520px){form{grid-template-columns:1fr}.unit{flex:1 1 100%}.unit button{flex:1;padding:7px 6px}}
+@media (max-width:360px){.logo{height:38px}.brand-t b{font-size:17px}}
 @media (prefers-reduced-motion:no-preference){.msg{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px);opacity:.6}}}
 .wfig{margin:10px 0 0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
 .wfig button{display:block;width:100%;padding:0;border:0;background:#fff;cursor:zoom-in}
@@ -196,6 +208,10 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .zoom.big .pane img{width:auto;max-width:none}
 .gate{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
 .gate form{max-width:360px;width:100%;display:flex;flex-direction:column;gap:12px}
+.gate .brand{flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 6px}
+.gate .logo{height:88px}
+.gate .brand-t{border-left:0;padding-left:0;border-top:3px solid var(--hmg-cyan);padding-top:10px}
+.gate .brand-t b{font-size:26px}
 .gate input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px}
 .install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .disclaimer{font-size:12.5px;color:var(--muted);margin:0}
@@ -204,7 +220,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 <body>
 
 <div class="gate" id="gate" hidden><form id="gate-f">
-  <div class="brand"><b>HMG Site Assist</b><span>Heat Merchants technical support</span></div>
+  <div class="brand"><img class="logo on-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div class="brand-t"><b>Installer Assistant</b><span>Technical support</span></div></div>
   <p class="lede" style="margin:0">Enter the access code from Heat Merchants. You only need to do this once on this phone.</p>
   <input id="gate-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Access code" aria-label="Access code">
   <button class="btn" type="submit">Continue</button>
@@ -212,7 +228,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </form></div>
 
 <header class="gut"><div class="wrap">
-  <div class="brand"><b>HMG Site Assist</b><span>Heat Merchants technical support</span></div>
+  <div class="brand"><img class="logo on-light" src="brand/hmg-logo.png" alt="Heat Merchants Group" width="74" height="44"><img class="logo on-dark" src="brand/hmg-logo-light.png" alt="Heat Merchants Group" width="74" height="44"><div class="brand-t"><b>Installer Assistant</b><span>Technical support</span></div></div>
   <div class="unit" role="group" aria-label="Heat pump model">
     <button id="u-J" aria-pressed="true" title="Panasonic J-series Mini Monobloc R32">J-series</button>
     <button id="u-K" aria-pressed="false" title="Panasonic K-series split Hydromodule + Tank">K-series</button>
@@ -229,7 +245,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
     <p class="disclaimer">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site.</p>
   </div>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
-  <div class="panel install" id="install" hidden><span id="install-t">Add Site Assist to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
+  <div class="panel install" id="install" hidden><span id="install-t">Add HMG Installer Assistant to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
   <div class="suggest" id="suggest"></div>
   <div id="log" aria-live="polite"></div>
   <div class="composer">
@@ -901,7 +917,7 @@ if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWo
   $("#install-x").onclick=()=>{box.hidden=true;store.set("hmg-install-x","1");};
   addEventListener("beforeinstallprompt",e=>{e.preventDefault();ev=e;$("#install-go").hidden=false;box.hidden=false;});
   $("#install-go").onclick=async()=>{if(!ev) return;ev.prompt();await ev.userChoice.catch(()=>{});box.hidden=true;};
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){$("#install-t").innerHTML="Add Site Assist to your home screen: tap <b>Share</b>, then <b>Add to Home Screen</b>.";box.hidden=false;}
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)){$("#install-t").innerHTML="Add HMG Installer Assistant to your home screen: tap <b>Share</b>, then <b>Add to Home Screen</b>.";box.hidden=false;}
 })();
 </script>
 </body>
