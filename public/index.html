@@ -461,7 +461,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 const $=s=>document.querySelector(s);
 let ESC_TO="donal.reilly@heatmerchants.ie";
 const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc",pill:"J-series"},
-             K:{name:"Panasonic K-series split Hydromodule + Tank (tank unit WH-ADC0309K3E5/K6E5/K0E5A, outdoor WH-UDZ03/05/07/09KE5)",short:"K-series split",pill:"K-series"},
+             K:{name:"Panasonic K-series split Hydromodule + Tank (tank unit WH-ADC0309K3E5/K6E5, outdoor WH-UDZ03/05/07/09KE5)",short:"K-series split",pill:"K-series"},
              B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55",pill:"Baxi HP55"}};
 let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=null;
 
@@ -682,7 +682,7 @@ function renderDocs(){
   }
   if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
   if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
-  if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" The service manual covers the outdoor units with the WH-ADC0309K0E5A tank unit; the installation manual covers the K3E5/K6E5 tank units.":"");box.append(g);}
+  if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" Use the service manual for the outdoor unit and fault codes; its tank unit pages are for the WH-ADC0309K0E5A, so use the installation manual for the K3E5/K6E5 tank unit.":"");box.append(g);}
 }
 
 /* ---------- Spare parts (catalogue in knowledge.json "parts", from source/j-series-parts.json and source/k-series-parts.json) ---------- */
@@ -692,9 +692,9 @@ const PTEXT={
   J:{lede:"Exploded views and the replacement parts list from the J-series service manual (pp.237-246). Pick the model from the rating label, then search by part name, ref number or part number.",
      eg:"pump, PCB, 58, ACXB53",
      note:"From the 2020 service manual (Order No PAPAMY2003034CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts."},
-  K:{lede:"Exploded views and the replacement parts lists from the K-series service manual (pp.289-306). Pick the outdoor unit size from its rating label, or the tank unit, then search by part name, ref number or part number.",
+  K:{lede:"Outdoor unit exploded views and replacement parts lists from the K-series service manual (pp.299-306). Pick the size from the outdoor unit's rating label, then search by part name, ref number or part number.",
      eg:"fan motor, PCB, 37, sensor",
-     note:"From the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing."}};
+     note:"From the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing. No parts list on file for the K3E5/K6E5 tank unit: the service manual's tank unit list is for a different model (K0E5A)."}};
 const pModel={J:store.get("hmg-parts-model")||"05",K:store.get("hmg-parts-model-K")||"05"};
 let pQuery="";
 function renderParts(){
@@ -735,7 +735,7 @@ function listParts(){
   for(const x of list){
     const no=x.no[m], qty=x.qtyBy?x.qtyBy[m]:x.qty;
     const nos=Object.values(x.no), diff=nos.some(v=>v!==nos[0]);
-    const vlab=v=>/^Outdoor unit/.test(v.title)?"exploded view":v.title.split(":")[0].replace("Exploded view","view").replace("Tank unit view","view");
+    const vlab=v=>/^Outdoor unit/.test(v.title)?"exploded view":v.title.split(":")[0].replace("Exploded view","view");
     const el=document.createElement("div");el.className="pt";
     el.innerHTML=`<div class="pt-top"><span class="pt-ref">${x.ref}</span><div><div class="pt-name">${esc(x.name)}</div>${x.aka?`<div class="pt-aka">${esc(x.aka)}</div>`:""}</div></div>
       <div class="pt-no">${no?`<code>${esc(no)}</code><button type="button" data-copy="${esc(no)}">Copy</button>`:`<span class="pt-none">Not fitted on the ${esc(M.model)}</span>`}</div>
@@ -827,7 +827,7 @@ function cpPart(ref){
   const [l,r]=typeof ref==="string"?ref.split(":"):[null,ref];
   const x=KB.parts?.[unit]?.parts.find(p=>p.ref===+r&&(!l||p.list===l));if(!x) return "";
   const ms=Object.keys(x.no), same=ms.every(m=>x.no[m]===x.no[ms[0]]);
-  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":l==="in"?" (tank unit)":"";
+  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":"";
   return `<span>Part ${x.ref}${who}: <code>${esc(same?x.no[ms[0]]:ms.map(m=>`${m} ${x.no[m]||"n/a"}`).join(" · "))}</code></span>`;
 }
 function goFault(code){
