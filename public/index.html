@@ -269,13 +269,13 @@ table.cu+table.cu{margin-top:8px}
 .seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start;flex-wrap:wrap;max-width:100%}
 .seg button{border:0;background:none;padding:7px 14px;border-radius:6px;font-size:14.5px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
-/* Install topics: blue buttons with white dividers, like the bottom menu. */
-#install-seg{display:flex;flex-wrap:nowrap;align-self:stretch;background:var(--hmg-cyan);border-radius:10px;padding:0;overflow:hidden;box-shadow:var(--shadow)}
-#install-seg button{flex:1 1 0;min-width:0;border-radius:0;padding:11px 2px;font-size:12.5px;line-height:1.2;color:#fff;text-align:center}
-#install-seg button+button{border-left:1px solid rgba(255,255,255,.55)}
-#install-seg button:active{background:rgba(0,0,0,.12)}
-#install-seg button[aria-pressed="true"]{background:var(--hmg-grey);color:#fff;box-shadow:none}
-#install-seg :focus-visible{outline:2px solid #fff;outline-offset:-4px}
+/* Install and Controller topics: blue buttons with white dividers, like the bottom menu. */
+.seg.blue{display:flex;flex-wrap:nowrap;align-self:stretch;background:var(--hmg-cyan);border-radius:10px;padding:0;overflow:hidden;box-shadow:var(--shadow)}
+.seg.blue button{flex:1 1 0;min-width:0;border-radius:0;padding:11px 2px;font-size:12.5px;line-height:1.2;color:#fff;text-align:center}
+.seg.blue button+button{border-left:1px solid rgba(255,255,255,.55)}
+.seg.blue button:active{background:rgba(0,0,0,.12)}
+.seg.blue button[aria-pressed="true"]{background:var(--hmg-grey);color:#fff;box-shadow:none}
+.seg.blue :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .cl-fig{width:100%;max-width:360px;height:auto;align-self:center}
 .cl-fig .u{fill:var(--sunk);stroke:var(--fg);stroke-width:1.5}
 .cl-fig .w{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
@@ -424,7 +424,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <section class="view" id="v-ctrl" hidden>
   <div><h2>Controller</h2><p class="lede" id="ctrl-lede">Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.</p></div>
-  <div class="seg" role="group" aria-label="Controller topic"><button data-c="set" aria-pressed="true">Settings</button><button data-c="comm" aria-pressed="false">Commissioning</button></div>
+  <div class="seg blue" role="group" aria-label="Controller topic"><button data-c="set" aria-pressed="true">Settings</button><button data-c="comm" aria-pressed="false">Commissioning</button></div>
   <div class="view" id="ctrl-set">
     <input class="search" id="cq" placeholder="Find a setting, e.g. thermostat, flow rate" autocomplete="off">
     <div class="view" id="tasks"></div>
@@ -443,7 +443,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <section class="view" id="v-size" hidden>
   <div><h2>Install</h2><p class="lede" id="size-lede">What each component inside the unit is, primary pipe sizing, outdoor unit clearances and the HMG heating curve, for the selected unit.</p></div>
-  <div class="seg" id="install-seg" role="group" aria-label="Install topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button></div>
+  <div class="seg blue" id="install-seg" role="group" aria-label="Install topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button></div>
   <div id="cl-body" hidden></div>
   <div id="ez-body" hidden></div>
   <div id="size-body" hidden></div>
