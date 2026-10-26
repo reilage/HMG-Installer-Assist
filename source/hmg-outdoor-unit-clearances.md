@@ -15,7 +15,7 @@ Minimum clear space from the outdoor unit to a wall, fence or other obstacle. Le
 | Panasonic K-series split outdoor unit (WH-UDZ03/05/07/09KE5) | 100 mm | 300 mm | 100 mm | 1000 mm |
 | Panasonic J-series T-Cap monobloc R32 (WH-MXC09J3E5 / WH-MXC12J6E5) | 300 mm | 300 mm | 100 mm | 1000 mm |
 
-The J-series T-Cap row is from the T-Cap service manual (p.49), which gives the same figures as HMG's J-series row. Added 26/10/2026; HMG to confirm these are HMG's T-Cap figures.
+The J-series T-Cap row is from the T-Cap service manual (p.49), which gives the same figures as HMG's J-series row. HMG confirmed these as HMG's T-Cap figures, the same as the J-series (Donal Reilly 26/10/2026).
 
 ---
 
