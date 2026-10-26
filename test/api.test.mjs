@@ -337,6 +337,10 @@ test("each phone gets its daily question limit", async () => {
   assert.equal(r.status, 429); assert.deepEqual(await r.json(), { error: "daily_limit", limit: 2 });
   assert.equal(mock.seen.length, 2, "Claude isn't called once the limit is reached");
   assert.deepEqual((await events(await ask({ unit: "J", text: "H62" }, phoneB)))[0], { t: "quota", left: 1 });
+  const left = async h => (await (await fetch(BASE + "/api/config", { headers: h })).json()).questionsLeft;
+  assert.equal(await left(phoneA), 0, "the counter shows each phone's own questions left");
+  assert.equal(await left(phoneB), 1);
+  assert.equal(await left({ "X-Device-Id": "phone-cccccccc" }), 2);
 });
 
 test("installer accounts: admin adds an installer, their code signs them in and has its own limit", async () => {
