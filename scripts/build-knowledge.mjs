@@ -30,6 +30,7 @@ const between = (t, a, b) => t.slice(t.indexOf(a), t.indexOf(b)).trim();
 const J = pages(read("manuals/panasonic/panasonic-mini-monobloc-r32-j-series-service-manual.md"));
 const K = pages(read("manuals/panasonic/panasonic-k-series-hydromodule-tank-installation-manual.md"));
 const K2 = pages(read("manuals/panasonic/panasonic-k-series-service-manual.md"));
+const K3 = pages(read("manuals/panasonic/panasonic-k-series-tank-service-manual.md"));
 
 // Self-diagnosis pages for each code, from the section 19.5.x headings, e.g. "19.5.25 Outdoor High Pressure Protection (H98 / F95)".
 // Each section runs to the page before the next one starts; `last` is the last page of the final section.
@@ -106,7 +107,7 @@ const parts = {
     views: jparts.views.map(v => ({ ...v, list: "J", unit: "J", key: "J" })),
     parts: jparts.parts.map(x => ({ ...x, list: "J", no: { "05": x.part05, "07": x.part07, "09": x.part09 }, qtyBy: { "05": x.qty05, "07": x.qty0709, "09": x.qty0709 } })),
   },
-  K: { models: kparts.models, views: kparts.views.map(v => ({ ...v, unit: "K", key: "K2" })), parts: kparts.parts },
+  K: { models: kparts.models, views: kparts.views.map(v => ({ key: "K2", ...v, unit: "K" })), parts: kparts.parts },
 };
 
 // Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
@@ -147,6 +148,7 @@ const TITLES = {
   J: { title: "Panasonic Service Manual, Mini Monobloc R32 J-series (WH-MDC05/07/09J3E5)", cite: "J-series SM" },
   K: { title: "Panasonic Installation Manual, Hydromodule + Tank K-series (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)", cite: "K-series IM" },
   K2: { title: "Panasonic Service Manual, Hydromodule + Tank K-series (outdoor WH-UDZ03/05/07/09KE5, tank unit WH-ADC0309K0E5A), Order No PCZ2508021CE (2025)", cite: "K-series SM" },
+  K3: { title: "Panasonic Service Manual, Hydromodule + Tank K-series (tank unit WH-ADC0309K3E5/K6E5, outdoor WH-UDZ03/05/07/09KE5), Order No PAPAMY2302047CE (2023)", cite: "K-series tank SM" },
   B: { title: "Baxi Installation, user and service manual, Assure HP55 R290 monobloc outdoor unit (7890198 v03)", cite: "Baxi HP55 IM" },
   B2: { title: "Baxi ASHP Control (indoor unit / controller) installation, user and service manual (7887625 v04)", cite: "Baxi ASHP Control IM" },
 };
@@ -154,19 +156,20 @@ const full = {
   J: { ...TITLES.J, pages: J },
   K: { ...TITLES.K, pages: K },
   K2: { ...TITLES.K2, pages: K2 },
+  K3: { ...TITLES.K3, pages: K3 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
   nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, parts, components,
 };
 const lite = {
-  J: TITLES.J, K: TITLES.K, K2: TITLES.K2, B2: TITLES.B2,
+  J: TITLES.J, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   nav, wiring, commissioning, fieldNoteList: fnotes, faults, kfaults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
-console.log(`Built knowledge: J ${Object.keys(J).length} pages, K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
+console.log(`Built knowledge: J ${Object.keys(J).length} pages, K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), K tank SM ${Object.keys(K3).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
   `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ${parts.K.parts.length} K-series parts, ` +
   `components J ${components.J.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
   `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, K ${commissioning.K.flatMap(s => s.steps).length}.`);

@@ -99,8 +99,12 @@ test("each Panasonic unit's parts list is in its own rules only, with the part n
   assert.match(k, /--- OUTDOOR WH-UDZ03KE5 \(3 kW\) ---\n1 CHASSY ASS’Y \| CWD52K1317 \| qty 1 \| k-parts-o03 \| SM p\.300$/m);
   assert.match(k, /^37 ELECTRONIC CONTROLLER - MAIN \(PCB main board circuit board\) \| 05: ACXA73C91120R, 07: ACXA73C91130R, 09: ACXA73C91140R \| qty 1 \| keep in stock \| k-parts-o0509 \| SM p\.303\/305$/m);
   assert.match(k, /^7 FAN MOTOR, DC 60W 3PH \| 05\/07\/09 all L6CBYYYL0422 \|/m);
-  assert.doesNotMatch(k, /K0E5A ---|ACXB56C01211/, "no tank unit list: HMG's tank unit is the K3E5/K6E5");
-  assert.match(k, /2025 service manual: confirm the number with the Panasonic parts supplier/);
+  assert.match(k, /--- TANK UNIT WH-ADC0309K3E5 \/ WH-ADC0309K6E5 \(from the K-series tank SM\) ---\n1 CHASSIS - COMPLETE \| K3E5\/K6E5 all ACXD50C04840 \| qty 1 \| k-parts-tank-cabinet \| tank SM p\.441$/m);
+  assert.match(k, /^40 HEATER ASS’Y \(back-up heater element booster\) \| K3E5: ACXA34K00460, K6E5: ACXA34K00530 \|/m);
+  assert.match(k, /^76 TERMINAL BOARD ASS’Y \(A,B\) .*\| K3E5: not fitted, K6E5: CWA28K1238 \| qty K3E5: 0, K6E5: 1/m);
+  assert.match(k, /^33 RECEIVER \(expansion vessel 10 L heating circuit\) \|/m);
+  assert.doesNotMatch(k, /K0E5A ---|ACXB56C01211/, "no K0E5A tank unit list: HMG's tank unit is the K3E5/K6E5");
+  assert.match(k, /Panasonic service manual: confirm the number with the Panasonic parts supplier/);
   for (const t of [j, b]) assert.doesNotMatch(t, /K-SERIES PARTS LIST/);
   assert.doesNotMatch(k, /J-SERIES PARTS LIST/);
   assert.doesNotMatch(b, /J-SERIES PARTS LIST/); assert.match(b, /no parts list on file/);
@@ -127,7 +131,7 @@ test("each unit's rules list only its own components, with drawing numbers and f
   for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "What is the valve on top of the unit?" }));
   const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
   assert.match(j, /^j-comp-main no\.8, j-comp-cycle \(labelled\) \| Flow sensor \(water flow switch\) \| .* \| codes H62 \| SM p\.37, p\.140$/m);
-  assert.match(k, /^k-comp-main no\.13 \| Expansion vessel \| .*10 L/m);
+  assert.match(k, /^k-comp-main no\.13, k-parts-tank-water no\.33 \| Expansion vessel \| .*10 L/m);
   assert.match(b, /^b-comp-hydro-small no\.7, b-comp-hydro-large no\.7, b-comp-refrigerant no\.23 \| Flow switch \| .* \| codes E0 E8 PF \|/m);
   assert.doesNotMatch(j, /k-comp-main|b-comp-/); assert.doesNotMatch(k, /j-comp-|b-comp-/); assert.doesNotMatch(b, /j-comp-|k-comp-main/);
 });
@@ -174,7 +178,8 @@ test("static files are served", async () => {
   assert.equal(k.kfaults.length, 52);
   assert.deepEqual(k.kfaults.find(f => f.code === "H98").diagPages, [235, 236]);
   assert.equal(k.kfaults.find(f => f.code === "F20").tablePage, 210);
-  assert.equal(k.parts.K.parts.length, 120);
+  assert.equal(k.parts.K.parts.length, 211);
+  assert.equal(k.parts.K.parts.filter(p => p.list === "tank").length, 91);
   for (const u of ["J", "K"]) {
     const P = k.parts[u], lists = new Set(P.models.map(m => m.list)), views = new Set(P.views.map(v => v.id).concat(P.views.map(v => v.view)));
     for (const v of P.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);

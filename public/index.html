@@ -643,7 +643,7 @@ document.addEventListener("click",e=>{if(!e.target.closest(".unit-pick")) unitMe
 document.addEventListener("keydown",e=>{if(e.key==="Escape") unitMenu(false);});
 
 /* ---------- Manuals ---------- */
-/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160, K-series SM at p.128/129 and p.204/205. */
+/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160, K-series SM at p.128/129 and p.204/205, K-series tank SM at p.150/151 and p.300/301. */
 const DOCS={
   J:{docs:[
     {key:"J",from:1,to:80,file:"Panasonic-J-series-SM-part1-pp1-80.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 1 (pp.1-80)",meta:"WH-MDC05/07/09J3E5 · 12.7 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, installation, siting, water and electrical connections, commissioning."},
@@ -653,7 +653,10 @@ const DOCS={
     {key:"K",file:"Panasonic-K-series-Hydromodule-Tank-Installation-Manual.pdf",title:"Panasonic K-series Hydromodule + Tank, installation manual",meta:"WH-ADC0309K3E5/K6E5 · 34 pages · 8.4 MB",covers:"Tank unit installation, pipework, wiring, controller setup and commissioning."},
     {key:"K2",from:1,to:128,file:"Panasonic-K-series-SM-part1-pp1-128.pdf",title:"Panasonic K-series service manual, part 1 (pp.1-128)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 7.0 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, PCBs, installation of the tank unit and outdoor unit (clearances p.94), piping, wiring, service and maintenance."},
     {key:"K2",from:129,to:204,file:"Panasonic-K-series-SM-part2-pp129-204.pdf",title:"Panasonic K-series service manual, part 2 (pp.129-204)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 3.4 MB",covers:"R32 servicing and brazing, operation and control, protection control for the outdoor units, test run, pump down, pump speed, maintenance."},
-    {key:"K2",from:205,to:306,file:"Panasonic-K-series-SM-part3-pp205-306.pdf",title:"Panasonic K-series service manual, part 3 (pp.205-306)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 3.9 MB",covers:"Troubleshooting, error codes (pp.209-210) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists."}]},
+    {key:"K2",from:205,to:306,file:"Panasonic-K-series-SM-part3-pp205-306.pdf",title:"Panasonic K-series service manual, part 3 (pp.205-306)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 3.9 MB",covers:"Troubleshooting, error codes (pp.209-210) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists."},
+    {key:"K3",from:1,to:150,file:"Panasonic-K-series-tank-SM-part1-pp1-150.pdf",title:"Panasonic K-series tank unit service manual, part 1 (pp.1-150)",meta:"WH-ADC0309K3E5/K6E5 + WH-UDZ03-09KE5 · 6.1 MB",covers:"Specifications per tank unit and outdoor unit (back-up heater 3 kW on the K3E5, 6 kW on the K6E5), tank unit components (pp.77-108), dimensions, water cycle, wiring and circuit diagrams, PCBs, installation."},
+    {key:"K3",from:151,to:300,file:"Panasonic-K-series-tank-SM-part2-pp151-300.pdf",title:"Panasonic K-series tank unit service manual, part 2 (pp.151-300)",meta:"WH-ADC0309K3E5/K6E5 + WH-UDZ03-09KE5 · 9.1 MB",covers:"Installation (continued), R32 servicing and brazing, operation and control."},
+    {key:"K3",from:301,to:461,file:"Panasonic-K-series-tank-SM-part3-pp301-461.pdf",title:"Panasonic K-series tank unit service manual, part 3 (pp.301-461)",meta:"WH-ADC0309K3E5/K6E5 + WH-UDZ03-09KE5 · 7.4 MB",covers:"Back-up heater and tank heater control, protection control, servicing (expansion vessel p.342, pump down, pump speed), error codes (pp.358-359) and self-diagnosis, disassembly, exploded views and parts lists (tank unit pp.439-443)."}]},
   B:{docs:[
     {key:"B",from:1,to:44,file:"Baxi-Assure-HP55-IM-part1-pp1-44.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 1 (pp.1-44)",meta:"7890198 v03 · 9.3 MB",covers:"Safety (R290), technical specs, siting and clearances, hydraulic connections, flow rates, freeze protection."},
     {key:"B",from:45,to:68,file:"Baxi-Assure-HP55-IM-part2-pp45-68.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 2 (pp.45-68)",meta:"7890198 v03 · 6.5 MB",covers:"Electrical connections, flushing and filling, maintenance, error codes (pp.57-60), Benchmark and service records."},
@@ -682,7 +685,7 @@ function renderDocs(){
   }
   if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
   if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
-  if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" Use the service manual for the outdoor unit and fault codes; its tank unit pages are for the WH-ADC0309K0E5A, so use the installation manual for the K3E5/K6E5 tank unit.":"");box.append(g);}
+  if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" Use the outdoor service manual for the outdoor unit and fault codes. Its tank unit pages are for the WH-ADC0309K0E5A, so for the K3E5/K6E5 tank unit use the tank unit service manual and the installation manual.":"");box.append(g);}
 }
 
 /* ---------- Spare parts (catalogue in knowledge.json "parts", from source/j-series-parts.json and source/k-series-parts.json) ---------- */
@@ -692,9 +695,9 @@ const PTEXT={
   J:{lede:"Exploded views and the replacement parts list from the J-series service manual (pp.237-246). Pick the model from the rating label, then search by part name, ref number or part number.",
      eg:"pump, PCB, 58, ACXB53",
      note:"From the 2020 service manual (Order No PAPAMY2003034CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts."},
-  K:{lede:"Outdoor unit exploded views and replacement parts lists from the K-series service manual (pp.299-306). Pick the size from the outdoor unit's rating label, then search by part name, ref number or part number.",
+  K:{lede:"Exploded views and replacement parts lists for the outdoor unit (K-series SM pp.299-306) and the K3E5/K6E5 tank unit (K-series tank SM pp.439-443). Pick the outdoor size or the tank unit from its rating label, then search by part name, ref number or part number.",
      eg:"fan motor, PCB, 37, sensor",
-     note:"From the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing. No parts list on file for the K3E5/K6E5 tank unit: the service manual's tank unit list is for a different model (K0E5A)."}};
+     note:"Outdoor unit lists from the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing. The tank unit list is from the 2023 tank unit service manual (Order No PAPAMY2302047CE); RECEIVER (ref 33) is the heating expansion vessel."}};
 const pModel={J:store.get("hmg-parts-model")||"05",K:store.get("hmg-parts-model-K")||"05"};
 let pQuery="";
 function renderParts(){
@@ -735,7 +738,7 @@ function listParts(){
   for(const x of list){
     const no=x.no[m], qty=x.qtyBy?x.qtyBy[m]:x.qty;
     const nos=Object.values(x.no), diff=nos.some(v=>v!==nos[0]);
-    const vlab=v=>/^Outdoor unit/.test(v.title)?"exploded view":v.title.split(":")[0].replace("Exploded view","view");
+    const vlab=v=>/^Outdoor unit/.test(v.title)?"exploded view":/^Tank unit view/.test(v.title)?v.title.split(":")[0].replace("Tank unit ",""):v.title.split(":")[0].replace("Exploded view","view");
     const el=document.createElement("div");el.className="pt";
     el.innerHTML=`<div class="pt-top"><span class="pt-ref">${x.ref}</span><div><div class="pt-name">${esc(x.name)}</div>${x.aka?`<div class="pt-aka">${esc(x.aka)}</div>`:""}</div></div>
       <div class="pt-no">${no?`<code>${esc(no)}</code><button type="button" data-copy="${esc(no)}">Copy</button>`:`<span class="pt-none">Not fitted on the ${esc(M.model)}</span>`}</div>
@@ -822,12 +825,12 @@ function renderClear(){
 /* Pick a drawing from the manual, then match the numbers on it to the list. Search covers every drawing for the unit. */
 let cpDraw={}, cpQuery="";
 const cpDrawings=()=>KB?.components?.[unit]?.drawings||[];
-/* A part on a component card: a J-series ref number, or "list:ref" for the K-series lists (o03, o0509, in). */
+/* A part on a component card: a J-series ref number, or "list:ref" for the K-series lists (o03, o0509, tank). */
 function cpPart(ref){
   const [l,r]=typeof ref==="string"?ref.split(":"):[null,ref];
   const x=KB.parts?.[unit]?.parts.find(p=>p.ref===+r&&(!l||p.list===l));if(!x) return "";
   const ms=Object.keys(x.no), same=ms.every(m=>x.no[m]===x.no[ms[0]]);
-  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":"";
+  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":l==="tank"?" (tank unit)":"";
   return `<span>Part ${x.ref}${who}: <code>${esc(same?x.no[ms[0]]:ms.map(m=>`${m} ${x.no[m]||"n/a"}`).join(" · "))}</code></span>`;
 }
 function goFault(code){
