@@ -21,11 +21,17 @@ remote controller (the panel on the unit or wall, not a phone app).
   Order No PAPAMY2101001CE (cite as "T-Cap SM, p.N"). Added 26/10/2026. Its
   controller pages match the J-series Mini Monobloc, so Part C is Part A with
   the T-Cap page numbers, checked against the T-Cap manual and its page images.
+- **Part D: L-series R290 Hydromodule + Tank** (tank unit WH-ADC0509L3E51,
+  outdoor WH-WDG05LE5 / WDG07LE5 / WDG09LE5). Source: *Panasonic Service
+  Manual, Hydromodule + Tank R290 L-series*, Order No PCZ2504005CE (cite as
+  "L-series SM, p.N"). Added 26/10/2026. Its menu pages (pp.37-67) have no
+  text layer, so they were read by OCR and the key combinations were read
+  from the page images (pp.123, 222-226, 235-236).
 
 **Keep the parts separate.** The manuals show the same button layout, but
 menu lists, item numbers and hidden-menu key combinations are documented
 separately. Never use a Part B key combination or menu item for a J-series
-unit, or the reverse, and give T-Cap page numbers (Part C) for a T-Cap. If something is only in one part, say it is not
+unit, or the reverse, and give T-Cap page numbers (Part C) for a T-Cap and L-series page numbers (Part D) for an L-series. If something is only in one part, say it is not
 covered for the other model.
 
 ---
@@ -391,3 +397,133 @@ manual's own page images (pp.84, 152, 153), so they can be given for T-Cap units
   error-history (p.163) procedures are on the pages given.
 - System information lists 10 items with no water pressure reading. Pressure
   is read from the unit's water pressure gauge (p.34).
+
+---
+
+# Part D: L-series R290 Hydromodule + Tank (WH-ADC0509L3E51, outdoor WH-WDG05/07/09LE5)
+
+## D1. First power-up (L-series SM p.39, p.110)
+
+1. Initialising screen about 10 s, then the normal screen showing
+   "[⏻] Start".
+2. Press any button: Language. [▲]/[▼] to select, [OK].
+   With two controllers fitted, the first one to confirm a language becomes
+   the main controller.
+3. Clock format 24h / am/pm: [▲]/[▼], [OK].
+4. Date & time: arrows, [OK].
+5. **Front grille: "Is O/D front grille fixed?"** Select Yes, [OK]. If No,
+   a caution appears ("To prevent injury, fix front grille before ope.",
+   [Back] Close). Fit the outdoor discharge grille before powering on
+   (p.172).
+6. Back to the start screen. [Menu], select Installer setup (p.111).
+
+If this initial setting is not done, the controller will not go into the
+menus (p.110).
+
+## D2. Main menu tree (L-series SM pp.46-67, pp.111-112)
+
+[Menu] opens Main Menu: Function setup, System check, Personal setup,
+Service contact, Installer setup. L-series SM p.46: "Ensure the operation
+indicator is OFF before setting."
+
+- **Function setup**: Weekly timer, Holiday timer, Quiet timer, Quiet
+  priority, Room heater, Tank heater, Sterilization, DHW mode (pp.46-47)
+- **System check**: Energy monitor, System information, Error history,
+  Compressor, Heater (p.48)
+- **Personal setup**: Remote control No., Touch sound, LCD contrast,
+  Backlight, Backlight intensity, Clock format, Date & Time, Language,
+  Unlock password (pp.49-50)
+- **Service contact**: Contact 1 / Contact 2 (p.50)
+- **Installer setup** (pp.51-67, flow chart pp.111-112)
+  - **System setup**, numbered as in the manual: 1 Optional PCB
+    connectivity, 2 Zone & Sensor, 3 Heater capacity, 4 Anti freezing,
+    5 DHW capacity, 6 Buffer tank connection, 7 Base pan heater,
+    8 Alternative outdoor sensor, 9 Bivalent connection, 10 External SW,
+    11 Solar connection*, 12 External error signal*, 13 Demand control*,
+    14 SG ready*, 15 External compressor SW*, 16 Circulation liquid,
+    17 Heat-Cool SW*, 18 Force heater, 19 Force defrost, 20 Defrost signal,
+    21 Pump flowrate, 22 DHW defrost, 23 Heating control, 24 External
+    meter, 25 Electrical anode. (*Only shown when Optional PCB connectivity
+    = Yes; optional PCB is CZ-NS5P, p.106.)
+  - **Operation setup**: Heat (26-29), Cool (30-31, cooling model only),
+    Auto (32-33, cooling model only), Tank (34-37)
+  - **Service setup**: 38 Pump maximum speed (with Air purge), 39 Dry
+    concrete, 40 Service contact. Pump down is also in this list on the
+    servicing pages (p.222).
+  - **Remote control setup**: 41 RC selection (Single / Dual)
+
+## D3. Step-by-step recipes (L-series)
+
+General path is the same as A3, including step 0 (turn the unit OFF with
+[Operate] first; L-series SM p.46: "Ensure the operation indicator is OFF
+before setting"): [Menu] → [▼] to Installer setup → [OK] → section → item →
+change → [OK] → [Back].
+
+| Task | Path after "Installer setup" | Options / default | Check it changed | Source |
+|---|---|---|---|---|
+| External room thermostat (or internal, room thermistor, water temp) | System setup → Zone & Sensor | Without optional PCB: Water temperature / Room thermostat (Internal or External; Internal then RC-1 or RC-2) / Room thermistor. Default "Room and Water temp." | Main screen temp-setting icon (p.109) | pp.51, 113; wiring pp.95-96, 105 |
+| 2-zone / pool | System setup → Optional PCB connectivity = Yes, then Zone & Sensor → 1 or 2 zone | Pool only on zone 2 | Zone 1 / Zone 2 appear in Operation setup | pp.51, 113 |
+| Backup heater capacity | System setup → Heater capacity | Depends on model (the E51 has a 3 kW heater, p.14) | Re-open item | pp.51, 113 |
+| Anti freezing | System setup → Anti freezing | Yes (default) | Re-open item | pp.51, 113 |
+| DHW capacity | System setup → DHW capacity | Variable (default) / Standard | Re-open item | pp.52, 113 |
+| Bivalent (boiler) | System setup → Bivalent connection → Yes → SG ready / Auto (Alternative, Parallel, Advanced Parallel) / Smart (energy prices) | No (default); switch point -10 °C example | Boiler icon on main screen; "_" under it when boiler contact is ON | pp.53-56, 114-115 |
+| Glycol | System setup → Circulation liquid | Water (default) / Glycol | Re-open item | pp.58, 117 |
+| Pump control mode | System setup → Pump flowrate | ΔT (default) / Max. duty | Re-open item | pp.59, 118 |
+| DHW used for defrost | System setup → DHW defrost | Yes (default) / No | Re-open item | pp.59, 118 |
+| Compressor strategy | System setup → Heating control | Comfort (default) / Efficiency | Re-open item | pp.59, 118 |
+| External meters | System setup → External meter | All No by default | Re-open item | pp.60-61, 118 |
+| Electrical anode | System setup → Electrical anode | No on the E51 (Yes only on the AN1 model) | Re-open item | pp.61, 118 |
+| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve / Direct | Curve default -5 °C → 55 °C, 15 °C → 35 °C. Range: outdoor -20 to 15 °C, flow 20-75 °C on the WH-WDG. HMG recommends: steel rads -3 °C → 45 °C, 15 °C → 35 °C; UFH -3 °C → 35 °C, 15 °C → 25 °C; HMG max flow 45 °C rads, 35 °C UFH (HMG weather compensation guidance) | Main screen temp-setting icon; re-open | pp.62, 119 |
+| Heating OFF outdoor temp | Operation setup → Heat → Outdoor temp. for heating OFF | 24 °C, 5-35 °C | Re-open item | pp.63, 119 |
+| ΔT for heating | Operation setup → Heat → ΔT for heating ON | 5 °C, 1-15 °C | Re-open item | pp.63, 119 |
+| Backup heater rules | Operation setup → Heat → Heater ON/OFF | Outdoor temp for heater ON 0 °C (-20 to 15 °C); delay 30 min (10-60); ON at -4 °C, OFF at -2 °C of target | Re-open item | pp.63, 119 |
+| Tank times, re-heat, sterilisation | Operation setup → Tank → item | 8 h / 60 min / -8 °C / 65 °C 10 min | Re-open item | pp.65-66, 121 |
+| Pump maximum speed, read flow rate, air purge | Service setup → Pump maximum speed. [▲]/[▼] sets Max. Duty (0x40-0xFF), [►] moves to Operation, [▲]/[▼] picks OFF / ON / Air Purge, [◄] goes back. [Operate] turns the pump off on either screen | Default depends on model | Flow rate (0.1-99.9 L/min) on the same screen. Minimum flow during main pump operation not less than 15 L/min (p.93) | pp.66, 93, 122, 223 |
+| Pump down | Service setup → [OK] → [▼] to Pump down → [OK] → ON → [OK]. Stop with [Operate] (⏻) OFF | | "Pump down operation in progress!" | p.222 |
+| Screed drying | Service setup → Dry concrete → Edit: number of stages (1-99, one a day), each stage's water temp (25-55 °C), then ON → [OK] | 2 zones: dries both | Status shows the stage; re-open item | pp.66, 122, 226-227 |
+| Two controllers | Remote control setup → RC selection | Single (default) / Dual | Re-open item | p.122 |
+| Installer phone number | Service setup → Service contact → Contact 1/2 | Name and number | Personal menu → Service contact | pp.67, 122 |
+
+User-menu recipes (L-series):
+
+| Task | Steps | Source |
+|---|---|---|
+| **Water pressure** | 1. [Menu], [▼] to System check. 2. [OK], [▼] to System information. 3. [OK], then [▼] to page down to "11. Water pressure" (example 1.51 bar). Normal 0.5-3 bar (0.05-0.3 MPa) | pp.93, 124 |
+| Flow rate / compressor frequency | Same path: System information → 9. COMP frequency, 10. Pump flowrate | p.124 |
+| Error history | [Menu] → [▲]/[▼] to System check → [OK] → [▼] to Error history → [OK]. Shows the last 4 errors, most recent at top | pp.48, 236 |
+| Quick menu items | [Quick Menu] → [▲]/[▼]/[◄]/[►] to select → [OK] to turn on/off. Items: Force DHW, Powerful, Quiet, Force Heater, Weekly Timer, Force Defrost, Error Reset, R/C Lock | pp.40-45 |
+| Clear a displayed error | [Quick Menu] → Error Reset. On the error screen itself, [◄]/[►] to Close or Reset, then [OK]. If the fault is still there, it returns | pp.40, 235 |
+| Weekly timer / holiday / quiet timer | [Menu] → Function setup → item | pp.46-47 |
+| Language, clock, contrast | [Menu] → Personal setup → item | pp.49-50 |
+
+## D4. Hidden menus (L-series): key combinations (read from the L-series PDF page images, 26/10/2026)
+
+| Menu | Hold | Contents | Source |
+|---|---|---|---|
+| **Maintenance menu** | **[Back] + [OK] + [►] for 5 s** | Actuator check (manual ON/OFF of each part; no protection, so never run the pump without water), Test mode (not normally used), Sensor setup (offset -2 to +2 °C, only if a sensor is deviating; it affects temperature control), Reset password | p.123 |
+| **Custom menu** | **[Menu] + [▼] + [◄] for 5 s** | Cool mode (with/without cooling, default without), Back-up heater use/not use (disables frost-protection heater, may cause H75), Reset energy monitor, Reset operation history, Smart DHW (start time, stop time, ON temp) | p.123 |
+| **Forgotten password** | **[Back] + [OK] + [►] for 5 s** (only shown when locked) | Password unlock screen appears, press Confirm, password resets to 0000. Set it again | p.123 |
+| **Unlock Cool mode** | **[Menu] + [▼] + [◄] for 5 s**, operation must be OFF | Opens the Custom menu on Cool mode. [OK], [▲]/[▼] to Enable or Disable, [OK]. [Back] to exit | p.224 |
+| **EEPROM factory reset** | **[▲] + [▼] + [◄] + [►] together for 5 s**, only while the screen shows "Initializing" at power-up | Initialisation stops, "EEPROM setup" runs, then initialisation restarts and the clock blinks. Wipes settings back to factory defaults | p.225 |
+
+Note: on the L-series the Custom menu hold is 5 s (p.123), not the 10 s
+given in the J-series and K-series manuals.
+
+**Clear error history permanently (p.236):** [Menu] → System check → [OK] →
+[▼] to Error history → [OK] (shows last 4 errors). Press [OK] ("Clear
+history"), "Do you want to clear error history?" appears with No selected.
+[◄] to Yes, [OK]. The list shows "--". [Back] to leave without clearing.
+
+**Clear a displayed error (p.235):** on the error pop-up, [◄]/[►] to Close
+or Reset, then [OK].
+
+## D5. Gaps (L-series)
+
+- The menu pages (pp.37-67) have no text layer in the PDF and were read by
+  OCR, so check a figure against the page if it looks odd. The installer
+  setup pages (pp.109-124) have a clean text layer.
+- Pump down isn't in the Service setup menu table (p.66) but is on the
+  servicing pages (p.222).
+- The UK1 tank unit has its own installation pages (pp.125-166); HMG
+  supplies the E51, so use pp.84-124.
+
