@@ -109,16 +109,25 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .msg img{border-radius:8px;max-height:160px;display:block;margin-bottom:6px}
 .msg-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 /* Greeting strip: one compact charcoal band with a cyan edge, so the questions and the box stay on screen. */
-.hero{border-radius:12px;padding:12px 14px;color:#fff;background:linear-gradient(135deg,#53565a 0%,#3d4043 100%);border-left:5px solid var(--hmg-cyan);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:4px}
+.hero{border-radius:14px;padding:17px 16px 16px;color:#fff;background:linear-gradient(135deg,#53565a 0%,#3d4043 100%);border-left:5px solid var(--hmg-cyan);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
 .hero-row{display:flex;align-items:center;gap:10px}
-.hero h2{flex:1;min-width:0;font-size:21px;color:#fff;margin:0}
+.hero h2{flex:1;min-width:0;font-size:25px;color:#fff;margin:0}
 .hero h2::after{display:none}
 .hero-k{flex:none;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7fd6f2;border:1px solid rgba(127,214,242,.5);border-radius:999px;padding:3px 9px}
-.hero-who{margin:0;font-size:13px;color:rgba(255,255,255,.78)}
+.hero-who{margin:0;font-size:13.5px;color:rgba(255,255,255,.78)}
 .hero-who b{color:#fff;font-weight:600}
-.hero-who a{color:#7fd6f2}
-.suggest{display:grid;grid-template-columns:1fr;gap:8px}
-@media (min-width:560px){.suggest{grid-template-columns:1fr 1fr}}
+.hero-who a{color:#7fd6f2;white-space:nowrap}
+/* Suggested Questions: one bordered panel with a title, rows split by thin lines. */
+.sugg-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.sugg-box:has(#suggest:empty){display:none}
+.box-h{font:400 17px/1.2 var(--f-display);margin:0;color:var(--fg);display:flex;align-items:center;gap:8px}
+.box-h::before{content:"";width:4px;height:17px;border-radius:2px;background:var(--hmg-cyan)}
+.sugg-box .box-h{padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.suggest{display:grid;grid-template-columns:1fr}
+.sugg-box .suggest button{border:0;border-radius:0;box-shadow:none;background:none}
+.sugg-box .suggest button+button{border-top:1px solid var(--line)}
+.sugg-box .suggest button:hover{box-shadow:none;background:var(--sunk)}
+.composer .box-h{padding:0 2px 2px}
 .suggest button{display:flex;align-items:center;gap:12px;border:1px solid var(--card-line);background:var(--surface);border-radius:var(--r);padding:12px 12px 12px 12px;font-size:15px;text-align:left;box-shadow:var(--shadow);min-width:0}
 .suggest button .si{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
 .suggest button .si svg,.suggest button .chev{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -401,10 +410,11 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   </div>
   <div class="notice" id="ai-off" hidden>The assistant isn't switched on yet. Fault codes, controller steps, manuals, install guidance and escalation still work.</div>
   <div class="panel install" id="install" hidden><span id="install-t">Add HMG Installer Assistant to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
-  <div class="suggest" id="suggest"></div>
+  <div class="sugg-box" id="sugg-box"><h3 class="box-h">Suggested Questions</h3><div class="suggest" id="suggest"></div></div>
   <div id="log" aria-live="polite"></div>
   <p class="disclaimer" id="disc">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site. Questions are saved to help Heat Merchants improve the service.</p>
   <div class="composer">
+    <h3 class="box-h">Ask a Question</h3>
     <div class="attached" id="attached" hidden><img id="att-img" alt="Attached photo"><span>Photo attached</span><button class="ghost" id="att-x">Remove</button></div>
     <div class="row">
       <label class="iconbtn" id="photo-btn" title="Attach a photo of the display or label" hidden>
@@ -1130,11 +1140,11 @@ function calcSizing(){
 }
 
 /* ---------- Ask ---------- */
-const SUGGEST={J:["Talk me through commissioning","H62 after start-up, what do I check?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?","What clearances does the outdoor unit need?"],
-               T:["Talk me through commissioning","H62 after start-up, what do I check?","Part number for the water pump?","Where do I connect the room thermostat?","What size primary pipe for a 12 kW?","What clearances does the unit need?"],
-               L:["What exclusion zone does the outdoor unit need?","Talk me through commissioning","H62 after start-up, what do I check?","Part number for the expansion vessel?","Where do I connect the room thermostat?","What size primary pipe for a 7 kW?"],
-               K:["Talk me through commissioning","Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
-               B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
+const SUGGEST={J:["Talk me through commissioning","H62 after start-up, what do I check?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?"],
+               T:["Talk me through commissioning","H62 after start-up, what do I check?","Part number for the water pump?","Where do I connect the room thermostat?","What size primary pipe for a 12 kW?"],
+               L:["What exclusion zone does the outdoor unit need?","Talk me through commissioning","H62 after start-up, what do I check?","Part number for the expansion vessel?","Where do I connect the room thermostat?"],
+               K:["Talk me through commissioning","Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","What size primary pipe for a 7 kW?"],
+               B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?"]};
 /* Icon for a suggested question, picked from its wording. */
 const SICON={fault:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',gauge:'<path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15l4-5"/>',wire:'<path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0z"/><path d="M12 17v4"/>',
   pipe:'<path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8"/>',space:'<rect x="7" y="7" width="10" height="10" rx="1"/><path d="M3 3v4M3 3h4M21 3v4M21 3h-4M3 21v-4M3 21h4M21 21v-4M21 21h-4"/>',
@@ -1244,7 +1254,7 @@ const hDate=d=>new Date(d).toLocaleDateString("en-IE",{day:"numeric",month:"shor
 const plain=a=>(a||"").replace(/\n\s*\**Diagrams?:?[^\n]*$/i,"").replace(/\*\*|`|^#+\s*/gm,"").replace(/\s+/g," ").trim().slice(0,160);
 async function openHist(){
   stopSpeaking();
-  for(const id of ["hero","suggest","log","ask-top","disc"]) $("#"+id).hidden=true;
+  for(const id of ["hero","sugg-box","log","ask-top","disc"]) $("#"+id).hidden=true;
   document.querySelector("#v-ask .composer").hidden=true;$("#hist").hidden=false;
   $("#hist-body").innerHTML=`<p class="src">Loading…</p>`;$("#hist-note").textContent="";
   hItems=localHist();hFrom="phone";
@@ -1258,7 +1268,7 @@ async function openHist(){
   listHist();
 }
 function closeHist(){
-  $("#hist").hidden=true;for(const id of ["log","ask-top","disc"]) $("#"+id).hidden=false;
+  $("#hist").hidden=true;for(const id of ["sugg-box","log","ask-top","disc"]) $("#"+id).hidden=false;
   document.querySelector("#v-ask .composer").hidden=false;renderSuggest();
 }
 function listHist(){
