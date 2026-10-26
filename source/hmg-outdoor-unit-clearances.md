@@ -13,6 +13,9 @@ Minimum clear space from the outdoor unit to a wall, fence or other obstacle. Le
 | Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5) | 300 mm | 300 mm | 100 mm | 1000 mm |
 | Baxi Assure HP55 R290 monobloc (all models) | 300 mm | 300 mm | 100 mm | 1000 mm |
 | Panasonic K-series split outdoor unit (WH-UDZ03/05/07/09KE5) | 100 mm | 300 mm | 100 mm | 1000 mm |
+| Panasonic J-series T-Cap monobloc R32 (WH-MXC09J3E5 / WH-MXC12J6E5) | 300 mm | 300 mm | 100 mm | 1000 mm |
+
+The J-series T-Cap row is from the T-Cap service manual (p.49), which gives the same figures as HMG's J-series row. Added 26/10/2026; HMG to confirm these are HMG's T-Cap figures.
 
 ---
 
@@ -82,3 +85,16 @@ Other siting points from the manual (cite "K-series SM"):
 - J-series clearance figures (not in the service manual; installation manual not on file).
 - Clearances above the unit and between multiple units for the Panasonic units.
 - Building regulations, planning or noise distance rules.
+
+### Panasonic J-series T-Cap monobloc: the service manual gives the same as the HMG J-series figures
+
+Checked against the T-Cap Service Manual (Order No PAPAMY2101001CE, 2021) on 2026-10-26. p.49 (12.1 Mono Bloc Unit, dimension diagram) shows the clearances on a 3D view of the unit, all "or more": **300 mm rear, 300 mm right-hand side, 100 mm left-hand side (the fan end), 1000 mm front**. That is the same as HMG's J-series Mini Monobloc figures.
+
+Other siting points from the manual (cite "T-Cap SM"):
+- Avoid more than 2 blocked sides (p.34).
+- Outdoors only, on a flat solid surface; avoid sites below -20°C ambient (p.50).
+- Good air circulation, easy drainage, accessible for maintenance, away from heat sources and flammable gas leaks; don't block the discharge air or face the suction side into the wind (p.50).
+- Exposed or windy sites: fix with an overturn prevention wire (fitting K-KYZP15C) (p.50).
+- Fix to a concrete floor with M12 anchor bolts at 4 points, pull-out strength above 15000 N. Concrete compressive strength above 18 MPa (p.50). The unit weighs 140 kg empty (p.11), more when full of water.
+- With the drain elbow: stand taller than 50 mm, cover the 8 holes (ø20 mm) with rubber caps. Don't use the elbow and caps where it stays below 0°C for 2-3 days (drain water freezes and the fan won't turn) (p.50).
+- A base pan heater (CZ-NE3P) is strongly recommended in cold climates (p.49, p.60).

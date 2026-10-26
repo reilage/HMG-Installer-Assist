@@ -99,7 +99,7 @@ details.inst summary::-webkit-details-marker{display:none}
   <div id="app" hidden>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button></div>
     <div id="t-answers" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
-      <div class="btnrow" style="justify-content:space-between"><h2>Stored answers</h2><select id="sa-unit" aria-label="Unit"><option value="">All units</option><option value="J">J-series</option><option value="K">K-series</option><option value="B">Baxi HP55</option></select></div>
+      <div class="btnrow" style="justify-content:space-between"><h2>Stored answers</h2><select id="sa-unit" aria-label="Unit"><option value="">All units</option><option value="J">J-series</option><option value="T">J-series T-Cap</option><option value="K">K-series</option><option value="B">Baxi HP55</option></select></div>
       <p class="src">The first time a question is asked, Claude's answer is kept here. When an installer asks the same question again for the same unit, they get this answer straight away, free, and it doesn't use one of their questions for the day. Installers can tap "Didn't help" to get a fresh answer from Claude, which then replaces the stored one. Answers are cleared for a unit when its manuals or field notes change. Edit an answer to fix its wording: an edited answer stays even if an installer says it didn't help.</p>
       <div class="totals" id="sa-totals"></div>
       <div id="sa-list" style="display:flex;flex-direction:column;gap:8px"></div>
@@ -272,7 +272,7 @@ $("#add").onsubmit=async e=>{
 
 /* ---------- Fault trends (lib/trends.js) ---------- */
 let TR=null, trWeek=null;
-const UNIT={J:"J-series",K:"K-series",B:"Baxi HP55"};
+const UNIT={J:"J-series",T:"J-series T-Cap",K:"K-series",B:"Baxi HP55"};
 const change=(n,last)=>n===last?"":n>last?`<span class="up">▲ ${n-last} on last week</span>`:`<span class="down">▼ ${last-n} on last week</span>`;
 const day=d=>new Date(d).toLocaleDateString("en-IE",{weekday:"short",day:"numeric",month:"short"});
 function mdLite(t){

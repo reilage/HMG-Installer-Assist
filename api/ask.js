@@ -6,7 +6,7 @@
 //   {"t":"done","truncated":false}
 //   {"t":"error","code":"rate_limited"}
 // Over the daily limit it answers 429 {"error":"daily_limit","limit":5} instead (see lib/quota.js).
-// Body: { unit: "J"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data}, fresh: id, chat: id }
+// Body: { unit: "J"|"T"|"K"|"B", text, history: [{role, content}], extra: {code, pages, note}, image: {media_type, data}, fresh: id, chat: id }
 // standalone: a ready-made question from a button (fault card, suggestion...), which can be answered from storage even
 // part-way through a chat. chat: the app's id for this chat, so the installer's "My questions" (lib/history.js) keeps a chat together. fresh: the installer tapped "Didn't help" on stored answer <id>, so ask Claude afresh and store that answer instead.
 import Anthropic from "@anthropic-ai/sdk";

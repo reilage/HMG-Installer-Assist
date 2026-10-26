@@ -67,6 +67,17 @@ test("a code typed or dictated in Ask gets its table row and check pages, and ne
   assert.doesNotMatch(last, /J-series SM/);
 
   mock.seen.length = 0;
+  await events(await ask({ unit: "T", text: "help with h 42" }));
+  last = mock.seen[0].body.messages.at(-1).content;
+  assert.match(last, /^Manual excerpts for this question:\n\n\[T-Cap SM, p\.164\]/);
+  assert.match(last, /Error codes table row: H42 \| .*\(T-Cap SM p\.164/);
+  assert.doesNotMatch(last, /J-series SM|K-series SM/);
+
+  mock.seen.length = 0;
+  await events(await ask({ unit: "T", text: "F29 on the screen" }));
+  assert.match(mock.seen[0].body.messages.at(-1).content, /F29 looks like a Panasonic fault code, but it isn't in the T-Cap error codes table/);
+
+  mock.seen.length = 0;
   await events(await ask({ unit: "K", text: "help with H01" }));
   last = mock.seen[0].body.messages.at(-1).content;
   assert.match(last, /H01 looks like a Panasonic fault code, but it isn't in the K-series error codes table/);
@@ -102,9 +113,11 @@ test("the HMG heating curve is in the rules, with the Baxi gradient and base wor
 
 test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi gets none", async () => {
   mock.seen.length = 0;
-  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "Talk me through commissioning" }));
-  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
-  assert.match(j, /HMG COMMISSIONING PROCEDURE \(J-series\)[\s\S]*Built-in vessel is 6 L/);
+  for (const unit of ["J", "K", "B", "T"]) await events(await ask({ unit, text: "Talk me through commissioning" }));
+  const [j, k, b, t] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(t, /HMG COMMISSIONING PROCEDURE \(J-series T-Cap\)[\s\S]*Built-in vessel is 10 L/);
+  assert.doesNotMatch(t, /HMG COMMISSIONING PROCEDURE \(J-series Mini|Built-in vessel is 6 L/);
+  assert.match(j, /HMG COMMISSIONING PROCEDURE \(J-series Mini Monobloc\)[\s\S]*Built-in vessel is 6 L/);
   assert.doesNotMatch(j, /Built-in vessel is 10 L/);
   assert.match(k, /HMG COMMISSIONING PROCEDURE \(K-series\)[\s\S]*Built-in vessel is 10 L/);
   assert.doesNotMatch(k, /Built-in vessel is 6 L/);
@@ -115,8 +128,13 @@ test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi ge
 
 test("each Panasonic unit's parts list is in its own rules only, with the part number per model", async () => {
   mock.seen.length = 0;
-  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "Part number for the water PCB?" }));
-  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
+  for (const unit of ["J", "K", "B", "T"]) await events(await ask({ unit, text: "Part number for the water PCB?" }));
+  const [j, k, b, t] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(t, /T-CAP PARTS LIST/);
+  assert.match(t, /--- WATER SYSTEM \(list "w"\) ---/); assert.match(t, /--- REFRIGERANT SYSTEM \(list "r"\) ---/);
+  assert.match(t, /^8 THERMOSTAT .*\| qty 09: 2, 12: 3/m);
+  for (const x of [j, k, b]) assert.doesNotMatch(x, /T-CAP PARTS LIST/);
+  for (const x of ["J-SERIES PARTS LIST", "K-SERIES PARTS LIST"]) assert.doesNotMatch(t, new RegExp(x));
   assert.match(j, /J-SERIES PARTS LIST/);
   assert.match(j, /^58 PUMP \(water pump circulating pump circulator\) \| all models ACXB53-00390 \| qty 1 \| keep in stock \| j-parts-water$/m);
   assert.match(j, /^63 ELECTRONIC CONTROLLER \(MAIN\) - WATER .*\| 05: ACXA73C58300R, 07: ACXA73C58310R, 09: ACXA73C58320R \|/m);
@@ -155,8 +173,10 @@ test("K-series questions use both K manuals, and the fault card sends the servic
 
 test("each unit's rules list only its own components, with drawing numbers and fault codes", async () => {
   mock.seen.length = 0;
-  for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "What is the valve on top of the unit?" }));
-  const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
+  for (const unit of ["J", "K", "B", "T"]) await events(await ask({ unit, text: "What is the valve on top of the unit?" }));
+  const [j, k, b, t] = mock.seen.map(s => s.body.system[0].text);
+  assert.match(t, /^t-comp-main no\.\d+.* \| Flow sensor/m);
+  assert.doesNotMatch(t, /j-comp-|k-comp-|b-comp-/); assert.doesNotMatch(j, /t-comp-/);
   assert.match(j, /^j-comp-main no\.8, j-comp-cycle \(labelled\) \| Flow sensor \(water flow switch\) \| .* \| codes H62 \| SM p\.37, p\.140$/m);
   assert.match(k, /^k-comp-main no\.13, k-parts-tank-water no\.33 \| Expansion vessel \| .*10 L/m);
   assert.match(b, /^b-comp-hydro-small no\.7, b-comp-hydro-large no\.7, b-comp-refrigerant no\.23 \| Flow switch \| .* \| codes E0 E8 PF \|/m);
@@ -199,6 +219,8 @@ test("static files are served", async () => {
   const html = await (await fetch(BASE + "/")).text();
   const pdfs = [...html.matchAll(/file:"([^"]+\.pdf)"/g)].map(m => m[1]);
   assert.ok(pdfs.includes("Panasonic-K-series-SM-part3-pp205-306.pdf"));
+  assert.ok(pdfs.includes("Panasonic-J-T-Cap-SM-part4-pp160-237.pdf"));
+  assert.equal(k.T.pages, undefined, "manual text stays on the server");
   for (const f of pdfs) assert.equal((await fetch(BASE + "/manuals/" + f, { method: "HEAD" })).status, 200, f);
   assert.equal(k.faults.length, 52);
   assert.equal(k.parts.J.parts.length, 100);
@@ -207,21 +229,25 @@ test("static files are served", async () => {
   assert.equal(k.kfaults.find(f => f.code === "F20").tablePage, 210);
   assert.equal(k.parts.K.parts.length, 211);
   assert.equal(k.parts.K.parts.filter(p => p.list === "tank").length, 91);
-  for (const u of ["J", "K"]) {
-    const P = k.parts[u], lists = new Set(P.models.map(m => m.list)), views = new Set(P.views.map(v => v.id).concat(P.views.map(v => v.view)));
+  assert.equal(k.tfaults.length, 51);
+  assert.ok(!k.tfaults.some(f => f.code === "F29"));
+  assert.equal(k.parts.T.parts.length, 108);
+  const inList = (m, l) => (m.lists || [m.list]).includes(l);
+  for (const u of ["J", "T", "K"]) {
+    const P = k.parts[u], lists = new Set(P.models.flatMap(m => m.lists || [m.list])), views = new Set(P.views.map(v => v.id).concat(P.views.map(v => v.view)));
     for (const v of P.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);
     for (const x of P.parts) {
       assert.ok(lists.has(x.list), `${u} ${x.ref} list`);
       for (const v of x.views) assert.ok(views.has(v), `${u} ${x.ref} view ${v}`);
-      for (const m of P.models.filter(m => m.list === x.list)) assert.ok(m.id in x.no, `${u} ${x.list} ${x.ref} has a number for ${m.id}`);
+      for (const m of P.models.filter(m => inList(m, x.list))) assert.ok(m.id in x.no, `${u} ${x.list} ${x.ref} has a number for ${m.id}`);
     }
   }
   // component cards point at parts that exist
-  for (const u of ["J", "K"]) for (const c of k.components[u].components) for (const r of c.parts || []) {
+  for (const u of ["J", "T", "K"]) for (const c of k.components[u].components) for (const r of c.parts || []) {
     const [l, n] = typeof r === "string" ? r.split(":") : [null, r];
     assert.ok(k.parts[u].parts.some(x => x.ref === +n && (!l || x.list === l)), `${u} ${c.name}: part ${r}`);
   }
-  for (const u of ["J", "K", "B"]) {
+  for (const u of ["J", "T", "K", "B"]) {
     const C = k.components[u], ids = new Set(C.drawings.map(d => d.id));
     for (const d of C.drawings) assert.equal((await fetch(BASE + "/" + d.file)).status, 200, d.file);
     for (const c of C.components) for (const [d] of c.at) assert.ok(ids.has(d), `${u} ${c.name}: ${d}`);
@@ -378,7 +404,7 @@ test("fault trends: each question is saved, counted per unit and installer, and 
   assert.equal(t.current, true); assert.equal(t.summary, null);
   assert.equal(t.stats.total, 5); assert.equal(t.stats.installers, 2); assert.equal(t.stats.unanswered, 5); assert.equal(t.stats.escalated, 5);
   assert.deepEqual(t.stats.codes.map(c => [c.unit, c.code, c.n]), [["J", "H62", 3], ["B", "H02.23", 1], ["B", "Pd", 1]]);
-  assert.deepEqual(t.stats.units.map(u => [u.unit, u.n]), [["J", 3], ["K", 0], ["B", 2]]);
+  assert.deepEqual(t.stats.units.map(u => [u.unit, u.n]), [["J", 3], ["T", 0], ["K", 0], ["B", 2]]);
   const sean = t.stats.people.find(p => p.name === "Seán Murphy");
   assert.equal(sean.n, 4); assert.deepEqual(sean.repeats, [{ unit: "J", code: "H62", n: 3 }]);
   assert.ok(t.stats.people.some(p => p.name === "Phone abcd (no account)"));
