@@ -61,14 +61,24 @@ Cold climates (p.34): back of the unit towards the wall; at least 100 mm between
 
 Page images: `clearances/originals/baxi-hp55-protective-perimeter-p31.png`, `clearances/originals/baxi-hp55-wall-clearances-p32.png`.
 
-### Panasonic K-series outdoor unit: not checked
+### Panasonic K-series outdoor unit: the service manual agrees with HMG
 
-The K-series manual on file is the Hydromodule + Tank installation manual. It gives the tank unit's (indoor) installation space only, and refers to the outdoor unit's own installation manual for the outdoor unit, which is not on file. So the HMG figures can't be checked against the manual yet.
+Checked against the K-series Service Manual (Order No PCZ2508021CE, 2025) on 2026-10-26. p.94 (12.3.2.1 Installation Diagram) shows the same clearances for both drawings (WH-UDZ03KE5, and WH-UDZ05/07/09KE5): **100 mm rear, 100 mm left-hand side, 300 mm right-hand side, 1000 mm front**, all "or more". That is exactly the HMG figure, so there are no differences to flag.
+
+Page image: `clearances/originals/panasonic-k-series-sm-p94-installation-diagram.png`.
+
+Other siting points from the manual (cite "K-series SM"):
+- Avoid more than 2 blocked directions; for multiple outdoor units, consult the dealer (p.94).
+- Fix the unit firmly and level on concrete or a rigid frame with ø10 mm bolts and nuts. On a roof, allow for strong wind (p.94).
+- With the drain elbow: a stand taller than 50 mm and rubber caps on the other ø20 mm holes (7 on the 3 kW, 3 on the 5-9 kW). Where it stays below 0 °C for 2 or 3 days running, don't use the drain elbow and caps: the drain water freezes and the fan won't turn (p.94).
+- Avoid sites that drop below -20 °C (3 kW) or -25 °C (5, 7 and 9 kW). Don't block the discharge air or let it short-circuit. An awning must not block the heat radiation from the coil (p.93).
+- A base pan heater (CZ-NE2P, optional) is strongly recommended in cold areas (p.93).
+- 5, 7 and 9 kW: fit the discharge grille (supplied) before powering on (p.95).
 
 ---
 
 ## Not covered
 
-- J-series clearance figures (not in the service manual; installation manual not on file) and K-series outdoor unit clearance drawing (not on file).
+- J-series clearance figures (not in the service manual; installation manual not on file).
 - Clearances above the unit and between multiple units for the Panasonic units.
 - Building regulations, planning or noise distance rules.
