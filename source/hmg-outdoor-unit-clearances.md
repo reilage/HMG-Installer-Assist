@@ -14,8 +14,11 @@ Minimum clear space from the outdoor unit to a wall, fence or other obstacle. Le
 | Baxi Assure HP55 R290 monobloc (all models) | 300 mm | 300 mm | 100 mm | 1000 mm |
 | Panasonic K-series split outdoor unit (WH-UDZ03/05/07/09KE5) | 100 mm | 300 mm | 100 mm | 1000 mm |
 | Panasonic J-series T-Cap monobloc R32 (WH-MXC09J3E5 / WH-MXC12J6E5) | 300 mm | 300 mm | 100 mm | 1000 mm |
+| Panasonic L-series R290 outdoor unit (WH-WDG05LE5 / WDG07LE5 / WDG09LE5) | 300 mm | 300 mm | 100 mm | 1000 mm |
 
 The J-series T-Cap row is from the T-Cap service manual (p.49), which gives the same figures as HMG's J-series row. HMG confirmed these as HMG's T-Cap figures, the same as the J-series (Donal Reilly 26/10/2026).
+
+The L-series row is from the L-series service manual dimension diagram (p.169), which gives the same figures as the J-series row. HMG confirmed them as HMG's L-series figures (Donal Reilly 26/10/2026). The L-series is R290, so its protective zone applies as well: see the HMG R290 exclusion zone guidance.
 
 ---
 
@@ -98,3 +101,19 @@ Other siting points from the manual (cite "T-Cap SM"):
 - Fix to a concrete floor with M12 anchor bolts at 4 points, pull-out strength above 15000 N. Concrete compressive strength above 18 MPa (p.50). The unit weighs 140 kg empty (p.11), more when full of water.
 - With the drain elbow: stand taller than 50 mm, cover the 8 holes (ø20 mm) with rubber caps. Don't use the elbow and caps where it stays below 0°C for 2-3 days (drain water freezes and the fan won't turn) (p.50).
 - A base pan heater (CZ-NE3P) is strongly recommended in cold climates (p.49, p.60).
+
+### Panasonic L-series R290 outdoor unit: the service manual agrees with HMG
+
+Checked against the L-series Service Manual (Order No PCZ2504005CE, 2025) on 2026-10-26. p.169 (12.7.3.1 Dimension Diagram) shows **300 mm rear, 300 mm right-hand side, 100 mm left-hand side, 1000 mm front**, all "or more", the same as the HMG figures. HMG confirmed them (Donal Reilly 26/10/2026).
+
+Other siting points from the manual (cite "L-series SM"):
+- Avoid more than 2 blocked directions; for multiple outdoor units, consult the dealer (p.169).
+- Avoid sites that drop below -25 °C. Don't block the discharge air or let it short-circuit. An awning must not block the heat radiation from the coil (p.167).
+- Fix the unit upright and level on concrete or a solid surface with M10 or W 3/8 bolts and nuts; on a roof, allow for strong wind (p.169).
+- With the drain elbow: a stand taller than 50 mm and rubber caps on the ø32 mm holes. Where it stays below 0 °C for 2 or 3 days running, don't use the drain elbow and caps: the drain water freezes and the fan won't turn (p.170).
+- Pressure relief valve drain: 15 mm hose, running continuously downward to open, frost-free air, outlet where it can't be blocked, not into a sewer or drain that may give off gas (p.170).
+- A base pan heater (CZ-NE4P, optional) is strongly recommended in cold areas (p.167).
+- Fit the discharge grilles before powering on (p.170, p.172).
+- Water pipes between the outdoor unit and tank unit: ø20 (5 kW) or ø25 (7/9 kW) inner diameter, 30 m maximum, 10 m maximum height difference, 30 mm or more insulation (p.167).
+- R290: a protective zone applies around the outdoor unit (p.168). See the HMG R290 exclusion zone guidance.
+

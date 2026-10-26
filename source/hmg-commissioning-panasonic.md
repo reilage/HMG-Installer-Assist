@@ -2,10 +2,10 @@
 
 Cite as **"HMG commissioning procedure"**, plus the manual page given on the step.
 
-Step-by-step commissioning on site, in order, for the Panasonic J-series monobloc (Part A), the K-series split (Part B) and the J-series T-Cap monobloc (Part C). The parts are kept separate: never use one unit's steps for the other. The app shows this as a tick list under Controller › Commissioning.
+Step-by-step commissioning on site, in order, for the Panasonic J-series monobloc (Part A), the K-series split (Part B), the J-series T-Cap monobloc (Part C) and the L-series R290 Hydromodule + Tank (Part D). The parts are kept separate: never use one unit's steps for the other. The app shows this as a tick list under Controller › Commissioning.
 
 How this file works (for editing on GitHub):
-- `# Part A` / `# Part B` / `# Part C` start each unit. `## ` lines are the stages. Each `- **Step.**` line is one tick box; the text after it is what the installer sees.
+- `# Part A` / `# Part B` / `# Part C` / `# Part D` start each unit. `## ` lines are the stages. Each `- **Step.**` line is one tick box; the text after it is what the installer sees.
 - **HMG TO CONFIRM** marks a setting where HMG hasn't given a recommended value yet. The app shows a "HMG value needed" tag on it and gives the factory setting. When Donal confirms a value, replace the HMG TO CONFIRM text with "HMG: <value> (Donal Reilly, <date>)".
 - Recommended values that are already HMG's: heating curve and maximum flow (HMG weather compensation guidance, 25/10/2026), flow rates (HMG sizing guidance), and the F12 site checks (HMG Field Notes).
 
@@ -219,3 +219,80 @@ How this file works (for editing on GitHub):
 
 - **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit (T-Cap SM p.4).
 - **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.
+
+---
+
+# Part D: L-series R290 Hydromodule + Tank (WH-ADC0509L3E51, WH-WDG05/07/09LE5)
+
+HMG values are the same as the J-series and K-series checklists (Donal Reilly, 26/10/2026).
+
+## 1. Before you switch on
+
+- **Pipework and wiring finished.** Pipework and electrical cable connections properly done, tank unit filled with water and trapped air released, before the test run (L-series SM p.93).
+- **R290 outdoor unit sited safely.** The outdoor unit holds R290, which is extremely flammable (A3). Check the protective zone around it is clear: no windows, doors, vents, drains or other openings, and no ignition sources such as sockets, switches or lamps (L-series SM p.168; Install › Exclusion zones in the app). The refrigerant circuit is sealed in the outdoor unit, so there is no refrigerant pipework to do on site.
+- **No automatic air vents indoors.** Don't fit automatic air purge valves on the indoor water pipes: if R290 ever leaked into the water circuit it could get into the house (L-series SM p.86).
+- **Fill the DHW tank first.** Drain tap CLOSED, all taps and showers OPEN, fill through the tank connector: water should flow from the taps after 20-40 min. Open the drain tap for 10 s to release air, then close it. Turn the safety relief valve knob anticlockwise and hold 10 s, then back (L-series SM p.89).
+- **Fill and purge the heating circuit.** Fill at more than 1 bar until water flows freely from the pressure relief valve drain pipe at the outdoor unit. Then switch on the tank unit and run the pump at maximum speed from Installer setup › Service setup (L-series SM p.89). Open the air vent plugs on the emitters; if the units are on different floors, also open the vent plugs on the outdoor unit's water plug and the heater bottle in the tank unit (L-series SM p.90).
+- **Expansion vessel big enough.** Built-in vessel is 10 L at 1 bar, good for up to 200 L of system water (tank unit piping is about 5 L). Over 200 L, add a vessel. Keep the height difference of the water circuit within 10 m (L-series SM p.90).
+- **Pressure relief valve tested.** It is in the outdoor unit. Pull the lever horizontal and release it when water comes out of the drain pipe, then check the water stops. If water keeps draining, switch off and escalate (L-series SM p.90).
+- **Water only, no glycol.** HMG recommends water only in the circuit (HMG, Donal Reilly 25/10/2026). Set Circulation liquid to Water in stage 3, and keep Anti freezing on Yes.
+
+## 2. First power-up
+
+- **Power on, pump running, no leaks.** Switch on the tank unit and check the water pump runs and there are no leaks at the connections (L-series SM p.89).
+- **RCCB/ELCB tested.** With power on, test the RCCB/ELCB and set it back ON (L-series SM p.90).
+- **Winter warm-up.** In winter, leave the unit powered on standby for at least 15 minutes before the test run, so the refrigerant warms up and no wrong error code shows (L-series SM p.93).
+- **Language, clock, date and front grille.** Press any button: language, clock format, date and time, [OK] after each. When asked "Is O/D front grille fixed?" select Yes (fit the outdoor discharge grille first). With two controllers, the first to confirm a language becomes the main one (L-series SM p.110, p.172).
+- **Water pressure on the controller.** [Menu] › System check › System information › [▼] to Water pressure. Fill to **1 to 1.5 bar** (HMG, Donal Reilly 25/10/2026). Never lower than 0.5 bar (L-series SM p.90, p.124).
+
+## 3. System setup (unit OFF)
+
+- **Get into Installer setup.** Press [Operate] ⏻ so the operation light goes out, then [Menu] (top right) › Installer setup › System setup (HMG Field Notes – Can't get into Installer setup; L-series SM p.46).
+- **Optional PCB connectivity.** Yes only if the optional PCB (CZ-NS5P) is fitted. Otherwise leave No (L-series SM p.106, p.113).
+- **Zone & Sensor.** HMG: **Room thermostat, External**, with the weather compensation curve (HMG, Donal Reilly 25/10/2026). Options are Water temperature, Room thermostat (Internal or External) or Room thermistor (L-series SM p.105, p.113).
+- **Heater capacity.** HMG: **3 kW** backup heater (HMG, Donal Reilly 25/10/2026). The E51 tank unit has a 3 kW heater (L-series SM p.14, p.113).
+- **Anti freezing.** HMG: **Yes** (also the factory setting) (HMG, Donal Reilly 25/10/2026) (L-series SM p.113).
+- **DHW capacity.** HMG: **Standard** (factory is Variable, so change it) (HMG, Donal Reilly 25/10/2026) (L-series SM p.113).
+- **Bivalent connection.** Only if a boiler is connected: Yes › SG ready, Auto or Smart. Otherwise leave No (L-series SM pp.114-115).
+- **Circulation liquid.** Water or Glycol, to match what's in the system (L-series SM p.117).
+- **Pump flowrate.** HMG: **ΔT** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Other option Max. duty (L-series SM p.118).
+- **DHW defrost.** HMG: **Yes** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Uses the DHW tank for defrost (L-series SM p.118).
+- **Heating control.** HMG: **Comfort** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Other option Efficiency (L-series SM p.118).
+- **Electrical anode.** No on the E51 (Yes only on the AN1 model): check it matches the model on the rating label (L-series SM p.118).
+- **Two controllers.** Only if two remotes are fitted: Installer setup › Remote control setup › RC selection = Dual (L-series SM p.122).
+
+## 4. Operation setup › Heat
+
+- **Heating curve (HMG).** Operation setup › Heat › Water temp. for heating ON › Compensation curve. HMG: steel radiators -3 °C outdoor → 45 °C flow, 15 °C → 35 °C. Underfloor -3 °C → 35 °C, 15 °C → 25 °C. The factory curve (-5 °C → 55 °C) is over the HMG maximum, so always change it. On 2 zones set both (HMG weather compensation guidance; L-series SM p.62, p.119).
+- **Maximum flow (HMG).** Never above 45 °C on radiators or 35 °C on underfloor. The L-series curve can be set up to 75 °C, so take care. The -3 °C curve point is the maximum: there is no separate maximum flow setting in the manual (HMG weather compensation guidance; L-series SM p.62).
+- **Outdoor temp. for heating OFF.** HMG: **24 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Range 5-35 °C (L-series SM p.119).
+- **ΔT for heating ON.** HMG: **5 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Range 1-15 °C (L-series SM p.119).
+- **Heater ON/OFF.** HMG: outdoor temp for heater ON **-3 °C** (factory 0 °C) (HMG, Donal Reilly 25/10/2026). Leave the rest at factory: delay 30 min, heater ON at 4 °C below target water temperature, OFF at 2 °C below (L-series SM p.119).
+
+## 5. Operation setup › Tank
+
+- **Tank timings.** HMG: Tank re-heat temp **-8 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Leave Floor operation time (8 h) and Tank heat up time (60 min) at factory (L-series SM p.121).
+- **Sterilization (legionella).** HMG: **65 °C for 10 min** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Set the day and time to suit the customer (L-series SM p.121).
+
+## 6. Service setup
+
+- **Air purge.** Service setup › Pump maximum speed, [►] to Operation, [▲]/[▼] to Air Purge, [OK]. Run it until the flow reading is steady. If there is no flow or H62 shows, stop the pump and release the air (L-series SM p.93, p.223).
+- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (L-series SM p.93). Rated flow: 5 kW 14.3, 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; L-series SM p.13, p.17, p.21). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (L-series SM p.122). No phone number needed.
+- **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit (25-55 °C, 1-99 stages), then ON. Follow the screed maker's schedule (L-series SM p.122, pp.226-227).
+
+## 7. Test run
+
+- **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (L-series SM p.93).
+- **Pressure while running.** System check › System information › Water pressure reads 0.5-3 bar (0.05-0.3 MPa). If not, adjust the pump speed; if that doesn't fix it, escalate (L-series SM p.93, p.124).
+- **Heating normal, no leaks, no odd noise.** Heating works, no abnormal sound, no water leaks during the test run (L-series SM p.93).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (L-series SM p.93, p.124; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
+- **No errors.** [Menu] › System check › Error history: nothing new (L-series SM p.236).
+- **Filters cleaned.** After the test run, clean the magnetic water filter and the water filter and refit them (L-series SM p.93).
+
+## 8. Handover
+
+- **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit, including keeping the protective zone around the outdoor unit clear: no new openings, sockets, lights or barbecues there later (L-series SM p.168).
+- **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.
+

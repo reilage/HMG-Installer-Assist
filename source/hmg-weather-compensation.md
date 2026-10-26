@@ -37,6 +37,8 @@ Path: Installer setup → Operation setup → Heat → Water temp. for heating O
 
 Manual pages: J-series SM pp.31-32 and p.83 (12.4.4 Operation Setup, item 24); K-series IM p.31 (3-4 Operation Setup, item 26). Room thermostat / thermistor shift: J-series SM p.65, K-series IM p.14.
 
+Panasonic L-series R290 (added 26/10/2026): entered the same way, Operation setup › Heat › Water temp. for heating ON › Compensation curve (L-series SM p.62, p.119, item 26). The L-series curve can be set from 20 °C up to 75 °C flow (p.62), so keeping to the HMG maximum (45 °C radiators, 35 °C underfloor) matters even more.
+
 ---
 
 ## Baxi Assure HP55 (ASHP Control): gradient + base temperature

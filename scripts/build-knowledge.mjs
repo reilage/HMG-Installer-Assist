@@ -32,9 +32,10 @@ const K = pages(read("manuals/panasonic/panasonic-k-series-hydromodule-tank-inst
 const K2 = pages(read("manuals/panasonic/panasonic-k-series-service-manual.md"));
 const K3 = pages(read("manuals/panasonic/panasonic-k-series-tank-service-manual.md"));
 const T = pages(read("manuals/panasonic/panasonic-j-series-t-cap-9-12kw-service-manual.md"));
+const L = pages(read("manuals/panasonic/panasonic-l-series-r290-service-manual.md"));
 
 // Self-diagnosis pages for each code, from the section 19.5.x headings, e.g. "19.5.25 Outdoor High Pressure Protection (H98 / F95)"
-// (18.5.x in the T-Cap manual). Each section runs to the page before the next one starts; `last` is the last page of the final section.
+// (18.5.x in the T-Cap and L-series manuals). Each section runs to the page before the next one starts; `last` is the last page of the final section.
 function diagFinder(P, last, sec = "19") {
   const starts = {};
   for (const p of Object.keys(P).map(Number).sort((a, b) => a - b))
@@ -62,6 +63,12 @@ const kfaults = JSON.parse(read("k-series-faults.json")).map(f => ({
 const tDiag = diagFinder(T, 211, "18");
 const tfaults = JSON.parse(read("t-cap-faults.json")).map(f => ({
   ...f, tablePage: f.code[0] === "H" || HPAGE.has(f.code) || f.code === "F95" ? 164 : 165, diagPages: tDiag(f.code),
+}));
+
+// L-series R290 error codes table (L-series SM pp.237-238: H codes, F12-F16 and H98/F95 on p.237, F20 onwards on p.238), checks in section 18.5 (pp.239-286).
+const lDiag = diagFinder(L, 286, "18");
+const lfaults = JSON.parse(read("l-series-faults.json")).map(f => ({
+  ...f, tablePage: f.code[0] === "H" || HPAGE.has(f.code) || f.code === "F95" ? 237 : 238, diagPages: lDiag(f.code),
 }));
 
 /* ---------- Baxi Assure HP55 outdoor unit: quick reference and error codes ---------- */
@@ -99,6 +106,7 @@ const fn = read("hmg-field-notes.md");
 const sizing = read("hmg-primary-pipe-sizing.md");
 const clearances = read("hmg-outdoor-unit-clearances.md");
 const weatherComp = read("hmg-weather-compensation.md");
+const zones = read("hmg-r290-exclusion-zones.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");
 
@@ -109,6 +117,7 @@ const commFile = read("hmg-commissioning-panasonic.md");
 const jparts = JSON.parse(read("j-series-parts.json"));
 const kparts = JSON.parse(read("k-series-parts.json"));
 const tparts = JSON.parse(read("t-cap-parts.json"));
+const lparts = JSON.parse(read("l-series-parts.json"));
 const parts = {
   J: {
     models: [["05", "5 kW", "WH-MDC05J3E5"], ["07", "7 kW", "WH-MDC07J3E5"], ["09", "9 kW", "WH-MDC09J3E5"]].map(([id, label, model]) => ({ id, label, model, list: "J" })),
@@ -118,6 +127,8 @@ const parts = {
   K: { models: kparts.models, views: kparts.views.map(v => ({ key: "K2", ...v, unit: "K" })), parts: kparts.parts },
   // T-Cap: two lists (water system, refrigerant system) and both models show both, so a model has `lists`, not `list`
   T: { models: tparts.models, lists: tparts.lists, views: tparts.views.map(v => ({ ...v, key: "T", unit: "T" })), parts: tparts.parts },
+  // L-series: the E51 tank unit list and one outdoor list for the 5, 7 and 9 kW, like the K-series
+  L: { models: lparts.models, views: lparts.views.map(v => ({ ...v, key: "L", unit: "L" })), parts: lparts.parts },
 };
 
 // Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
@@ -125,10 +136,10 @@ const parts = {
 const { _about, ...compSrc } = JSON.parse(read("components.json"));
 const components = Object.fromEntries(Object.entries(compSrc).map(([u, c]) => [u, { ...c, drawings: c.drawings.map(d => ({ ...d, unit: u })) }]));
 
-// Commissioning tick list: "# Part A" = J-series, "# Part B" = K-series, "# Part C" = J-series T-Cap; "## " stages; each "- **Step.** text" is one tick box.
+// Commissioning tick list: "# Part A" = J-series, "# Part B" = K-series, "# Part C" = J-series T-Cap, "# Part D" = L-series; "## " stages; each "- **Step.** text" is one tick box.
 // "HMG TO CONFIRM" marks a setting HMG hasn't given a value for yet.
-const commPart = l => commFile.split(/^(?=# Part [ABC]\b)/m).find(t => t.startsWith("# Part " + l)).replace(/\n---\s*$/, "").trim();
-const commText = { J: commPart("A"), K: commPart("B"), T: commPart("C") };
+const commPart = l => commFile.split(/^(?=# Part [ABCD]\b)/m).find(t => t.startsWith("# Part " + l)).replace(/\n---\s*$/, "").trim();
+const commText = { J: commPart("A"), K: commPart("B"), T: commPart("C"), L: commPart("D") };
 const commissioning = Object.fromEntries(Object.entries(commText).map(([u, t]) => [u,
   t.split(/^## /m).slice(1).map(sec => ({
     stage: sec.split("\n", 1)[0].trim(),
@@ -149,7 +160,7 @@ const fnotes = fn.split(/^## /m).slice(1).map(sec => {
   return {
     title, product: prod,
     // "J-series T-Cap" is the T-Cap only; "J-series" on its own (or "Mini Monobloc") is the Mini Monobloc
-    units: [["J", /J-series(?! T-Cap)|Mini Monobloc/], ["T", /T-Cap/], ["K", /K-series/], ["B", /Baxi/]].filter(([, k]) => k.test(prod)).map(([u]) => u),
+    units: [["J", /J-series(?! T-Cap)|Mini Monobloc/], ["T", /T-Cap/], ["K", /K-series/], ["L", /L-series/], ["B", /Baxi/]].filter(([, k]) => k.test(prod)).map(([u]) => u),
     codes: [...new Set(sym.match(/\b[A-Z]\d{2}(?:\.\d+)?\b/g) || [])].sort(),
     cause: fld("Cause"), fix: fld("Fix"), confirmed: fld("Confirmed"),
   };
@@ -158,6 +169,7 @@ const fnotes = fn.split(/^## /m).slice(1).map(sec => {
 const TITLES = {
   J: { title: "Panasonic Service Manual, Mini Monobloc R32 J-series (WH-MDC05/07/09J3E5)", cite: "J-series SM" },
   T: { title: "Panasonic Service Manual, Monobloc T-Cap J-series 9 and 12 kW (WH-MXC09J3E5, WH-MXC12J6E5), Order No PAPAMY2101001CE (2021)", cite: "T-Cap SM" },
+  L: { title: "Panasonic Service Manual, Hydromodule + Tank R290 L-series (tank unit WH-ADC0509L3E51, outdoor WH-WDG05LE5 / WDG07LE5 / WDG09LE5), Order No PCZ2504005CE (2025)", cite: "L-series SM" },
   K: { title: "Panasonic Installation Manual, Hydromodule + Tank K-series (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)", cite: "K-series IM" },
   K2: { title: "Panasonic Service Manual, Hydromodule + Tank K-series (outdoor WH-UDZ03/05/07/09KE5, tank unit WH-ADC0309K0E5A), Order No PCZ2508021CE (2025)", cite: "K-series SM" },
   K3: { title: "Panasonic Service Manual, Hydromodule + Tank K-series (tank unit WH-ADC0309K3E5/K6E5, outdoor WH-UDZ03/05/07/09KE5), Order No PAPAMY2302047CE (2023)", cite: "K-series tank SM" },
@@ -167,22 +179,23 @@ const TITLES = {
 const full = {
   J: { ...TITLES.J, pages: J },
   T: { ...TITLES.T, pages: T },
+  L: { ...TITLES.L, pages: L },
   K: { ...TITLES.K, pages: K },
   K2: { ...TITLES.K2, pages: K2 },
   K3: { ...TITLES.K3, pages: K3 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, parts, components,
+  nav, sizing, wiring, clearances, weatherComp, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 const lite = {
-  J: TITLES.J, T: TITLES.T, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
+  J: TITLES.J, T: TITLES.T, L: TITLES.L, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, fieldNoteList: fnotes, faults, kfaults, tfaults, parts, components,
+  nav, wiring, commissioning, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
-console.log(`Built knowledge: J ${Object.keys(J).length} pages, T-Cap ${Object.keys(T).length} (${tfaults.length} codes, ${parts.T.parts.length} parts), K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), K tank SM ${Object.keys(K3).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
+console.log(`Built knowledge: J ${Object.keys(J).length} pages, T-Cap ${Object.keys(T).length} (${tfaults.length} codes, ${parts.T.parts.length} parts), L-series ${Object.keys(L).length} (${lfaults.length} codes, ${parts.L.parts.length} parts), K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), K tank SM ${Object.keys(K3).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
   `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ${parts.K.parts.length} K-series parts, ` +
-  `components J ${components.J.components.length}, T ${components.T.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
-  `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, T ${commissioning.T.flatMap(s => s.steps).length}, K ${commissioning.K.flatMap(s => s.steps).length}.`);
+  `components J ${components.J.components.length}, T ${components.T.components.length}, L ${components.L.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
+  `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, T ${commissioning.T.flatMap(s => s.steps).length}, L ${commissioning.L.flatMap(s => s.steps).length}, K ${commissioning.K.flatMap(s => s.steps).length}.`);

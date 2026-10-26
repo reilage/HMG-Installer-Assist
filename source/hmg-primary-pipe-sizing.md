@@ -1,4 +1,4 @@
-# HMG Primary Pipe Sizing Guidance (Panasonic J-series, J-series T-Cap and K-series)
+# HMG Primary Pipe Sizing Guidance (Panasonic J-series, J-series T-Cap, K-series and L-series)
 
 Cite as **"HMG sizing guidance"** (method: HMG Pro Academy Training Handbook Level 1, pp.36-38; flow rates: HMG Panasonic nominal flow rate table).
 
@@ -60,6 +60,8 @@ These are the kW ÷ (4.18 × 5°C ΔT) flows, so the table assumes a 5°C ΔT.
 | 16 kW | 45.9 | not covered | not covered | From HMG table only |
 
 **J-series T-Cap (added 26/10/2026):** the T-Cap service manual gives 25.8 l/min for the WH-MXC09J3E5 (T-Cap SM p.12) and 34.4 l/min for the WH-MXC12J6E5 (p.15), heating and cooling, at LWT 35°C and ΔT 5°C. Both match the HMG table, so the 9 and 12 kW rows are backed by a manual for the T-Cap. HMG: size T-Cap primary pipework with this HMG sizing method, the same as the other Panasonic units (Donal Reilly 26/10/2026). T-Cap water connections are Rp 1¼" (p.51), minimum 15 l/min with the main pump running (p.62), and insulate with 20 mm or more (p.51).
+
+**L-series R290 (added 26/10/2026):** the L-series service manual gives heating flows of 14.3 l/min for the WH-WDG05LE5 (L-series SM p.13), 20.1 l/min for the WH-WDG07LE5 (p.17) and 25.8 l/min for the WH-WDG09LE5 (p.21), the same as the HMG table (20 rounded) and the K-series. HMG: size L-series primary pipework with this HMG sizing method (Donal Reilly 26/10/2026). The manual's own guide for the water pipes between the outdoor unit and the tank unit is ø20 inner diameter on the 5 kW and ø25 on the 7 and 9 kW, 30 m maximum length, 10 m maximum height difference, insulation 30 mm or more (p.167); minimum 15 l/min with the main pump running (p.93).
 
 K-series rated flows: K-series IM p.8. J-series flows are "based on nominal capacity, LWT 35°C and ΔT 5°C" (J-series SM p.12).
 

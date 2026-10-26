@@ -266,7 +266,7 @@ table.cu+table.cu{margin-top:8px}
 .sz-notes li{margin:3px 0}
 
 /* Clearances */
-.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start}
+.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start;flex-wrap:wrap;max-width:100%}
 .seg button{border:0;background:none;padding:7px 14px;border-radius:6px;font-size:14.5px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .cl-fig{width:100%;max-width:360px;height:auto;align-self:center}
@@ -366,6 +366,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
     <div class="unit" id="unit-menu" role="group" aria-label="Heat pump model" hidden>
       <button id="u-J" aria-pressed="true">J-series<small>Panasonic Mini Monobloc R32</small></button>
       <button id="u-T" aria-pressed="false">J-series T-Cap<small>Panasonic T-Cap monobloc 9 / 12 kW</small></button>
+      <button id="u-L" aria-pressed="false">L-series R290<small>Panasonic Hydromodule + Tank, R290 monobloc</small></button>
       <button id="u-K" aria-pressed="false">K-series<small>Panasonic split Hydromodule + Tank</small></button>
       <button id="u-B" aria-pressed="false">Baxi HP55<small>Baxi Assure HP55 R290 monobloc</small></button>
     </div>
@@ -435,8 +436,9 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <section class="view" id="v-size" hidden>
   <div><h2>Install</h2><p class="lede" id="size-lede">Outdoor unit clearances, primary pipe sizing, the HMG heating curve and what each component inside the unit is, for the selected unit.</p></div>
-  <div class="seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="cp" aria-pressed="false">Components</button></div>
+  <div class="seg" id="install-seg" role="group" aria-label="Install topic"><button data-s="cl" aria-pressed="true">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="cp" aria-pressed="false">Components</button></div>
   <div id="cl-body"></div>
+  <div id="ez-body" hidden></div>
   <div id="size-body" hidden></div>
   <div id="wc-body" hidden></div>
   <div id="cp-body" class="view" hidden></div>
@@ -486,6 +488,7 @@ const $=s=>document.querySelector(s);
 let ESC_TO="donal.reilly@heatmerchants.ie";
 const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc",pill:"J-series"},
              T:{name:"Panasonic J-series T-Cap monobloc R32, 9 and 12 kW (WH-MXC09J3E5, WH-MXC12J6E5)",short:"J-series T-Cap",pill:"J T-Cap"},
+             L:{name:"Panasonic L-series R290 Hydromodule + Tank (tank unit WH-ADC0509L3E51, outdoor WH-WDG05LE5 / WDG07LE5 / WDG09LE5)",short:"L-series R290",pill:"L-series"},
              K:{name:"Panasonic K-series split Hydromodule + Tank (tank unit WH-ADC0309K3E5/K6E5, outdoor WH-UDZ03/05/07/09KE5)",short:"K-series split",pill:"K-series"},
              B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55",pill:"Baxi HP55"}};
 let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=null;
@@ -656,19 +659,19 @@ function show(v){
 }
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
 function setUnit(u){
-  unit=u;for(const k of ["J","T","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
+  unit=u;for(const k of ["J","T","L","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
   $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
-  renderSuggest();renderDocs();renderSizing();renderClear();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}
+  renderSuggest();renderDocs();renderSizing();renderClear();renderZones();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}
 }
-$("#u-J").onclick=()=>setUnit("J");$("#u-T").onclick=()=>setUnit("T");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
+$("#u-J").onclick=()=>setUnit("J");$("#u-T").onclick=()=>setUnit("T");$("#u-L").onclick=()=>setUnit("L");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
 function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
 $("#unit-btn").onclick=e=>{e.stopPropagation();unitMenu($("#unit-menu").hidden);};
 document.addEventListener("click",e=>{if(!e.target.closest(".unit-pick")) unitMenu(false);});
 document.addEventListener("keydown",e=>{if(e.key==="Escape") unitMenu(false);});
 
 /* ---------- Manuals ---------- */
-/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160, T-Cap SM into four at p.48/49, p.84/85 and p.159/160, K-series SM at p.128/129 and p.204/205, K-series tank SM at p.150/151 and p.300/301. */
+/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160, T-Cap SM into four at p.48/49, p.84/85 and p.159/160, K-series SM at p.128/129 and p.204/205, K-series tank SM at p.150/151 and p.300/301, L-series SM at p.82/83 and p.236/237. */
 const DOCS={
   J:{docs:[
     {key:"J",from:1,to:80,file:"Panasonic-J-series-SM-part1-pp1-80.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 1 (pp.1-80)",meta:"WH-MDC05/07/09J3E5 · 12.7 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, installation, siting, water and electrical connections, commissioning."},
@@ -679,6 +682,10 @@ const DOCS={
     {key:"T",from:49,to:84,file:"Panasonic-J-T-Cap-SM-part2-pp49-84.pdf",title:"Panasonic J-series T-Cap service manual, part 2 (pp.49-84)",meta:"WH-MXC09J3E5 / WH-MXC12J6E5 · 7.6 MB",covers:"Installation: clearances (p.49), siting, pipework, power supplies, field wiring, controller, filling, test run, external devices, installer setup, hidden menus (p.84)."},
     {key:"T",from:85,to:159,file:"Panasonic-J-T-Cap-SM-part3-pp85-159.pdf",title:"Panasonic J-series T-Cap service manual, part 3 (pp.85-159)",meta:"WH-MXC09J3E5 / WH-MXC12J6E5 · 7.0 MB",covers:"R32 servicing and brazing, operation and control, protection control, servicing (expansion vessel, pump down, pump speed, dry concrete), maintenance guide."},
     {key:"T",from:160,to:237,file:"Panasonic-J-T-Cap-SM-part4-pp160-237.pdf",title:"Panasonic J-series T-Cap service manual, part 4 (pp.160-237)",meta:"WH-MXC09J3E5 / WH-MXC12J6E5 · 8.6 MB",covers:"Troubleshooting, error codes (pp.164-165) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists (pp.230-237)."}]},
+  L:{docs:[
+    {key:"L",from:1,to:82,file:"Panasonic-L-series-SM-part1-pp1-82.pdf",title:"Panasonic L-series R290 service manual, part 1 (pp.1-82)",meta:"WH-ADC0509L3E51 + WH-WDG05/07/09LE5 · 9.9 MB",covers:"R290 safety, specifications (5 kW p.12, 7 kW p.16, 9 kW p.20), controller menus (pp.39-67), main components (p.68), refrigerant and water cycle (p.74), wiring and circuit diagrams, PCBs."},
+    {key:"L",from:83,to:236,file:"Panasonic-L-series-SM-part2-pp83-236.pdf",title:"Panasonic L-series R290 service manual, part 2 (pp.83-236)",meta:"WH-ADC0509L3E51 + WH-WDG05/07/09LE5 · 4.5 MB",covers:"Installation of the tank unit and outdoor unit (power supplies p.88, filling and relief valve p.93, R290 protective zone p.168, clearances p.169), installer setup, R290 servicing, operation and control, servicing (pump down p.222, error history pp.235-236). Pages 125-166 are for the UK1 tank unit, which HMG doesn't supply."},
+    {key:"L",from:237,to:333,file:"Panasonic-L-series-SM-part3-pp237-333.pdf",title:"Panasonic L-series R290 service manual, part 3 (pp.237-333)",meta:"WH-ADC0509L3E51 + WH-WDG05/07/09LE5 · 3.9 MB",covers:"Error codes (pp.237-238) and self-diagnosis checks for each code (pp.239-286), disassembly, technical data, exploded views and parts lists (tank unit pp.310-325, outdoor unit pp.326-333)."}]},
   K:{docs:[
     {key:"K",file:"Panasonic-K-series-Hydromodule-Tank-Installation-Manual.pdf",title:"Panasonic K-series Hydromodule + Tank, installation manual",meta:"WH-ADC0309K3E5/K6E5 · 34 pages · 8.4 MB",covers:"Tank unit installation, pipework, wiring, controller setup and commissioning."},
     {key:"K2",from:1,to:128,file:"Panasonic-K-series-SM-part1-pp1-128.pdf",title:"Panasonic K-series service manual, part 1 (pp.1-128)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 7.0 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, PCBs, installation of the tank unit and outdoor unit (clearances p.94), piping, wiring, service and maintenance."},
@@ -716,6 +723,7 @@ function renderDocs(){
   if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
   if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
   if(unit==="T"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in four to keep each download small. Page numbers in the app match the printed pages. It covers the 9 and 12 kW T-Cap only, not the Mini Monobloc.";box.append(g);}
+  if(unit==="L"){const g=document.createElement("p");g.className="src";g.textContent="One service manual covers both the tank unit and the outdoor unit. It is split in three to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
   if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" Use the outdoor service manual for the outdoor unit and fault codes. Its tank unit pages are for the WH-ADC0309K0E5A, so for the K3E5/K6E5 tank unit use the tank unit service manual and the installation manual.":"");box.append(g);}
 }
 
@@ -732,7 +740,10 @@ const PTEXT={
   K:{lede:"Exploded views and replacement parts lists for the outdoor unit (K-series SM pp.299-306) and the K3E5/K6E5 tank unit (K-series tank SM pp.439-443). Pick the outdoor size or the tank unit from its rating label, then search by part name, ref number or part number.",
      eg:"fan motor, PCB, 37, sensor",
      note:"Outdoor unit lists from the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing. The tank unit list is from the 2023 tank unit service manual (Order No PAPAMY2302047CE); RECEIVER (ref 33) is the heating expansion vessel."}};
-const pModel={J:store.get("hmg-parts-model")||"05",T:store.get("hmg-parts-model-T")||"09",K:store.get("hmg-parts-model-K")||"05"};
+PTEXT.L={lede:"Exploded views and replacement parts lists for the E51 tank unit (L-series SM pp.310-325) and the R290 outdoor unit (pp.326-333). Pick the tank unit or the outdoor size from its rating label, then search by part name, ref number or part number.",
+  eg:"pump, PCB, expansion vessel, 41",
+  note:"From the 2025 service manual (Order No PCZ2504005CE). The tank unit and the outdoor unit each have their own ref numbers, so check which list a number is from. The plate heat exchanger, relief valve and air separator are in the outdoor unit; the 10 L expansion vessel is in the tank unit. Refrigerant side parts are R290: F-Gas certified and R290 trained personnel only. Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts."};
+const pModel={J:store.get("hmg-parts-model")||"05",T:store.get("hmg-parts-model-T")||"09",L:store.get("hmg-parts-model-L")||"E51",K:store.get("hmg-parts-model-K")||"05"};
 let pQuery="";
 function renderParts(){
   const box=$("#parts");if(!box||!KB) return;
@@ -772,7 +783,7 @@ function listParts(){
   for(const x of list){
     const no=x.no[m], qty=x.qtyBy?x.qtyBy[m]:x.qty;
     const nos=Object.values(x.no), diff=nos.some(v=>v!==nos[0]);
-    const vlab=v=>/^Outdoor unit|^Water system:/.test(v.title)?"exploded view":/^Tank unit view|^Refrigerant system view/.test(v.title)?v.title.split(":")[0].replace(/^(Tank unit|Refrigerant system) /,""):v.title.split(":")[0].replace("Exploded view","view");
+    const vlab=v=>/^Outdoor unit(?! view)|^Water system:/.test(v.title)?"exploded view":/^(Tank unit|Refrigerant system|Outdoor unit) view/.test(v.title)?v.title.split(":")[0].replace(/^(Tank unit|Refrigerant system|Outdoor unit) /,""):v.title.split(":")[0].replace("Exploded view","view");
     const el=document.createElement("div");el.className="pt";
     el.innerHTML=`<div class="pt-top"><span class="pt-ref">${x.ref}</span><div><div class="pt-name">${esc(x.name)}</div>${x.aka?`<div class="pt-aka">${esc(x.aka)}</div>`:""}</div></div>
       <div class="pt-no">${no?`<code>${esc(no)}</code><button type="button" data-copy="${esc(no)}">Copy</button>`:`<span class="pt-none">Not fitted on the ${esc(M.model)}</span>`}</div>
@@ -786,13 +797,16 @@ function listParts(){
 }
 
 /* ---------- Outdoor unit clearances (HMG figures, Donal Reilly 24/10/2026) ---------- */
-/* Left/right looking at the front (fan side). Manual figures: Baxi HP55 IM p.32 (Fig.21/22); J-series SM p.52 drawing has no figures; K-series SM p.94 and T-Cap SM p.49 give the same as HMG. */
-const CLEAR={J:{rear:300,right:300,left:100,front:1000},T:{rear:300,right:300,left:100,front:1000},B:{rear:300,right:300,left:100,front:1000},K:{rear:100,right:300,left:100,front:1000}};
+/* Left/right looking at the front (fan side). Manual figures: Baxi HP55 IM p.32 (Fig.21/22); J-series SM p.52 drawing has no figures; K-series SM p.94, T-Cap SM p.49 and L-series SM p.169 give the same as HMG. */
+const CLEAR={J:{rear:300,right:300,left:100,front:1000},T:{rear:300,right:300,left:100,front:1000},B:{rear:300,right:300,left:100,front:1000},K:{rear:100,right:300,left:100,front:1000},L:{rear:300,right:300,left:100,front:1000}};
 const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
-document.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{
-  b.parentElement.querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));
-  $("#cl-body").hidden=b.dataset.s!=="cl";$("#size-body").hidden=b.dataset.s!=="sz";$("#wc-body").hidden=b.dataset.s!=="wc";$("#cp-body").hidden=b.dataset.s!=="cp";});
+/* Install topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
+function installTopic(s){
+  document.querySelectorAll("#install-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.s===s));
+  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#cp-body").hidden=s!=="cp";
+}
+document.querySelectorAll("#install-seg button").forEach(b=>b.onclick=()=>installTopic(b.dataset.s));
 function clFig(c,m){
   const lab=(k,x,y)=>{const bad=m&&m[k]>c[k];return `<text x="${x}" y="${y}" text-anchor="middle" class="${bad?"x":""}">${c[k]}${bad?" / "+m[k]:""}</text>`;};
   return `<svg class="cl-fig" viewBox="0 0 340 250" role="img" aria-label="Plan view of the outdoor unit with clearances">
@@ -825,47 +839,89 @@ function renderClear(){
       <div class="btnrow">${pageLink("B",32)}</div>
       <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026); Baxi HP55 IM p.32 (Fig.21, Fig.22), p.33 (Fig.23), p.34.</div>
     </div>
-    <div class="panel">
-      <span class="chip warn">R290 protective perimeter</span>
-      <p style="margin:0">R290 is highly flammable and heavier than air. As well as the clearances, mark out a protective perimeter (pp.30-31):</p>
-      <ul class="sz-notes">
-        <li><b>Free-standing</b> (ground or flat roof): 1000 mm all round.</li>
-        <li><b>In front of a wall:</b> 300 mm behind, 1000 mm in front. At the sides, 500 mm at the top of the unit widening to 1000 mm at ground level. At least as high as the unit.</li>
-        <li><b>In a corner:</b> 300 mm behind, 500 mm to the side wall, 1000 mm on the open side, up to 1800 mm in front. See Fig.20.</li>
-        <li><b>Nothing inside it:</b> no doors, windows, vents, lightwells, cellar access or sewer hatches; no lights, switches or sockets; no barbecues, mowers or smoking; not next to alleys, parking, neighbours' plots or public areas.</li>
-      </ul>
-      <div class="btnrow">${pageLink("B",31)}</div>
-      <div class="src">Source: Baxi HP55 IM pp.30-31 (Fig.18-20).</div>
-    </div>`;
+    ${ezPointer()}`;
   }else{
     body=`<div class="panel">
       ${clFig(c)}
       <table class="cu cl"><thead><tr><th>Minimum clearance</th><th>HMG</th></tr></thead><tbody>
         ${row("Rear","rear")}${row("Right-hand side","right")}${row("Left-hand side","left")}${row("Front","front")}</tbody></table>
       ${unit==="K"?`<p class="src" style="margin:0">K-series rear is <b>100 mm</b>, not the 300 mm used on the J-series and Baxi.</p>`:""}
-      ${unit==="J"?`<div class="notice">Not in the manual: the J-series service manual (p.52) refers to a clearance drawing, but the drawing has no figures, and no other page gives any. These are HMG's figures.</div>`:unit==="T"?`<p class="src" style="margin:0"><b>Matches the manual.</b> The T-Cap service manual dimension diagram (p.49) gives 300 mm rear, 300 mm right, 100 mm left (fan end) and 1000 mm front, the same as HMG's J-series figures. HMG confirmed them for the T-Cap (Donal Reilly, 26/10/2026).</p>`:`<p class="src" style="margin:0"><b>Matches the manual.</b> The K-series service manual installation diagram (p.94) gives the same for all four outdoor units: 100 mm rear, 100 mm left, 300 mm right, 1000 mm front.</p>`}
-      ${unit==="T"?`<ul class="sz-notes"><li>Avoid more than 2 blocked sides (SM p.34). Outdoors only, on a flat solid surface; avoid sites below -20 °C (SM p.50).</li><li>Fix on concrete with 4 × M12 anchor bolts, pull-out strength over 15000 N. It weighs 140 kg empty, more when full (SM p.11, p.50).</li><li>Drain elbow: put the unit on a stand over 50 mm and fit the 8 rubber caps. Where it stays below 0 °C for 2 or 3 days running, leave the drain elbow and caps off: the drain water freezes and the fan won't turn (SM p.50).</li><li>A base pan heater (CZ-NE3P) is strongly recommended in cold areas (SM p.60).</li></ul>`
+      ${unit==="L"?`<p class="src" style="margin:0"><b>Matches the manual.</b> The L-series service manual (p.169) gives 300 mm rear, 300 mm right, 100 mm left and 1000 mm front, the same as HMG's J-series figures. HMG confirmed them for the L-series (Donal Reilly, 26/10/2026).</p>`:unit==="J"?`<div class="notice">Not in the manual: the J-series service manual (p.52) refers to a clearance drawing, but the drawing has no figures, and no other page gives any. These are HMG's figures.</div>`:unit==="T"?`<p class="src" style="margin:0"><b>Matches the manual.</b> The T-Cap service manual dimension diagram (p.49) gives 300 mm rear, 300 mm right, 100 mm left (fan end) and 1000 mm front, the same as HMG's J-series figures. HMG confirmed them for the T-Cap (Donal Reilly, 26/10/2026).</p>`:`<p class="src" style="margin:0"><b>Matches the manual.</b> The K-series service manual installation diagram (p.94) gives the same for all four outdoor units: 100 mm rear, 100 mm left, 300 mm right, 1000 mm front.</p>`}
+      ${unit==="L"?`<ul class="sz-notes"><li>Outdoors only. Water pipes run from the outdoor unit to the tank unit: ø20 mm inner on the 5 kW, ø25 mm on the 7 and 9 kW, 30 m maximum, 10 m maximum height difference, 30 mm or more insulation (SM p.167).</li><li>Siting, fixing and drain points for the R290 outdoor unit are on SM pp.167-172. Tighten the water pipe glands to the torque on p.171, and don't use hydrocarbon based solvents on the unit (p.172).</li></ul>`
+        :unit==="T"?`<ul class="sz-notes"><li>Avoid more than 2 blocked sides (SM p.34). Outdoors only, on a flat solid surface; avoid sites below -20 °C (SM p.50).</li><li>Fix on concrete with 4 × M12 anchor bolts, pull-out strength over 15000 N. It weighs 140 kg empty, more when full (SM p.11, p.50).</li><li>Drain elbow: put the unit on a stand over 50 mm and fit the 8 rubber caps. Where it stays below 0 °C for 2 or 3 days running, leave the drain elbow and caps off: the drain water freezes and the fan won't turn (SM p.50).</li><li>A base pan heater (CZ-NE3P) is strongly recommended in cold areas (SM p.60).</li></ul>`
         :unit==="J"?`<ul class="sz-notes"><li>Outdoors only, on a flat solid base, on a stand over 50 mm, fixed with 4 × M12 anchor bolts (SM p.52).</li><li>Don't block the discharge air or let it short-circuit back to the intake; keep the intake out of the prevailing wind (SM p.52).</li></ul>`
         :`<ul class="sz-notes"><li>Avoid more than 2 blocked sides. Fix the unit level on concrete or a rigid frame with ø10 mm bolts (SM p.94).</li><li>Drain elbow: put the unit on a stand over 50 mm and fit the rubber caps. Where it stays below 0 °C for 2 or 3 days running, leave the drain elbow and caps off: the drain water freezes and the fan won't turn (SM p.94).</li><li>Don't site the 3 kW where it drops below -20 °C, or the 5-9 kW below -25 °C. A base pan heater (CZ-NE2P) is strongly recommended in cold areas (SM p.93).</li><li>5, 7 and 9 kW: fit the discharge grille before powering on (SM p.95).</li></ul>`}
-      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026)${unit==="J"?"; J-series SM p.52":unit==="T"?"; T-Cap SM p.34, pp.49-50, p.60":"; K-series SM pp.93-95"}.</div>
-      <div class="btnrow">${unit==="J"?pageLink("J",52):unit==="T"?pageLink("T",49):pageLink("K2",94)}</div>
-    </div>`;
+      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026)${unit==="J"?"; J-series SM p.52":unit==="T"?"; T-Cap SM p.34, pp.49-50, p.60":unit==="L"?"; L-series SM pp.167-172":"; K-series SM pp.93-95"}.</div>
+      <div class="btnrow">${unit==="J"?pageLink("J",52):unit==="T"?pageLink("T",49):unit==="L"?pageLink("L",169):pageLink("K2",94)}</div>
+    </div>${unit==="L"?ezPointer():""}`;
   }
   box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
   box.querySelectorAll("#cl-sz button").forEach(b=>b.onclick=()=>{clSize=b.dataset.s;renderClear();});
+  box.querySelectorAll("[data-ez]").forEach(b=>b.onclick=()=>{installTopic("ez");$("#ez-body").scrollIntoView({block:"start"});});
   $("#cl-ask").onclick=()=>{show("ask");ask(`What clearances do I need around the ${u.short} outdoor unit?`);};
+}
+
+/* ---------- R290 exclusion zones (L-series SM p.168, Baxi HP55 IM pp.30-31; HMG uses the maker's figures, Donal Reilly 26/10/2026) ---------- */
+const R290=u=>u==="L"||u==="B";
+const ezPointer=()=>`<div class="panel"><span class="chip warn">R290: protective zone too</span><p style="margin:0">R290 is extremely flammable (A3) and heavier than air. As well as these clearances, the outdoor unit needs a protective zone kept clear of openings, drains and ignition sources.</p><div class="btnrow"><button class="btn sec" type="button" data-ez>See Exclusion zones</button></div></div>`;
+const LZONES=[
+  {id:"l-zone-1-open",file:"zones/l-zone-1-open.png",w:470,h:191,title:"1. Ground or flat roof, open area",fig:"A 1000 mm all round the unit."},
+  {id:"l-zone-2-ground-wall",file:"zones/l-zone-2-ground-wall.png",w:552,h:366,title:"2. On the ground, in front of a wall",fig:"A 2000 · B 3000 · C 300 · D 1000 mm"},
+  {id:"l-zone-3-ground-corner",file:"zones/l-zone-3-ground-corner.png",w:476,h:352,title:"3. On the ground, in a corner",fig:"A 2000 · B 2500 · C 300 · D 500 · E 1000 · F 500 · G 1800 mm"},
+  {id:"l-zone-4-wall-mounted",file:"zones/l-zone-4-wall-mounted.png",w:480,h:365,title:"4. Wall-mounted, in front of a wall",fig:"A 2000 · B 3000 · C 300 · D 1000 mm. The zone under the unit goes down to the floor."},
+  {id:"l-zone-5-wall-corner",file:"zones/l-zone-5-wall-corner.png",w:479,h:378,title:"5. Wall-mounted, in a corner",fig:"A 2000 · B 2500 · C 300 · D 500 · E 1000 · F 500 · G 1800 mm. The zone under the unit goes down to the floor."}];
+function renderZones(){
+  const tab=document.querySelector('#install-seg [data-s="ez"]'), on=R290(unit);
+  tab.hidden=!on;
+  if(!on&&tab.getAttribute("aria-pressed")==="true") installTopic("cl");
+  const box=$("#ez-body");if(!on){box.innerHTML="";return;}
+  const fig=z=>`<figure class="wfig" style="margin:0"><button type="button" data-z="${z.id}" aria-label="Enlarge ${esc(z.title)}"><img loading="lazy" src="${z.file}" width="${z.w}" height="${z.h}" alt="${esc(z.title)}"></button></figure>`;
+  let body;
+  if(unit==="L"){
+    body=`<div class="panel">
+      <span class="chip warn">R290 · A3 extremely flammable</span>
+      <p style="margin:0">The L-series outdoor unit has a <b>protective zone</b> (Panasonic's figures, SM p.168). It is separate from the clearances: both apply. R290 is heavier than air, so a leak collects at ground level and in low points.</p>
+      <p class="src" style="margin:0"><b>Nothing inside the zone:</b> no windows, doors, light shafts, cellar entrances, escape hatches, flat-roof windows or ventilation openings; no ignition sources (sockets, light switches, lamps, electrical switches, open flame, anything over 360 °C); not onto a neighbour's property, the public road, drains, sewer or waste water shafts, pump shafts or hollows. Don't let later building work break this.</p>
+    </div>
+    ${LZONES.map(z=>`<div class="panel"><div class="src" style="font-weight:600">${esc(z.title)}</div>${fig(z)}<p style="margin:0">${esc(z.fig)}</p></div>`).join("")}
+    <div class="panel"><ul class="sz-notes">
+      <li>Reading the drawings: A is the width of the zone at the top of the unit and B its width at ground level, so it widens towards the ground. C is behind the unit (to the wall); D, E and F are to the sides; G is how far it reaches in front.</li>
+      <li>No automatic air vents indoors on the water circuit (SM p.86). Tighten the water pipe glands to torque (p.171). No hydrocarbon based solvents on the unit (p.172).</li>
+      <li>Mark the zone out on site before fixing the unit. Tell the customer it has to stay clear for the life of the unit. If it can't, move the unit or escalate.</li></ul>
+      <div class="btnrow">${pageLink("L",168)}</div>
+      <div class="src">Source: HMG R290 exclusion zone guidance (Donal Reilly, 26/10/2026); L-series SM p.168 (12.7.2 Protective zone), p.86, pp.171-172.</div></div>`;
+  }else{
+    const bz={id:"b-perimeter-p31",file:"zones/b-perimeter-p31.png",w:910,h:1287,title:"Baxi HP55 protective perimeter (Fig.18-20)"};
+    body=`<div class="panel">
+      <span class="chip warn">R290 · A3 highly flammable</span>
+      <p style="margin:0">The Baxi HP55 has a <b>protective perimeter</b> (Baxi's figures, IM pp.30-31). It is separate from the clearances: both apply. R290 is heavier than air.</p>
+      <ul class="sz-notes">
+        <li><b>Free-standing</b> (ground or flat roof): 1000 mm all round.</li>
+        <li><b>In front of a wall:</b> 300 mm behind, 1000 mm in front. At the sides, 500 mm at the top of the unit widening to 1000 mm at ground level. At least as high as the unit.</li>
+        <li><b>In a corner:</b> 300 mm behind, 500 mm to the side wall, 1000 mm on the open side, up to 1800 mm in front. See Fig.20.</li>
+        <li><b>Wall-mounted:</b> the perimeter applies the same way and goes down to the ground.</li>
+        <li><b>Nothing inside it:</b> no doors, windows, vents, skylights, lightwells, cellar access or sewer hatches; no lights, switches or sockets; no barbecues, mowers or smoking; not next to alleys, parking, neighbours' plots or public areas. Open condensate gullies are not a risk (p.36).</li>
+      </ul>
+      ${fig(bz)}
+      <div class="btnrow">${pageLink("B",31)}</div>
+      <div class="src">Source: HMG R290 exclusion zone guidance (Donal Reilly, 26/10/2026); Baxi HP55 IM pp.30-31 (Fig.18-20), p.36.</div></div>`;
+  }
+  box.innerHTML=`<div class="view">${body}<div class="btnrow"><button class="btn sec" id="ez-ask">Ask about this</button></div></div>`;
+  const zs=Object.fromEntries([...LZONES,{id:"b-perimeter-p31",file:"zones/b-perimeter-p31.png",w:910,h:1287,title:"Baxi HP55 protective perimeter (Fig.18-20)"}].map(z=>[z.id,z]));
+  box.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>{const z=zs[b.dataset.z];openZoom({...z,key:unit,page:unit==="L"?168:31,unit});});
+  $("#ez-ask").onclick=()=>{show("ask");ask(`What exclusion zone does the ${UNITS[unit].short} outdoor unit need, and what can't be inside it?`);};
 }
 
 /* ---------- Component identifier (catalogue in knowledge.json "components", from source/components.json) ---------- */
 /* Pick a drawing from the manual, then match the numbers on it to the list. Search covers every drawing for the unit. */
 let cpDraw={}, cpQuery="";
 const cpDrawings=()=>KB?.components?.[unit]?.drawings||[];
-/* A part on a component card: a J-series ref number, or "list:ref" for the K-series lists (o03, o0509, tank) and the T-Cap lists (w, r). */
+/* A part on a component card: a J-series ref number, or "list:ref" for the K-series lists (o03, o0509, tank), the T-Cap lists (w, r) and the L-series lists (in, o0509). */
 function cpPart(ref){
   const [l,r]=typeof ref==="string"?ref.split(":"):[null,ref];
   const x=KB.parts?.[unit]?.parts.find(p=>p.ref===+r&&(!l||p.list===l));if(!x) return "";
   const ms=Object.keys(x.no), same=ms.every(m=>x.no[m]===x.no[ms[0]]);
-  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":l==="tank"?" (tank unit)":l==="w"?" (water system)":l==="r"?" (refrigerant system)":"";
+  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":l==="tank"||l==="in"?" (tank unit)":l==="w"?" (water system)":l==="r"?" (refrigerant system)":"";
   return `<span>Part ${x.ref}${who}: <code>${esc(same?x.no[ms[0]]:ms.map(m=>`${m} ${x.no[m]||"n/a"}`).join(" · "))}</code></span>`;
 }
 function goFault(code){
@@ -883,7 +939,7 @@ function cpCard(c,here){
     <div class="cp-meta">${!here&&at?`<button type="button" data-d="${at[0]}">See it: ${esc(D[at[0]].tab)}${n?` no. ${esc(n)}`:""}</button>`:""}
       ${others.map(a=>`<button type="button" data-d="${a[0]}">Also on: ${esc(D[a[0]].tab)}${a[1]?` no. ${esc(a[1])}`:""}</button>`).join("")}
       ${(c.wiring||[]).filter(id=>W[id]).map(id=>`<button type="button" data-w="${id}">Wiring: ${esc(W[id].title)}</button>`).join("")}</div>
-    <div class="cp-meta"><span>Source: ${({J:"Panasonic J-series",T:"Panasonic T-Cap",K:"Panasonic K-series",B:"Baxi"})[unit]} ${esc(c.src)}</span><button type="button" data-ask>Ask about this</button></div>`;
+    <div class="cp-meta"><span>Source: ${({J:"Panasonic J-series",T:"Panasonic T-Cap",L:"Panasonic L-series",K:"Panasonic K-series",B:"Baxi"})[unit]} ${esc(c.src)}</span><button type="button" data-ask>Ask about this</button></div>`;
   el.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>goFault(b.dataset.f));
   el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{cpDraw[unit]=b.dataset.d;cpQuery="";renderComp();$("#cp-fig").scrollIntoView({block:"start"});});
   el.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>openZoom(W[b.dataset.w]));
@@ -896,11 +952,11 @@ function renderComp(){
   if(!C){box.innerHTML=`<div class="notice">There's no component drawing on file for the ${esc(UNITS[unit].short)} yet.</div>`;return;}
   if(!C.drawings.some(d=>d.id===cpDraw[unit])) cpDraw[unit]=C.drawings[0].id;
   box.innerHTML=`<p class="src" style="margin:0">Labelled drawings from the ${unit==="B"?"Baxi manuals":"Panasonic manual"}. Pick a drawing and tap it to enlarge, then tap a number to see what that part is. The list below has every part, or search for a part or fault code.</p>
-    <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",T:"flow sensor, expansion vessel, H62",K:"fan motor, expansion vessel, F15",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
+    <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",T:"flow sensor, expansion vessel, H62",L:"pump, expansion vessel, H62",K:"fan motor, expansion vessel, F15",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
     <div class="cp-draw" id="cp-draw" role="group" aria-label="Drawing">${C.drawings.map(d=>`<button type="button" data-d="${d.id}" aria-pressed="${d.id===cpDraw[unit]}">${esc(d.tab)}</button>`).join("")}</div>
     <div id="cp-fig"></div><div class="view" id="cp-list"></div>
     ${C.note?`<div class="notice">${esc(C.note)}</div>`:""}
-    <p class="src" style="margin:0">The "what it does" lines are a plain-words summary of the manual pages given on each card.${unit==="B"?"":` Part numbers are from the ${({J:"2020",T:"2021",K:"2025"})[unit]} parts list: confirm with the supplier when ordering.`}</p>`;
+    <p class="src" style="margin:0">The "what it does" lines are a plain-words summary of the manual pages given on each card.${unit==="B"?"":` Part numbers are from the ${({J:"2020",T:"2021",L:"2025",K:"2025"})[unit]} parts list: confirm with the supplier when ordering.`}</p>`;
   box.querySelectorAll("#cp-draw button").forEach(b=>b.onclick=()=>{cpDraw[unit]=b.dataset.d;cpQuery="";renderComp();});
   $("#cpq").oninput=e=>{cpQuery=e.target.value;listComp();};
   listComp();
@@ -968,7 +1024,7 @@ function renderWC(){
       <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); Baxi ASHP Control IM pp.42-43, p.56, p.61, p.63, pp.73-75. Baxi settings worked out from the formula on p.74.</div>
     </div>`;
   }else{
-    const pg=unit==="J"?[31,83]:unit==="T"?[28,82]:[31];
+    const pg=unit==="J"?[31,83]:unit==="T"?[28,82]:unit==="L"?[62,119]:[31];
     how=`<div class="panel">
       <div class="src" style="font-weight:600">Set it on the Panasonic remote</div>
       <ol class="sz-notes">
@@ -981,25 +1037,25 @@ function renderWC(){
       </ol>
       <ul class="sz-notes">
         <li>The -3 °C point is the maximum flow: never above <b>${c.max} °C</b> on ${c.name.toLowerCase()}. The factory curve (55 °C at -5 °C) is over the HMG maximum, so always change it. The manuals on file have no separate max flow setting.</li>
-        <li>Factory curve is -5 °C → 55 °C, 15 °C → 35 °C. Range: outdoor -20 to 15 °C, flow 20 to ${unit==="T"?"65 °C (SM p.29)":`60 °C${unit==="J"?" (SM p.32)":""}`}.</li>
+        <li>Factory curve is -5 °C → 55 °C, 15 °C → 35 °C. Range: outdoor -20 to 15 °C, flow 20 to ${unit==="T"?"65 °C (SM p.29)":unit==="L"?"75 °C (SM p.62), so keeping to the HMG maximum matters even more":`60 °C${unit==="J"?" (SM p.32)":""}`}.</li>
         <li>2-zone system: enter the four points for Zone 1 and Zone 2 (e.g. rads on one, UFH on the other).</li>
-        <li>With a room thermostat or thermistor the unit shifts the curve up or down as the room warms (${({J:"SM p.65",T:"SM p.64"})[unit]||"IM p.14"}).</li>
+        ${unit==="L"?"":`<li>With a room thermostat or thermistor the unit shifts the curve up or down as the room warms (${({J:"SM p.65",T:"SM p.64"})[unit]||"IM p.14"}).</li>`}
       </ul>
       <div class="btnrow">${pg.map(p=>pageLink(unit,p)).join("")}</div>
-      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); ${({J:"J-series SM pp.31-32, p.83",T:"T-Cap SM pp.28-29, p.82"})[unit]||"K-series IM p.31"}.</div>
+      <div class="src">Source: HMG weather compensation guidance (Donal Reilly, 25/10/2026); ${({J:"J-series SM pp.31-32, p.83",T:"T-Cap SM pp.28-29, p.82",L:"L-series SM p.62, p.119"})[unit]||"K-series IM p.31"}.</div>
     </div>`;
   }
   box.innerHTML=`<div class="panel">${pick}${wcFig(c)}${hmg}
-      <p class="src" style="margin:0">Same HMG curve for the J-series, J-series T-Cap, K-series and Baxi HP55. <b>Maximum flow on any heat pump: 45 °C radiators, 35 °C underfloor.</b> The curves are starting points: fine-tune for the house a little at a time, but never above the maximum.</p></div>
+      <p class="src" style="margin:0">Same HMG curve for the J-series, J-series T-Cap, L-series, K-series and Baxi HP55. <b>Maximum flow on any heat pump: 45 °C radiators, 35 °C underfloor.</b> The curves are starting points: fine-tune for the house a little at a time, but never above the maximum.</p></div>
     ${how}<div class="btnrow"><button class="btn sec" id="wc-ask">Ask about this</button></div>`;
   box.querySelectorAll("#wc-e button").forEach(b=>b.onclick=()=>{wcE=b.dataset.e;renderWC();});
   $("#wc-ask").onclick=()=>{show("ask");ask(`How do I set the HMG heating curve for ${c.name.toLowerCase()} on the ${u.short}?`);};
 }
 
-/* ---------- Pipe sizing (HMG method, Panasonic J/T-Cap/K only) ---------- */
+/* ---------- Pipe sizing (HMG method, Panasonic J/T-Cap/K/L only) ---------- */
 /* d = 2000 × √(P ÷ (1000 × SHC × ΔT × π × V)), HMG Pro Academy handbook pp.36-38. */
 const NOMINAL={5:14.3,7:20,9:25.8,12:34.4,16:45.9};
-const RATED_K={3:9.2,5:14.3,7:20.1,9:25.8}, RATED_T={9:[25.8,12],12:[34.4,15]};
+const RATED_K={3:9.2,5:14.3,7:20.1,9:25.8}, RATED_T={9:[25.8,12],12:[34.4,15]}, RATED_L={5:[14.3,13],7:[20.1,17],9:[25.8,21]};
 /* [OD, wall, bore] mm. Copper: EN 1057 standard wall. MLCP: 2 mm wall (HMG, Donal Reilly 24/10/2026). */
 const PIPES=[{name:"copper",list:[[15,0.7,13.6],[22,0.9,20.2],[28,0.9,26.2],[35,1.2,32.6],[42,1.2,39.6],[54,1.2,51.6]]},
              {name:"MLCP",list:[[16,2,12],[20,2,16],[26,2,22],[32,2,28],[40,2,36],[50,2,46]]}];
@@ -1007,9 +1063,10 @@ let sz={kw:7,dt:5,v:1};
 const fmt=(x,n=1)=>(+x).toFixed(n);
 function renderSizing(){
   const box=$("#size-body");
-  if(unit==="B"){box.innerHTML=`<div class="notice">HMG's pipe sizing guidance and nominal flow rates are for the Panasonic J-series, J-series T-Cap and K-series only. Don't use them for the Baxi HP55. Use the flow rates in the Baxi HP55 manual, or ask in the Ask tab.</div>`;return;}
-  const kws=unit==="K"?[3,5,7,9,12,16]:unit==="T"?[9,12]:[5,7,9,12,16];
+  if(unit==="B"){box.innerHTML=`<div class="notice">HMG's pipe sizing guidance and nominal flow rates are for the Panasonic J-series, J-series T-Cap, K-series and L-series only. Don't use them for the Baxi HP55. Use the flow rates in the Baxi HP55 manual, or ask in the Ask tab.</div>`;return;}
+  const kws=unit==="K"?[3,5,7,9,12,16]:unit==="T"?[9,12]:unit==="L"?[5,7,9]:[5,7,9,12,16];
   if(unit==="T"&&!kws.includes(sz.kw)) sz.kw=9;
+  if(unit==="L"&&!kws.includes(sz.kw)) sz.kw=7;
   box.innerHTML=`<div class="panel">
       <div class="src" style="font-weight:600">Heat pump output (kW)</div>
       <div class="kw" id="sz-kw">${kws.map(k=>`<button data-k="${k}" aria-pressed="${k===sz.kw}">${k}</button>`).join("")}</div>
@@ -1023,9 +1080,9 @@ function renderSizing(){
     <div class="panel">
       <ul class="sz-notes">
         <li>HMG recommended maximum velocity is <b>1 m/s</b>, to avoid too much velocity. The handbook's worked example uses 0.9 m/s.</li>
-        <li>At commissioning, confirm max flow with the main pump running is <b>not less than 15 l/min</b> (${unit==="T"?"T-Cap SM p.62":"J-series SM p.63, K-series IM p.12"}). Low flow can trigger H75 in defrost.</li>
-        <li>Insulate the water pipework with <b>20 mm or more</b> insulation, especially outdoor runs (${unit==="T"?"T-Cap SM p.51":"J-series SM p.53"}).</li>
-        <li>Unit connections: ${unit==="T"?`T-Cap Rp 1¼" (SM p.51)`:`J-series Rp 1¼" (SM p.53), K-series tank unit R1¼" (IM p.5)`}. Size the pipe by the sum, not by the connection.</li>
+        <li>At commissioning, confirm max flow with the main pump running is <b>not less than 15 l/min</b> (${unit==="T"?"T-Cap SM p.62":unit==="L"?"L-series SM p.93":"J-series SM p.63, K-series IM p.12"}). Low flow can trigger H75 in defrost.</li>
+        <li>Insulate the water pipework with <b>${unit==="L"?"30":"20"} mm or more</b> insulation, especially outdoor runs (${unit==="T"?"T-Cap SM p.51":unit==="L"?"L-series SM p.167":"J-series SM p.53"}).</li>
+        <li>${unit==="L"?`Outdoor unit to tank unit, the L-series manual's own guide: ø20 mm inner on the 5 kW, ø25 mm on the 7 and 9 kW, 30 m maximum, 10 m maximum height difference (SM p.167). HMG sizes the primary with this method (Donal Reilly 26/10/2026).`:`Unit connections: `}${unit==="L"?"":unit==="T"?`T-Cap Rp 1¼" (SM p.51)`:`J-series Rp 1¼" (SM p.53), K-series tank unit R1¼" (IM p.5)`}${unit==="L"?"":". Size the pipe by the sum, not by the connection."}</li>
         <li>Not covered: pressure drop and pump head on long runs, glycol correction (glycol needs more flow), emitter-side pipework.</li>
       </ul>
       <div class="src">Source: HMG sizing guidance (Pro Academy handbook pp.36-38; HMG Panasonic nominal flow rate table). Copper bores: EN 1057 standard wall. MLCP: 2 mm wall, so bore = OD − 4 mm; check the maker's bore if it differs.</div>
@@ -1045,7 +1102,7 @@ function calcSizing(){
   const vel=c=>Q/(Math.PI*(c[2]/2000)**2);
   const nom=dt===5&&NOMINAL[P]?`Panasonic nominal flow: <b>${NOMINAL[P]} l/min</b> (HMG table).`:"";
   const kr=unit==="K"&&RATED_K[P]?` K-series rated heating flow: ${RATED_K[P]} l/min (IM p.8).`:"";
-  const tr=unit==="T"&&RATED_T[P]?` T-Cap manual nominal flow: ${RATED_T[P][0]} l/min (SM p.${RATED_T[P][1]}).`:"";
+  const tr=unit==="T"&&RATED_T[P]?` T-Cap manual nominal flow: ${RATED_T[P][0]} l/min (SM p.${RATED_T[P][1]}).`:unit==="L"&&RATED_L[P]?` L-series manual nominal flow: ${RATED_L[P][0]} l/min (SM p.${RATED_L[P][1]}).`:"";
   const extra=unit!=="T"&&(P===12||P===16)?` ${P} kW isn't covered by the ${unit}-series manual on file; flow from the HMG table only.`:"";
   out.innerHTML=`<div class="src" style="font-weight:600">Minimum internal diameter</div>
     <div class="sz-res"><span class="big">${fmt(d)} mm</span><span class="of">→ ${PIPES.map((t,i)=>picks[i]?`<b>${picks[i][0]} mm ${t.name}</b> at ${fmt(vel(picks[i]),2)} m/s`:`bigger than the largest ${t.name} listed`).join(" · ")}</span></div>
@@ -1053,7 +1110,7 @@ function calcSizing(){
     <div class="sum">d = 2000 × √(${P} ÷ (1000 × 4.2 × ${dt} × π × ${v}))<br>= 2000 × √${fmt(Q/(Math.PI*v),6)} = ${fmt(d,2)} mm</div>
     ${P===7&&picks[1]&&picks[1][0]===26?`<div class="notice"><b>7 kW on MLCP:</b> 26 mm works (${fmt(vel(picks[1]),2)} m/s), but <b>32 mm is preferred</b> to allow for bends and elbows (${fmt(vel(PIPES[1].list.find(c=>c[0]===32)),2)} m/s). HMG guidance, Donal Reilly 24/10/2026.</div>`:""}
     ${v>1?`<div class="notice">${v} m/s is over the HMG recommended maximum of 1 m/s. Size at 1 m/s or less.</div>`:""}
-    ${d15?`<div class="notice">${fmt(lpm)} l/min is under the 15 l/min minimum the unit must be able to pass (${({J:"J-series SM p.63",T:"T-Cap SM p.62"})[unit]||"K-series IM p.12"}). Sized for 15 l/min at ${v} m/s it needs ${fmt(d15)} mm bore, so the pipe sizes above are picked for 15 l/min.</div>`:""}
+    ${d15?`<div class="notice">${fmt(lpm)} l/min is under the 15 l/min minimum the unit must be able to pass (${({J:"J-series SM p.63",T:"T-Cap SM p.62",L:"L-series SM p.93"})[unit]||"K-series IM p.12"}). Sized for 15 l/min at ${v} m/s it needs ${fmt(d15)} mm bore, so the pipe sizes above are picked for 15 l/min.</div>`:""}
     ${PIPES.map((t,i)=>`<table class="cu"><thead><tr><th>${t.name==="MLCP"?"MLCP (2 mm wall)":"Copper"}</th><th>Bore</th><th>Velocity</th><th></th></tr></thead><tbody>
     ${t.list.map(c=>{const ok=c[2]>=need;return `<tr class="${c===picks[i]?"pick":ok?"":"small"}"><td>${c[0]} mm</td><td>${c[2]}</td><td>${fmt(vel(c),2)} m/s</td><td>${c===picks[i]?"Use":ok?"":"Too small"}</td></tr>`;}).join("")}
     </tbody></table>`).join("")}
@@ -1064,6 +1121,7 @@ function calcSizing(){
 /* ---------- Ask ---------- */
 const SUGGEST={J:["Talk me through commissioning","H62 after start-up, what do I check?","Where do I connect the room thermostat?","What size primary pipe for a 9 kW?","What heating curve should I set for radiators?","What clearances does the outdoor unit need?"],
                T:["Talk me through commissioning","H62 after start-up, what do I check?","Part number for the water pump?","Where do I connect the room thermostat?","What size primary pipe for a 12 kW?","What clearances does the unit need?"],
+               L:["What exclusion zone does the outdoor unit need?","Talk me through commissioning","H62 after start-up, what do I check?","Part number for the expansion vessel?","Where do I connect the room thermostat?","What size primary pipe for a 7 kW?"],
                K:["Talk me through commissioning","Where does the 3-way valve connect on the PCB?","How do I check water pressure on the controller?","How do I set a heating curve?","What size primary pipe for a 7 kW?","What clearances does the outdoor unit need?"],
                B:["H02.23 on the controller, what do I check?","Where do I wire the DHW 3-way valve?","How do I set CN1 and CN2 for an 8 kW?","How do I set the heating curve?","E0 on the outdoor unit, what do I check?","What clearances and perimeter does the HP55 need?"]};
 /* Icon for a suggested question, picked from its wording. */
@@ -1196,7 +1254,7 @@ function listHist(){
   const box=$("#hist-body");
   if(!hItems.length){box.innerHTML=`<div class="notice">No questions yet. Questions you ask in Ask, and their answers, show here.</div>`;return;}
   box.innerHTML=`<input class="search" id="hist-q" placeholder="Search, e.g. H62 or flow rate" autocomplete="off">
-    <div class="seg" role="group" aria-label="Unit">${[["all","All"],["J","J-series"],["T","J T-Cap"],["K","K-series"],["B","Baxi"]].map(([k,n])=>`<button data-u="${k}" aria-pressed="${hUnit===k}">${n}</button>`).join("")}</div>
+    <div class="seg" role="group" aria-label="Unit">${[["all","All"],["J","J-series"],["T","J T-Cap"],["L","L-series"],["K","K-series"],["B","Baxi"]].map(([k,n])=>`<button data-u="${k}" aria-pressed="${hUnit===k}">${n}</button>`).join("")}</div>
     <div id="hist-list"></div>`;
   box.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{hUnit=b.dataset.u;box.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));rowsHist();});
   $("#hist-q").oninput=rowsHist;rowsHist();
@@ -1387,8 +1445,9 @@ function renderFaults(){
   if(!list.length) box.innerHTML=`<p class="src">No code matches “${esc(q)}” in the ${P.short} table.</p>`;
   faultDetail();
 }
-/* The Panasonic error code tables: J-series SM pp.164-165, T-Cap SM pp.164-165, K-series SM pp.209-210 (kept separate). */
+/* The Panasonic error code tables: J-series SM pp.164-165, T-Cap SM pp.164-165, K-series SM pp.209-210, L-series SM pp.237-238 (kept separate). */
 const PFAULTS=()=>unit==="T"?{list:KB.tfaults,key:"T",cite:"T-Cap SM",pages:"pp.164-165",short:"J-series T-Cap",name:"J-series T-Cap, WH-MXC09J3E5 / WH-MXC12J6E5"}
+  :unit==="L"?{list:KB.lfaults,key:"L",cite:"L-series SM",pages:"pp.237-238",short:"L-series R290",name:"L-series R290, outdoor WH-WDG05/07/09LE5"}
   :unit==="K"?{list:KB.kfaults,key:"K2",cite:"K-series SM",pages:"pp.209-210",short:"K-series",name:"K-series split, outdoor WH-UDZ03/05/07/09KE5"}
   :{list:KB.faults,key:"J",cite:"J-series SM",pages:"pp.164-165",short:"J-series",name:"J-series Mini Monobloc R32"};
 function fieldNotesFor(code,u){return (KB.fieldNoteList||[]).filter(n=>n.codes.includes(code)&&n.units.includes(u));}
@@ -1458,7 +1517,7 @@ $("#fq").addEventListener("input",renderFaults);
 function parseTables(section){
   const rows=[];let head=null,group=null;
   for(const l of section.split("\n")){
-    if(/^##\s/.test(l)) group=l.replace(/^##\s*[ABC]\d\.\s*/,"");
+    if(/^##\s/.test(l)) group=l.replace(/^##\s*[ABCD]\d\.\s*/,"");
     if(/^\S.*recipes.*:$/i.test(l)) group=l.replace(/:$/,"");
     if(!l.startsWith("|")){head=null;continue;}
     const cells=l.slice(1,-1).split("|").map(c=>c.trim());
@@ -1469,8 +1528,8 @@ function parseTables(section){
   return rows;
 }
 function renderTasks(){
-  const nav=KB.nav, a=nav.indexOf("# Part A"), b=nav.indexOf("# Part B"), c=nav.indexOf("# Part C");
-  const part=unit==="B"?KB.B.nav:unit==="J"?nav.slice(a,b):unit==="T"?nav.slice(c):nav.slice(b,c);
+  const nav=KB.nav, a=nav.indexOf("# Part A"), b=nav.indexOf("# Part B"), c=nav.indexOf("# Part C"), d=nav.indexOf("# Part D");
+  const part=unit==="B"?KB.B.nav:unit==="J"?nav.slice(a,b):unit==="T"?nav.slice(c,d):unit==="L"?nav.slice(d):nav.slice(b,c);
   const keep=["recipes","Hidden menus"];
   const rows=parseTables(part).filter(r=>r.Task||r.Menu).filter(r=>keep.some(k=>(r.group||"").includes(k)));
   const q=$("#cq").value.trim().toLowerCase();
@@ -1487,7 +1546,7 @@ function renderTasks(){
       ${r["Options / default"]?`<div style="font-size:14px">${esc(r["Options / default"])}</div>`:""}
       ${r.Contents?`<div style="font-size:14px">${esc(r.Contents)}</div>`:""}
       ${r["Check it changed"]?`<details><summary>Check it changed</summary><div style="font-size:14px;margin-top:4px">${esc(r["Check it changed"])}</div></details>`:""}
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="src">Source: ${({B:"Baxi ASHP Control IM",J:"J-series SM",T:"T-Cap SM"})[unit]||"K-series IM"} ${esc(r.Source)}</span><button class="ghost">Step by step</button></div>`;
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span class="src">Source: ${({B:"Baxi ASHP Control IM",J:"J-series SM",T:"T-Cap SM",L:"L-series SM"})[unit]||"K-series IM"} ${esc(r.Source)}</span><button class="ghost">Step by step</button></div>`;
     d.querySelector("button").onclick=()=>{show("ask");ask(`How do I: ${name}?`);};
     box.append(d);
   }
@@ -1514,7 +1573,7 @@ function commText(t){
 }
 function renderComm(){
   const box=$("#comm-body");
-  if(unit==="B"){box.innerHTML=`<div class="notice">The HMG commissioning checklist is built for the Panasonic J-series, J-series T-Cap and K-series so far. Baxi HP55 is coming. Ask can still talk you through Baxi settings from the manual.</div>`;return;}
+  if(unit==="B"){box.innerHTML=`<div class="notice">The HMG commissioning checklist is built for the Panasonic J-series, J-series T-Cap, K-series and L-series so far. Baxi HP55 is coming. Ask can still talk you through Baxi settings from the manual.</div>`;return;}
   const stages=(KB&&KB.commissioning&&KB.commissioning[unit])||[], ticks=commTicks();
   const all=stages.flatMap(s=>s.steps), done=all.filter(x=>ticks.has(x.id)).length, need=all.filter(x=>x.confirm).length;
   box.innerHTML=`<div class="panel">
@@ -1526,7 +1585,7 @@ function renderComm(){
       const n=s.steps.filter(x=>ticks.has(x.id)).length;
       return `<div class="panel cm-stage${n===s.steps.length?" done":""}"><h3>${esc(s.stage)}<span>${n===s.steps.length?"✓ Done":`${n} / ${s.steps.length}`}</span></h3>
         ${s.steps.map(x=>`<label class="cm-step${ticks.has(x.id)?" ticked":""}"><input type="checkbox" data-id="${x.id}"${ticks.has(x.id)?" checked":""}><div><b>${esc(x.title)}</b>${commText(x.text)}<button class="how" type="button" data-q="${esc(x.title)}">Step by step ›</button></div></label>`).join("")}</div>`;
-    }).join("")+`<p class="cm-ask">Source: HMG commissioning procedure, with the ${({J:"J-series SM",T:"T-Cap SM"})[unit]||"K-series IM"} page on each step.</p>`;
+    }).join("")+`<p class="cm-ask">Source: HMG commissioning procedure, with the ${({J:"J-series SM",T:"T-Cap SM",L:"L-series SM"})[unit]||"K-series IM"} page on each step.</p>`;
   box.querySelectorAll("input[data-id]").forEach(c=>c.onchange=()=>{
     const t=commTicks();c.checked?t.add(c.dataset.id):t.delete(c.dataset.id);store.set(commKey(),JSON.stringify([...t]));
     const y=$("#main").scrollTop;renderComm();$("#main").scrollTop=y;
