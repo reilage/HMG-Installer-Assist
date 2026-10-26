@@ -16,11 +16,16 @@ remote controller (the panel on the unit or wall, not a phone app).
   Manual, Hydromodule + Tank K-series* (cite as "K-series IM, p.N"). Button
   steps here were read from the original PDF page images (pp.21-34), so the
   icons are known.
+- **Part C: J-series T-Cap monobloc R32** (WH-MXC09J3E5 / WH-MXC12J6E5).
+  Source: *Panasonic Service Manual, Monobloc T-Cap J-series 9 and 12 kW*,
+  Order No PAPAMY2101001CE (cite as "T-Cap SM, p.N"). Added 26/10/2026. Its
+  controller pages match the J-series Mini Monobloc, so Part C is Part A with
+  the T-Cap page numbers, checked against the T-Cap manual and its page images.
 
-**Keep the parts separate.** The two manuals show the same button layout, but
+**Keep the parts separate.** The manuals show the same button layout, but
 menu lists, item numbers and hidden-menu key combinations are documented
 separately. Never use a Part B key combination or menu item for a J-series
-unit, or the reverse. If something is only in one part, say it is not
+unit, or the reverse, and give T-Cap page numbers (Part C) for a T-Cap. If something is only in one part, say it is not
 covered for the other model.
 
 ---
@@ -262,3 +267,127 @@ User-menu recipes (K-series):
   are no K-series fault codes on file.
 - The manual says LCD screens are "for instructional purpose only, and may
   differ from the actual unit" (p.21).
+
+---
+
+# Part C: J-series T-Cap monobloc R32 (WH-MXC09J3E5 / WH-MXC12J6E5)
+
+## C1. First power-up (T-Cap SM p.19, p.74)
+
+1. Initialising screen shows for about 10 s, then the normal screen.
+2. Press any button: the Language screen opens. [▲]/[▼] to choose, [OK].
+3. Clock format 24h or am/pm: [▲]/[▼], [OK].
+4. Date & time: arrows to set year/month/day/hour/min, [OK].
+5. Back at the start screen. Press [Menu], select Installer setup.
+
+If this initial setting is not done, the controller will not go into the
+menus (p.74).
+
+## C2. Main menu tree (T-Cap SM pp.20-33, p.74)
+
+[Menu] opens Main Menu. Items 1-4 are user menus, 5-7 installer.
+T-Cap SM p.20: "Ensure the operation indicator is OFF before setting."
+
+- **Function setup**: Weekly timer, Holiday timer, Quiet timer, Room heater,
+  Tank heater, Sterilization (p.20)
+- **System check**: Energy monitor, System information, Error history,
+  Compressor, Heater (p.21)
+- **Personal setup**: Touch sound, LCD contrast, Backlight, Backlight
+  intensity, Clock format, Date & Time, Language, Unlock password (4 digits,
+  default 0000) (pp.21-22)
+- **Service contact**: Contact 1 / Contact 2 (p.22)
+- **Installer setup** (pp.23-33, flow chart pp.75-76)
+  - **System setup**, in this order: Optional PCB connectivity, Zone &
+    Sensor, Heater capacity, Anti freezing, Tank connection, DHW capacity,
+    Buffer tank connection*, Tank heater (only if Tank connection = Yes),
+    Base pan heater, Alternative outdoor sensor, Bivalent connection,
+    External SW, Solar connection*, External error signal*, Demand
+    control*, SG ready*, External compressor SW*, Circulation liquid,
+    Heat-Cool SW*, Force heater, Force defrost, Defrost signal, Pump
+    flowrate. (*Only shown when Optional PCB connectivity = Yes; optional
+    PCB is CZ-NS4P, p.65.)
+  - **Operation setup**: Heat, Cool (cooling unlocked only), Auto (cooling
+    unlocked only), Tank (only if Tank connection = Yes)
+  - **Service setup**: Pump maximum speed, Pump down, Dry concrete, Service
+    contact
+
+## C3. Step-by-step recipes (J T-Cap)
+
+General path into any installer item:
+0. **Turn the heat pump OFF first:** press [Operate] (⏻) so the operation LED goes out. Installer setup can't be opened while the unit is running (T-Cap SM p.20: "Ensure the operation indicator is OFF before setting"; HMG Field Notes 2026-10-23, confirmed on the J-series controller, which is the same). Remind the installer to switch it back on with [Operate] when finished.
+1. [Menu] (top-right button)
+2. [▼] to **Installer setup**, [OK]
+3. [▲]/[▼] to System setup / Operation setup / Service setup, [OK]
+4. [▲]/[▼] to the item, [OK]
+5. [▲]/[▼] (or [◄]/[►] on multi-field screens) to change, [OK] to store
+6. [Back] to step out, [Menu] to close
+
+**Check it changed:** open the item again and read the value back. Where a
+setting has a visible effect, it is listed below.
+
+| Task | Path after "Installer setup" | Options / default | Check it changed | Source |
+|---|---|---|---|---|
+| External room thermostat (or internal, room thermistor, water temp) | System setup → Zone & Sensor | Without optional PCB: Water temperature / Room thermostat (Internal or External) / Room thermistor. Default "Room and Water temp." | Main screen sensor-type icon changes (p.18 lists Water temperature, Compensation curve, Direct, Room thermostat External, Room thermostat Internal, Room thermistor icons) | pp.23, 77; wiring examples pp.63-64 |
+| 2-zone / pool | System setup → Optional PCB connectivity = Yes, then Zone & Sensor → 1 or 2 zone | Pool only on zone 2 | Zone 1 / Zone 2 appear in Operation setup | pp.23, 77 |
+| Backup heater capacity | System setup → Heater capacity | 3 / 6 / 9 kW, options depend on model (HMG: 6 kW back-up heater on both the 9 kW and 12 kW T-Cap, Donal Reilly 26/10/2026) | Re-open item | pp.23, 77 |
+| Anti freezing | System setup → Anti freezing | Yes (default) / No | Re-open item | pp.23, 77 |
+| Tank connected | System setup → Tank connection | No (default) / Yes | Tank temp appears on main screen; Operation setup shows Tank | pp.23, 77 |
+| Tank heater internal/external | System setup → Tank heater | Internal (default) / External + ON time 0:20 | Re-open item. Also set Function setup → Tank heater ON to use it (p.78) | pp.24, 78 |
+| Bivalent (boiler) | System setup → Bivalent connection → Yes → Auto or SG ready → pattern | Alternative / Parallel / Advanced parallel; ON temp -5 °C default | Boiler icon on main screen (p.79) | pp.24-26, 79 |
+| Glycol | System setup → Circulation liquid | Water (default) / Glycol | Re-open item | pp.27, 81 |
+| Pump control mode | System setup → Pump flowrate | ΔT (default) / Max. duty | Re-open item | pp.28, 81 |
+| Heating curve or fixed flow temp | Operation setup → Heat → Water temp. for heating ON → Compensation curve or Direct | Curve default: -5 °C → 55 °C, 15 °C → 35 °C. Direct default 35 °C. Range 20-65 °C on the WH-MXC, and the unit also caps the water temperature by outdoor temperature (55 °C at -20 °C, 60 °C at -15 to 0 °C, 65 °C at 5 to 20 °C, 60 °C at 25 to 35 °C); settings of 61 °C or more only work with ΔT set to 15 °C (p.29, p.82). HMG recommends: steel rads -3 °C → 45 °C, 15 °C → 35 °C; UFH -3 °C → 35 °C, 15 °C → 25 °C; HMG max flow 45 °C rads, 35 °C UFH (HMG weather compensation guidance) | Main screen temp-setting icon (curve vs direct), re-open item | pp.28-29, 82 |
+| Heating OFF outdoor temp | Operation setup → Heat → Outdoor temp. for heating OFF | 24 °C, range 5-35 °C | Re-open item | pp.29, 82 |
+| ΔT for heating | Operation setup → Heat → ΔT for heating ON | 5 °C, range 1-15 °C (not available if Pump flowrate = Max. duty) | Re-open item | pp.29, 82 |
+| Backup heater rules | Operation setup → Heat → Heater ON/OFF | Outdoor temp for heater ON 0 °C; delay 30 min; ON at -4 °C, OFF at -2 °C of target | Re-open item | pp.29-30, 82 |
+| Tank times, re-heat, sterilisation | Operation setup → Tank → Floor operation time / Tank heat up time / Tank re-heat temp / Sterilization | 8:00 / 1:00 / -8 °C / 65 °C 10 min | Re-open item | pp.31-32, 83 |
+| Pump maximum speed, read flow rate, air purge | Service setup → Pump maximum speed | Screen shows Flow rate (0.1-99.9 L/min), Max. Duty (range 0x40-0xFF, 0xCE example), Operation (OFF / ON / Air Purge). [▲]/[▼] sets Max. Duty, [►] moves to Operation, [▲]/[▼] picks OFF/ON/Air Purge, [◄] goes back. [Operate] turns the pump off on either screen | Flow rate reading on the same screen; also System check → System information → Pump flowrate | pp.32, 83, 150-151 |
+| Pump down | Service setup → [OK] → [▼] to Pump down → [OK] → ON → [OK]. [Back] cancels | Screen shows "Pump down operation in progress!"; press [Operate] to stop, screen returns to "[⏻] Start" | Message on screen | pp.33, 83, 149 |
+| Screed drying | Service setup → Dry concrete → Edit → [OK]: set number of stages (1-99, [▲]/[▼], [OK]), then each stage's water temp (25-55 °C, 1 °C steps, [OK] per stage; [Back] returns to the previous stage). After the last stage it returns to the ON/Edit screen. Select ON → [OK] to start | Status screen shows Stage n/N, water set temp and actual temp; stage moves on each day. [Operate] stops it | Re-open item | pp.33, 83, 154-155 |
+| Installer phone number | Service setup → Service contact → Contact 1/2 | Name and number | Personal menu → Service contact | pp.33, 83 |
+
+User-menu recipes (no Installer setup needed):
+
+| Task | Steps | Source |
+|---|---|---|
+| Error history | [Menu] → [▲]/[▼] to System check → [OK] → Error history → [OK]. Shows the last 4 errors, most recent at top | pp.21, 163 |
+| Live readings (inlet, outlet, zones, tank, buffer, solar, pool, compressor frequency, pump flowrate) | [Menu] → System check → System information → [OK] | p.21 |
+| Energy / COP | [Menu] → System check → Energy monitor | p.21 |
+| Quick menu items | [Quick Menu] → [▲]/[▼] to select → [OK] to turn on/off. Items: Force DHW, Powerful, Quiet, Force Heater, Weekly Timer, Force Defrost, Error Reset, R/C Lock | p.19 |
+| Clear a displayed error | [Quick Menu] → Error Reset. On the error screen itself, select Close / Reset and confirm. If the fault is still there, it returns | pp.19, 162 |
+| Weekly timer / holiday / quiet timer | [Menu] → Function setup → item | p.20 |
+| Language, clock, contrast | [Menu] → Personal setup → item | pp.21-22 |
+
+## C4. Hidden menus (J T-Cap): key combinations (checked on the T-Cap PDF page images, 26/10/2026)
+
+| Menu | Hold | Contents | Source |
+|---|---|---|---|
+| **Maintenance menu** | **[Back] + [OK] + [►] for 5 s** | Actuator check (manual ON/OFF of each part; no protection, so never run the pump without water), Test mode (test run, not normally used), Sensor setup (offset -2 to +2 °C, only if a sensor is deviating; it affects temperature control), Reset password | pp.84, 158 |
+| **Custom menu** | **[Menu] + [▼] + [◄] for 10 s** | Cool mode (with/without cooling, default without), Back-up heater use/not use (disables frost-protection heater, may cause H75), Reset energy monitor, Reset operation history | pp.84, 158 |
+| **Forgotten password** | **[Back] + [OK] + [►] for 5 s** (only shown when locked) | Password unlock screen appears, press Confirm, password resets to 0000. Set it again | pp.84, 158 |
+| **Unlock Cool mode** | **[Menu] + [▼] + [◄] for 5 s**, operation must be OFF | Opens the Custom menu on Cool mode. [OK], [▲]/[▼] to Enable or Disable, [OK]. [Back] to exit | p.152 |
+| **EEPROM factory reset** | **[▲] + [▼] + [◄] + [►] together for 5 s**, only while the screen shows "Initializing" at power-up | Initialisation stops, "EEPROM setup" runs, then initialisation restarts and the clock blinks. Wipes settings back to factory defaults | p.153 |
+
+Note: the Cool mode unlock hold is 5 s on p.152 but the Custom menu hold is
+10 s on pp.84/158. Same buttons. If 5 s does not open it, hold for 10 s.
+
+**Clear error history permanently (p.163):** [Menu] → System check → [OK] →
+[▼] to Error history → [OK] (shows last 4 errors). Press [OK] ("Clear
+history"), "Do you want to clear error history?" appears with No selected.
+[◄] to Yes, [OK]. The list shows "--". [Back] to leave without clearing.
+
+**Clear a displayed error (p.162):** on the error pop-up, [◄]/[►] to Close
+or Reset, then [OK].
+
+These are the same as the J-series Mini Monobloc. They were checked on the T-Cap
+manual's own page images (pp.84, 152, 153), so they can be given for T-Cap units.
+
+## C5. Gaps (J T-Cap)
+
+- The T-Cap manual's menu pages (pp.20-33) and installer setup pages (pp.73-84)
+  match the J-series Mini Monobloc word for word, apart from the higher water
+  temperature range (20-65 °C on the WH-MXC). Pump-down (p.149), pump-speed
+  (pp.150-151), dry-concrete (pp.154-155), cool-unlock (p.152) and
+  error-history (p.163) procedures are on the pages given.
+- System information lists 10 items with no water pressure reading. Pressure
+  is read from the unit's water pressure gauge (p.34).

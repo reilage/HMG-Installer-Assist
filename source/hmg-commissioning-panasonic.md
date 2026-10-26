@@ -2,10 +2,10 @@
 
 Cite as **"HMG commissioning procedure"**, plus the manual page given on the step.
 
-Step-by-step commissioning on site, in order, for the Panasonic J-series monobloc (Part A) and the K-series split (Part B). The two parts are kept separate: never use one unit's steps for the other. The app shows this as a tick list under Controller › Commissioning.
+Step-by-step commissioning on site, in order, for the Panasonic J-series monobloc (Part A), the K-series split (Part B) and the J-series T-Cap monobloc (Part C). The parts are kept separate: never use one unit's steps for the other. The app shows this as a tick list under Controller › Commissioning.
 
 How this file works (for editing on GitHub):
-- `# Part A` / `# Part B` start each unit. `## ` lines are the stages. Each `- **Step.**` line is one tick box; the text after it is what the installer sees.
+- `# Part A` / `# Part B` / `# Part C` start each unit. `## ` lines are the stages. Each `- **Step.**` line is one tick box; the text after it is what the installer sees.
 - **HMG TO CONFIRM** marks a setting where HMG hasn't given a recommended value yet. The app shows a "HMG value needed" tag on it and gives the factory setting. When Donal confirms a value, replace the HMG TO CONFIRM text with "HMG: <value> (Donal Reilly, <date>)".
 - Recommended values that are already HMG's: heating curve and maximum flow (HMG weather compensation guidance, 25/10/2026), flow rates (HMG sizing guidance), and the F12 site checks (HMG Field Notes).
 
@@ -150,4 +150,72 @@ How this file works (for editing on GitHub):
 ## 8. Handover
 
 - **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit (K-series IM p.1).
+- **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.
+
+---
+
+# Part C: J-series T-Cap monobloc R32 (WH-MXC09J3E5 / WH-MXC12J6E5)
+
+## 1. Before you switch on
+
+- **Pipework and wiring finished.** All water pipework and electrical cable connections are properly done before filling or test run (T-Cap SM p.61).
+- **Pipe duct sealed and dry.** The duct carrying the flow and return pipes between the outdoor and indoor unit is sealed and has no water in it. A wet duct makes the unit run constantly and trip on F12 (HMG Field Notes – F12 high pressure trips on site).
+- **Cylinder sensor in place.** If there is a DHW cylinder: the cylinder sensor is fully in the sensor pocket at the correct position, so it reads the real cylinder temperature. A misplaced sensor causes F12 trips (HMG Field Notes – F12 high pressure trips on site).
+- **Fill and purge the water circuit.** Open the cabinet front plate to reach the pressure relief valve and air purge valve. Turn the air purge valve plug anticlockwise one full turn. Set the pressure relief valve lever DOWN. Fill at more than 1 bar through the water inlet until water flows freely from the pressure relief valve drain hose (T-Cap SM p.60).
+- **Water only, no glycol.** HMG recommends water only in the circuit (HMG, Donal Reilly 25/10/2026). Set Circulation liquid to Water in stage 3, and keep Anti freezing on Yes. Note: the manual itself recommends 40% propylene glycol (T-Cap SM p.61).
+- **Expansion vessel big enough.** Built-in vessel is 10 L at 1 bar pre-charge, good for up to 200 L of system water without antifreeze. Over 200 L, or with glycol, add a vessel. If the highest point is more than 7 m above the unit, set the pre-charge to (height in m × 10 + 30) kPa (T-Cap SM p.61).
+- **Water pressure.** With all power off, fill to **1 to 1.5 bar** on the unit's water pressure gauge (HMG, Donal Reilly 25/10/2026). Never lower than 0.05 MPa (0.5 bar) (T-Cap SM p.61).
+- **Pressure relief valve tested.** Turn the lever horizontal and listen for the clack of water draining, then push the lever back down. If water keeps draining, switch off and escalate (T-Cap SM p.61).
+
+## 2. First power-up
+
+- **Power on, pump running, no leaks.** Switch on the supply and check the water pump runs and there are no leaks at the pipe connections. Refit the cabinet front plate (T-Cap SM p.60).
+- **RCCB tested.** With power on, press TEST on the RCCB: the lever drops to 0. Touch nothing else inside. Set the lever back ON (T-Cap SM p.61).
+- **Language, clock and date set.** About 10 s after power-up, press any button: choose the language, clock format (24h) and date and time, [OK] after each. The controller won't open the menus until this is done (T-Cap SM p.19, p.74).
+
+## 3. System setup (unit OFF)
+
+- **Get into Installer setup.** Press [Operate] ⏻ so the operation light goes out, then [Menu] (top right) › Installer setup › System setup. Installer setup is locked while the unit runs (T-Cap SM p.20; HMG Field Notes – Can't get into Installer setup).
+- **Optional PCB connectivity.** Yes only if the optional PCB (CZ-NS4P) is fitted, e.g. for 2 zones, solar or SG ready. Otherwise leave No (T-Cap SM p.23, p.65).
+- **Zone & Sensor.** HMG: **Room thermostat, External**, with the weather compensation curve (HMG, Donal Reilly 25/10/2026). Options are Water temperature, Room thermostat (Internal or External) or Room thermistor; 1 or 2 zones with the optional PCB (T-Cap SM p.23, p.77).
+- **Heater capacity.** HMG: **6 kW** backup heater on both the 9 kW and the 12 kW T-Cap (HMG, Donal Reilly 26/10/2026). Note the manual's 9 kW spec (p.12) lists 3 kW: set 6 kW. Options 3, 6 or 9 kW depending on model (T-Cap SM p.23, p.77).
+- **Anti freezing.** HMG: **Yes** (also the factory setting) (HMG, Donal Reilly 25/10/2026) (T-Cap SM p.23).
+- **Tank connection and tank heater.** If a DHW cylinder is fitted: Tank connection = Yes, then Tank heater = Internal or External (factory Internal, ON time 0:20). To use the tank heater also set Function setup › Tank heater ON (T-Cap SM pp.23-24, p.78).
+- **Bivalent connection.** Only if a boiler is connected: Yes › Auto or SG ready › pattern (Alternative, Parallel, Advanced parallel). Otherwise leave No (T-Cap SM pp.24-26, p.79).
+- **Circulation liquid.** Water or Glycol, to match what's in the system (T-Cap SM p.27, p.81).
+- **Pump flowrate.** HMG: **ΔT** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Other option Max. duty (T-Cap SM p.28, p.81).
+
+## 4. Operation setup › Heat
+
+- **Heating curve (HMG).** Operation setup › Heat › Water temp. for heating ON › Compensation curve. HMG: steel radiators -3 °C outdoor → 45 °C flow, 15 °C → 35 °C. Underfloor -3 °C → 35 °C, 15 °C → 25 °C. The factory curve (-5 °C → 55 °C) is over the HMG maximum, so always change it. On 2 zones set Zone 1 and Zone 2 (HMG weather compensation guidance; T-Cap SM pp.28-29, p.82).
+- **Maximum flow (HMG).** Never above 45 °C on radiators or 35 °C on underfloor. On the Panasonic the -3 °C curve point is the maximum: there is no separate maximum flow setting in the manual (HMG weather compensation guidance).
+- **Outdoor temp. for heating OFF.** HMG: **24 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Range 5-35 °C (T-Cap SM p.29, p.82).
+- **ΔT for heating ON.** HMG: **5 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Range 1-15 °C (T-Cap SM p.29, p.82).
+- **Heater ON/OFF.** HMG: outdoor temp for heater ON **-3 °C** (factory 0 °C) (HMG, Donal Reilly 25/10/2026). Leave the rest at factory: delay 30 min, heater ON at 4 °C below target water temperature, OFF at 2 °C below (T-Cap SM pp.29-30, p.82).
+
+## 5. Operation setup › Tank (cylinder only)
+
+- **Tank timings.** HMG: Tank re-heat temp **-8 °C** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Leave Floor operation time (8:00) and Tank heat up time (1:00) at factory (T-Cap SM pp.31-32, p.83).
+- **Sterilization (legionella).** HMG: **65 °C for 10 min** (also the factory setting) (HMG, Donal Reilly 25/10/2026). Operation setup › Tank › Sterilization. Set the day and time to suit the customer in Function setup › Sterilization (T-Cap SM pp.20, 31-32, p.83).
+
+## 6. Service setup
+
+- **Air purge.** Service setup › Pump maximum speed › [►] to Operation › [▲]/[▼] to Air Purge › [OK]. Run it until the flow reading is steady. [Operate] stops the pump (T-Cap SM p.32, pp.150-151).
+- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (T-Cap SM p.62). Nominal flow: 9 kW 25.8, 12 kW 34.4 l/min (HMG sizing guidance; T-Cap SM p.12, p.15). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (T-Cap SM p.33). No phone number needed.
+- **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit, set stages and temperatures (25-55 °C), then ON. Follow the screed maker's schedule (T-Cap SM p.33, pp.154-155).
+
+## 7. Test run
+
+- **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (T-Cap SM p.61).
+- **Pressure while running.** Gauge reads between 0.05 and 0.3 MPa (0.5 to 3 bar) (T-Cap SM p.157).
+- **No leaks.** Check every water connection for leaks during the test run (T-Cap SM p.51).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (T-Cap SM p.21, p.62; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
+- **No errors.** [Menu] › System check › Error history: nothing new. Clear old install errors: [OK], [◄] to Yes, [OK] (T-Cap SM p.21, p.163).
+- **Water filter cleaned.** After the test run, clean the magnetic water filter mesh: power off, close both filter valves, take out the mesh, wash it in warm water, refit, open the valves (T-Cap SM p.62).
+
+## 8. Handover
+
+- **Explain it to the customer.** Show the customer how to use the controller and how to look after the unit (T-Cap SM p.4).
 - **Unit left running.** Unit ON at the controller, covers refitted, and Error history clear.

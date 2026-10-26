@@ -1,4 +1,4 @@
-# HMG Primary Pipe Sizing Guidance (Panasonic J-series and K-series)
+# HMG Primary Pipe Sizing Guidance (Panasonic J-series, J-series T-Cap and K-series)
 
 Cite as **"HMG sizing guidance"** (method: HMG Pro Academy Training Handbook Level 1, pp.36-38; flow rates: HMG Panasonic nominal flow rate table).
 
@@ -59,6 +59,8 @@ These are the kW ÷ (4.18 × 5°C ΔT) flows, so the table assumes a 5°C ΔT.
 | 12 kW | 34.4 | not covered (J-series SM covers 05/07/09 only) | not covered (K-series IM covers 03-09 only) | From HMG table only |
 | 16 kW | 45.9 | not covered | not covered | From HMG table only |
 
+**J-series T-Cap (added 26/10/2026):** the T-Cap service manual gives 25.8 l/min for the WH-MXC09J3E5 (T-Cap SM p.12) and 34.4 l/min for the WH-MXC12J6E5 (p.15), heating and cooling, at LWT 35°C and ΔT 5°C. Both match the HMG table, so the 9 and 12 kW rows are backed by a manual for the T-Cap. HMG: size T-Cap primary pipework with this HMG sizing method, the same as the other Panasonic units (Donal Reilly 26/10/2026). T-Cap water connections are Rp 1¼" (p.51), minimum 15 l/min with the main pump running (p.62), and insulate with 20 mm or more (p.51).
+
 K-series rated flows: K-series IM p.8. J-series flows are "based on nominal capacity, LWT 35°C and ΔT 5°C" (J-series SM p.12).
 
 Other manual points that matter for sizing:
@@ -117,7 +119,7 @@ The OD range is the usual MLCP size range; some makers use 25 mm instead of 26 m
 
 ## 5. How the assistant should answer a sizing question
 
-1. Confirm the unit (Panasonic J-series monobloc or K-series split) and its kW. If it's a Baxi, say this HMG guidance is for Panasonic only and use the Baxi manual.
+1. Confirm the unit (Panasonic J-series Mini Monobloc, J-series T-Cap or K-series split) and its kW. If it's a Baxi, say this HMG guidance is for Panasonic only and use the Baxi manual.
 2. Take the nominal flow from the HMG table (or the manual's rated flow for the 3 kW K-series).
 3. Use ΔT 5°C and the 1 m/s maximum velocity unless the installer gives other values; say which values you used. Never recommend a tube running over 1 m/s.
 4. Give the minimum internal diameter, then the copper size and the MLCP (2 mm wall) size with the velocity in each, unless the installer names one material. Show the sum briefly.
