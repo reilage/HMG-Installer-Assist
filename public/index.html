@@ -197,7 +197,7 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .doc .covers{font-size:14px;margin:0}
 a.pg{color:var(--accent);font-weight:600;font-size:14px}
 
-/* Spare parts (J-series SM section 22) */
+/* Spare parts (J-series and K-series SM section 22) */
 .pt{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column;gap:4px}
 .pt-top{display:flex;gap:10px;align-items:baseline}
 .pt-ref{flex:none;min-width:30px;font:700 13px var(--f-mono);color:var(--muted)}
@@ -461,7 +461,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 const $=s=>document.querySelector(s);
 let ESC_TO="donal.reilly@heatmerchants.ie";
 const UNITS={J:{name:"Panasonic J-series Mini Monobloc R32 (WH-MDC05/07/09J3E5)",short:"J-series monobloc",pill:"J-series"},
-             K:{name:"Panasonic K-series split Hydromodule + Tank (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)",short:"K-series split",pill:"K-series"},
+             K:{name:"Panasonic K-series split Hydromodule + Tank (tank unit WH-ADC0309K3E5/K6E5/K0E5A, outdoor WH-UDZ03/05/07/09KE5)",short:"K-series split",pill:"K-series"},
              B:{name:"Baxi Assure HP55 R290 monobloc outdoor unit (HP55-4/6/8/11/13-1-PHMB, HP55-11/13-3-PHMB)",short:"Baxi HP55",pill:"Baxi HP55"}};
 let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=null;
 
@@ -597,7 +597,8 @@ function renderWiring(){
   for(const w of ws) box.append(wireFig(w));
 }
 function addDiagrams(b,ids,q){
-  const all=[...wiringFor(unit),...(KB?.parts?.[unit]?.views||[]),...(KB?.components?.[unit]?.drawings||[])];
+  // component drawings before parts views: the same exploded view can be both, and the component one has the tap targets
+  const all=[...wiringFor(unit),...(KB?.components?.[unit]?.drawings||[]),...(KB?.parts?.[unit]?.views||[])];
   let ws=ids.map(id=>all.find(w=>w.id===id)).filter(Boolean);
   if(!ws.length&&WIRE_Q.test(q)) ws=wiringMatch(q);
   for(const w of ws.slice(0,2)) b.append(wireFig(w));
@@ -642,13 +643,17 @@ document.addEventListener("click",e=>{if(!e.target.closest(".unit-pick")) unitMe
 document.addEventListener("keydown",e=>{if(e.key==="Escape") unitMenu(false);});
 
 /* ---------- Manuals ---------- */
-/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160. */
+/* PDFs in public/manuals/. Large ones are split: HP55 at p.44/45, J-series SM into three parts at p.80/81 and p.159/160, K-series SM at p.128/129 and p.204/205. */
 const DOCS={
   J:{docs:[
     {key:"J",from:1,to:80,file:"Panasonic-J-series-SM-part1-pp1-80.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 1 (pp.1-80)",meta:"WH-MDC05/07/09J3E5 · 12.7 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, installation, siting, water and electrical connections, commissioning."},
     {key:"J",from:81,to:159,file:"Panasonic-J-series-SM-part2-pp81-159.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 2 (pp.81-159)",meta:"WH-MDC05/07/09J3E5 · 6.3 MB",covers:"Remote controller and installer setup, operation and control, servicing, pump down, pump speed, dry concrete, hidden maintenance and custom menus."},
     {key:"J",from:160,to:246,file:"Panasonic-J-series-SM-part3-pp160-246.pdf",title:"Panasonic J-series Mini Monobloc service manual, part 3 (pp.160-246)",meta:"WH-MDC05/07/09J3E5 · 8.4 MB",covers:"Troubleshooting, error codes (pp.164-165) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists."}]},
-  K:{docs:[{key:"K",file:"Panasonic-K-series-Hydromodule-Tank-Installation-Manual.pdf",title:"Panasonic K-series Hydromodule + Tank, installation manual",meta:"WH-ADC0309K3E5/K6E5 · 34 pages · 8.4 MB",covers:"Installation, pipework, wiring, controller setup and commissioning. No fault code list (that's in the service manual, not on file yet)."}]},
+  K:{docs:[
+    {key:"K",file:"Panasonic-K-series-Hydromodule-Tank-Installation-Manual.pdf",title:"Panasonic K-series Hydromodule + Tank, installation manual",meta:"WH-ADC0309K3E5/K6E5 · 34 pages · 8.4 MB",covers:"Tank unit installation, pipework, wiring, controller setup and commissioning."},
+    {key:"K2",from:1,to:128,file:"Panasonic-K-series-SM-part1-pp1-128.pdf",title:"Panasonic K-series service manual, part 1 (pp.1-128)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 7.0 MB",covers:"Safety (R32), specifications, components, dimensions, wiring and circuit diagrams, PCBs, installation of the tank unit and outdoor unit (clearances p.94), piping, wiring, service and maintenance."},
+    {key:"K2",from:129,to:204,file:"Panasonic-K-series-SM-part2-pp129-204.pdf",title:"Panasonic K-series service manual, part 2 (pp.129-204)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 3.4 MB",covers:"R32 servicing and brazing, operation and control, protection control for the outdoor units, test run, pump down, pump speed, maintenance."},
+    {key:"K2",from:205,to:306,file:"Panasonic-K-series-SM-part3-pp205-306.pdf",title:"Panasonic K-series service manual, part 3 (pp.205-306)",meta:"WH-UDZ03/05/07/09KE5 + WH-ADC0309K0E5A · 3.9 MB",covers:"Troubleshooting, error codes (pp.209-210) and self-diagnosis checks for each code, disassembly, technical data, exploded views and parts lists."}]},
   B:{docs:[
     {key:"B",from:1,to:44,file:"Baxi-Assure-HP55-IM-part1-pp1-44.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 1 (pp.1-44)",meta:"7890198 v03 · 9.3 MB",covers:"Safety (R290), technical specs, siting and clearances, hydraulic connections, flow rates, freeze protection."},
     {key:"B",from:45,to:68,file:"Baxi-Assure-HP55-IM-part2-pp45-68.pdf",title:"Baxi Assure HP55 outdoor unit manual, part 2 (pp.45-68)",meta:"7890198 v03 · 6.5 MB",covers:"Electrical connections, flushing and filling, maintenance, error codes (pp.57-60), Benchmark and service records."},
@@ -677,49 +682,65 @@ function renderDocs(){
   }
   if(u.missing){const g=document.createElement("div");g.className="notice";g.textContent=u.missing;box.append(g);}
   if(unit==="B"){const g=document.createElement("p");g.className="src";g.textContent="The outdoor unit manual is split in two to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
-  if(unit==="J"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages.";box.append(g);}
+  if(unit==="J"||unit==="K"){const g=document.createElement("p");g.className="src";g.textContent="The service manual is split in three to keep each download small. Page numbers in the app match the printed pages."+(unit==="K"?" The service manual covers the outdoor units with the WH-ADC0309K0E5A tank unit; the installation manual covers the K3E5/K6E5 tank units.":"");box.append(g);}
 }
 
-/* ---------- Spare parts (catalogue in knowledge.json "parts", from source/j-series-parts.json) ---------- */
-/* One card per ref number in the manual's parts list, with the part number for the model picked here. */
-const PMODELS={"05":"WH-MDC05J3E5","07":"WH-MDC07J3E5","09":"WH-MDC09J3E5"};
-let pModel=store.get("hmg-parts-model")||"05", pQuery="";
+/* ---------- Spare parts (catalogue in knowledge.json "parts", from source/j-series-parts.json and source/k-series-parts.json) ---------- */
+/* One card per ref number in the manual's parts list, with the part number for the model picked here.
+   Each unit has models (the picker); a model shows the parts in its list, with the number for that model in x.no. */
+const PTEXT={
+  J:{lede:"Exploded views and the replacement parts list from the J-series service manual (pp.237-246). Pick the model from the rating label, then search by part name, ref number or part number.",
+     eg:"pump, PCB, 58, ACXB53",
+     note:"From the 2020 service manual (Order No PAPAMY2003034CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts."},
+  K:{lede:"Exploded views and the replacement parts lists from the K-series service manual (pp.289-306). Pick the outdoor unit size from its rating label, or the tank unit, then search by part name, ref number or part number.",
+     eg:"fan motor, PCB, 37, sensor",
+     note:"From the 2025 service manual (Order No PCZ2508021CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts. The 3 kW outdoor unit has its own ref numbers; the 5, 7 and 9 kW share one drawing."}};
+const pModel={J:store.get("hmg-parts-model")||"05",K:store.get("hmg-parts-model-K")||"05"};
+let pQuery="";
 function renderParts(){
   const box=$("#parts");if(!box||!KB) return;
   const P=KB.parts?.[unit];
   if(!P){$("#parts-lede").textContent="Part numbers from the manufacturer's parts list for this unit.";
     box.innerHTML=`<div class="notice">There's no parts list on file for the ${esc(UNITS[unit].short)} yet. Ask the manufacturer's parts supplier or Heat Merchants Technical Support.</div>`;return;}
-  $("#parts-lede").textContent=`Exploded views and the replacement parts list from the J-series service manual (pp.237-246). Pick the model from the rating label, then search by part name, ref number or part number.`;
-  box.innerHTML=`<div class="seg" role="group" aria-label="Model">${Object.keys(PMODELS).map(m=>`<button data-m="${m}" aria-pressed="${m===pModel}">${m==="05"?"5 kW":m==="07"?"7 kW":"9 kW"}</button>`).join("")}</div>
-    <input class="search" id="pq" placeholder="Search, e.g. pump, PCB, 58, ACXB53" autocomplete="off" value="${esc(pQuery)}">
+  const T=PTEXT[unit];
+  if(!P.models.some(m=>m.id===pModel[unit])) pModel[unit]=P.models[0].id;
+  $("#parts-lede").textContent=T.lede;
+  box.innerHTML=`<div class="seg" role="group" aria-label="Model">${P.models.map(m=>`<button data-m="${m.id}" aria-pressed="${m.id===pModel[unit]}">${esc(m.label)}</button>`).join("")}</div>
+    <input class="search" id="pq" placeholder="Search, e.g. ${T.eg}" autocomplete="off" value="${esc(pQuery)}">
     <div class="view" id="plist"></div>
-    <div class="notice">From the 2020 service manual (Order No PAPAMY2003034CE). Confirm the part number with the Panasonic parts supplier when ordering, as some may have been superseded. Parts without a number in the drawings aren't kept as service parts.</div>
-    <div><h3 style="margin:6px 0 0;font-size:17px">Exploded views</h3><p class="src" style="margin:4px 0 0">The ref numbers in the drawings match the list. Tap one to enlarge.</p></div>
+    <div class="notice">${T.note}</div>
+    <div><h3 style="margin:6px 0 0;font-size:17px">Exploded views</h3><p class="src" style="margin:4px 0 0" id="pviews-t"></p></div>
     <div class="wgrid" id="pviews"></div>`;
-  box.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{pModel=b.dataset.m;store.set("hmg-parts-model",pModel);
+  box.querySelectorAll(".seg button").forEach(b=>b.onclick=()=>{pModel[unit]=b.dataset.m;store.set(unit==="J"?"hmg-parts-model":"hmg-parts-model-"+unit,pModel[unit]);
     box.querySelectorAll(".seg button").forEach(x=>x.setAttribute("aria-pressed",x===b));listParts();});
   $("#pq").oninput=e=>{pQuery=e.target.value;listParts();};
-  for(const v of P.views) $("#pviews").append(wireFig(v));
   listParts();
 }
 function listParts(){
   const P=KB.parts[unit],box=$("#plist"),q=pQuery.toLowerCase().trim(),ws=q.split(/\s+/).filter(Boolean);
-  const views=Object.fromEntries(P.views.map(v=>[v.view,v]));
+  const M=P.models.find(m=>m.id===pModel[unit]), m=M.id;
+  const views=Object.fromEntries(P.views.flatMap(v=>[[v.id,v],[v.view,v]]));
+  // exploded views for the model picked
+  const pv=$("#pviews");pv.innerHTML="";
+  for(const v of P.views.filter(v=>v.list===M.list)) pv.append(wireFig(v));
+  $("#pviews-t").textContent=`For the ${M.model}. The ref numbers in the drawings match the list. Tap one to enlarge.`;
   const list=P.parts.filter(x=>{
+    if(x.list!==M.list) return false;
     if(!ws.length) return true;
     if(/^\d{1,3}$/.test(q)) return String(x.ref)===q;
-    const hay=`${x.name} ${x.aka||""} ${x.part05||""} ${x.part07} ${x.part09}`.toLowerCase().replace(/[’']/g,"");
+    const hay=`${x.name} ${x.aka||""} ${Object.values(x.no).filter(Boolean).join(" ")}`.toLowerCase().replace(/[’']/g,"");
     return ws.every(w=>hay.includes(w.replace(/[’']/g,"")));
   });
-  box.innerHTML=list.length?"":`<p class="src">No part matches “${esc(pQuery)}”. Try another word, e.g. sensor, valve or PCB.</p>`;
+  box.innerHTML=list.length?"":`<p class="src">No part matches “${esc(pQuery)}” for the ${esc(M.model)}. Try another word, e.g. sensor, valve or PCB.</p>`;
   for(const x of list){
-    const no=x["part"+pModel], qty=pModel==="05"?x.qty05:x.qty0709;
-    const diff=!(x.part05===x.part07&&x.part07===x.part09);
+    const no=x.no[m], qty=x.qtyBy?x.qtyBy[m]:x.qty;
+    const nos=Object.values(x.no), diff=nos.some(v=>v!==nos[0]);
+    const vlab=v=>/^Outdoor unit/.test(v.title)?"exploded view":v.title.split(":")[0].replace("Exploded view","view").replace("Tank unit view","view");
     const el=document.createElement("div");el.className="pt";
     el.innerHTML=`<div class="pt-top"><span class="pt-ref">${x.ref}</span><div><div class="pt-name">${esc(x.name)}</div>${x.aka?`<div class="pt-aka">${esc(x.aka)}</div>`:""}</div></div>
-      <div class="pt-no">${no?`<code>${esc(no)}</code><button type="button" data-copy="${esc(no)}">Copy</button>`:`<span class="pt-none">Not fitted on the ${PMODELS[pModel]}</span>`}</div>
+      <div class="pt-no">${no?`<code>${esc(no)}</code><button type="button" data-copy="${esc(no)}">Copy</button>`:`<span class="pt-none">Not fitted on the ${esc(M.model)}</span>`}</div>
       <div class="pt-meta">${no&&qty!=="1"?`<span>Qty ${esc(qty)}</span>`:""}${x.stock?`<span class="pt-tag">Keep in stock</span>`:""}${diff?`<span class="pt-tag diff">Differs by model</span>`:""}
-        ${x.views.map(v=>`<button type="button" data-v="${v}">See ${esc(views[v].title.split(":")[0].replace("Exploded view","view"))}</button>`).join("")}</div>`;
+        ${x.views.map(v=>`<button type="button" data-v="${v}">See ${esc(vlab(views[v]))}</button>`).join("")}</div>`;
     el.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>openZoom(views[b.dataset.v]));
     const c=el.querySelector("[data-copy]");
     if(c) c.onclick=()=>navigator.clipboard?.writeText(c.dataset.copy).then(()=>{c.textContent="Copied";setTimeout(()=>c.textContent="Copy",1500);}).catch(()=>{});
@@ -728,7 +749,7 @@ function listParts(){
 }
 
 /* ---------- Outdoor unit clearances (HMG figures, Donal Reilly 24/10/2026) ---------- */
-/* Left/right looking at the front (fan side). Manual figures: Baxi HP55 IM p.32 (Fig.21/22); J-series SM p.52 drawing has no figures; K drawing not on file. */
+/* Left/right looking at the front (fan side). Manual figures: Baxi HP55 IM p.32 (Fig.21/22); J-series SM p.52 drawing has no figures; K-series SM p.94 gives the same as HMG. */
 const CLEAR={J:{rear:300,right:300,left:100,front:1000},B:{rear:300,right:300,left:100,front:1000},K:{rear:100,right:300,left:100,front:1000}};
 const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
@@ -785,10 +806,11 @@ function renderClear(){
       <table class="cu cl"><thead><tr><th>Minimum clearance</th><th>HMG</th></tr></thead><tbody>
         ${row("Rear","rear")}${row("Right-hand side","right")}${row("Left-hand side","left")}${row("Front","front")}</tbody></table>
       ${unit==="K"?`<p class="src" style="margin:0">K-series rear is <b>100 mm</b>, not the 300 mm used on the J-series and Baxi.</p>`:""}
-      <div class="notice">${unit==="J"?"Not in the manual: the J-series service manual (p.52) refers to a clearance drawing, but the drawing has no figures, and no other page gives any. These are HMG's figures.":"Not checked against the manual: the K-series manual on file covers the indoor tank unit only, not the outdoor unit. These are HMG's figures."}</div>
-      ${unit==="J"?`<ul class="sz-notes"><li>Outdoors only, on a flat solid base, on a stand over 50 mm, fixed with 4 × M12 anchor bolts (SM p.52).</li><li>Don't block the discharge air or let it short-circuit back to the intake; keep the intake out of the prevailing wind (SM p.52).</li></ul>`:""}
-      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026)${unit==="J"?"; J-series SM p.52":""}.</div>
-      ${unit==="J"?`<div class="btnrow">${pageLink("J",52)}</div>`:""}
+      ${unit==="J"?`<div class="notice">Not in the manual: the J-series service manual (p.52) refers to a clearance drawing, but the drawing has no figures, and no other page gives any. These are HMG's figures.</div>`:`<p class="src" style="margin:0"><b>Matches the manual.</b> The K-series service manual installation diagram (p.94) gives the same for all four outdoor units: 100 mm rear, 100 mm left, 300 mm right, 1000 mm front.</p>`}
+      ${unit==="J"?`<ul class="sz-notes"><li>Outdoors only, on a flat solid base, on a stand over 50 mm, fixed with 4 × M12 anchor bolts (SM p.52).</li><li>Don't block the discharge air or let it short-circuit back to the intake; keep the intake out of the prevailing wind (SM p.52).</li></ul>`
+        :`<ul class="sz-notes"><li>Avoid more than 2 blocked sides. Fix the unit level on concrete or a rigid frame with ø10 mm bolts (SM p.94).</li><li>Drain elbow: put the unit on a stand over 50 mm and fit the rubber caps. Where it stays below 0 °C for 2 or 3 days running, leave the drain elbow and caps off: the drain water freezes and the fan won't turn (SM p.94).</li><li>Don't site the 3 kW where it drops below -20 °C, or the 5-9 kW below -25 °C. A base pan heater (CZ-NE2P) is strongly recommended in cold areas (SM p.93).</li><li>5, 7 and 9 kW: fit the discharge grille before powering on (SM p.95).</li></ul>`}
+      <div class="src">Source: HMG clearance guidance (Donal Reilly, 24/10/2026)${unit==="J"?"; J-series SM p.52":"; K-series SM pp.93-95"}.</div>
+      <div class="btnrow">${unit==="J"?pageLink("J",52):pageLink("K2",94)}</div>
     </div>`;
   }
   box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
@@ -800,10 +822,13 @@ function renderClear(){
 /* Pick a drawing from the manual, then match the numbers on it to the list. Search covers every drawing for the unit. */
 let cpDraw={}, cpQuery="";
 const cpDrawings=()=>KB?.components?.[unit]?.drawings||[];
+/* A part on a component card: a J-series ref number, or "list:ref" for the K-series lists (o03, o0509, in). */
 function cpPart(ref){
-  const x=KB.parts?.[unit]?.parts.find(p=>p.ref===ref);if(!x) return "";
-  const same=x.part05===x.part07&&x.part07===x.part09;
-  return `<span>Part ${x.ref}: <code>${esc(same?x.part05:`05 ${x.part05||"n/a"} · 07 ${x.part07} · 09 ${x.part09}`)}</code></span>`;
+  const [l,r]=typeof ref==="string"?ref.split(":"):[null,ref];
+  const x=KB.parts?.[unit]?.parts.find(p=>p.ref===+r&&(!l||p.list===l));if(!x) return "";
+  const ms=Object.keys(x.no), same=ms.every(m=>x.no[m]===x.no[ms[0]]);
+  const who=l==="o03"?" (3 kW)":l==="o0509"?" (5-9 kW)":l==="in"?" (tank unit)":"";
+  return `<span>Part ${x.ref}${who}: <code>${esc(same?x.no[ms[0]]:ms.map(m=>`${m} ${x.no[m]||"n/a"}`).join(" · "))}</code></span>`;
 }
 function goFault(code){
   if(unit==="B"){const f=KB.B.faults.find(x=>x.code===code);if(!f) return;openCode="o:"+f.code+"@"+f.tablePage;}else openCode=code;
@@ -833,11 +858,11 @@ function renderComp(){
   if(!C){box.innerHTML=`<div class="notice">There's no component drawing on file for the ${esc(UNITS[unit].short)} yet.</div>`;return;}
   if(!C.drawings.some(d=>d.id===cpDraw[unit])) cpDraw[unit]=C.drawings[0].id;
   box.innerHTML=`<p class="src" style="margin:0">Labelled drawings from the ${unit==="B"?"Baxi manuals":"Panasonic manual"}. Pick a drawing and tap it to enlarge, then tap a number to see what that part is. The list below has every part, or search for a part or fault code.</p>
-    <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",K:"flow sensor, expansion vessel, 3-way",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
+    <input class="search" id="cpq" placeholder="Search, e.g. ${({J:"flow sensor, relief valve, H62",K:"fan motor, expansion vessel, F15",B:"flow switch, pump, E0"})[unit]}" autocomplete="off" value="${esc(cpQuery)}">
     <div class="cp-draw" id="cp-draw" role="group" aria-label="Drawing">${C.drawings.map(d=>`<button type="button" data-d="${d.id}" aria-pressed="${d.id===cpDraw[unit]}">${esc(d.tab)}</button>`).join("")}</div>
     <div id="cp-fig"></div><div class="view" id="cp-list"></div>
     ${C.note?`<div class="notice">${esc(C.note)}</div>`:""}
-    <p class="src" style="margin:0">The "what it does" lines are a plain-words summary of the manual pages given on each card. Part numbers are from the 2020 parts list: confirm with the supplier when ordering.</p>`;
+    <p class="src" style="margin:0">The "what it does" lines are a plain-words summary of the manual pages given on each card.${unit==="B"?"":` Part numbers are from the ${unit==="J"?"2020":"2025"} parts list: confirm with the supplier when ordering.`}</p>`;
   box.querySelectorAll("#cp-draw button").forEach(b=>b.onclick=()=>{cpDraw[unit]=b.dataset.d;cpQuery="";renderComp();});
   $("#cpq").oninput=e=>{cpQuery=e.target.value;listComp();};
   listComp();
@@ -1187,22 +1212,21 @@ function renderFaults(){
     faultDetail();
     return;
   }
-  if(unit==="K"){
-    $("#fault-lede").textContent="K-series split";
-    det.innerHTML=`<div class="notice">K-series fault codes aren't covered yet. The K-series document on file is the installation manual, which has no fault code list. Upload the K-series service manual to add them. Don't use J-series codes for a K-series unit.</div>`;
-    return;
-  }
-  $("#fault-lede").textContent=`J-series Mini Monobloc R32 · ${KB.faults.length} codes from the error codes table (SM pp.164-165). Tap a code.`;
-  const list=KB.faults.filter(f=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||f.verify.join(" ").toLowerCase().includes(q));
+  const P=PFAULTS();
+  $("#fault-lede").textContent=`${P.name} · ${P.list.length} codes from the error codes table (SM ${P.pages}). Tap a code.`;
+  const list=P.list.filter(f=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||f.verify.join(" ").toLowerCase().includes(q));
   for(const f of list){
     const b=document.createElement("button");b.className="code";
     b.innerHTML=`<b class="${f.code[0]}">${f.code}</b><span>${esc(f.meaning)}</span>`;
     b.onclick=()=>{openCode=f.code;faultDetail();det.scrollIntoView({behavior:"smooth",block:"start"});};
     box.append(b);
   }
-  if(!list.length) box.innerHTML=`<p class="src">No code matches “${esc(q)}” in the J-series table.</p>`;
+  if(!list.length) box.innerHTML=`<p class="src">No code matches “${esc(q)}” in the ${P.short} table.</p>`;
   faultDetail();
 }
+/* The Panasonic error code tables: J-series SM pp.164-165, K-series SM pp.209-210 (kept separate). */
+const PFAULTS=()=>unit==="K"?{list:KB.kfaults,key:"K2",cite:"K-series SM",pages:"pp.209-210",short:"K-series",name:"K-series split, outdoor WH-UDZ03/05/07/09KE5"}
+  :{list:KB.faults,key:"J",cite:"J-series SM",pages:"pp.164-165",short:"J-series",name:"J-series Mini Monobloc R32"};
 function fieldNotesFor(code,u){return (KB.fieldNoteList||[]).filter(n=>n.codes.includes(code)&&n.units.includes(u));}
 function fnBlock(code,u){const ns=fieldNotesFor(code,u);if(!ns.length)return "";
   return ns.map(n=>`<div class="notice" style="white-space:pre-line"><b>HMG field note: ${esc(n.title)}</b>
@@ -1246,7 +1270,7 @@ function faultDetail(){
     $("#fd-esc").onclick=()=>{$("#e-code").value=f.code;$("#e-sym").value=`${f.code}: ${f.meaning}`;show("esc");};
     return;
   }
-  const f=unit==="J"&&KB.faults.find(x=>x.code===openCode);
+  const P=PFAULTS(), f=P.list.find(x=>x.code===openCode);
   if(!f){det.innerHTML="";return;}
   const diag=f.diagPages.length?`SM p.${f.diagPages.join(", ")}`:"no self-diagnosis page";
   det.innerHTML=`<div class="panel">
@@ -1254,13 +1278,14 @@ function faultDetail(){
     <div style="font-weight:600;font-size:17px">${esc(f.meaning)}</div>
     <dl class="kv"><dt>Triggers when</dt><dd>${esc(f.judgement)}</dd>
     <dt>Check first</dt><dd>${f.verify.length?"<ul>"+f.verify.map(v=>`<li>${esc(v)}</li>`).join("")+"</ul>":"—"}</dd></dl>
-    ${fnBlock(f.code,"J")}
-    <div class="src">Source: J-series SM p.${f.tablePage} (error codes table); self-diagnosis ${diag}</div>
-    <div class="btnrow">${pageLink("J",f.tablePage)}${f.diagPages.length?pageLink("J",f.diagPages[0]).replace(/Open p\.(\d+) in the manual/,"Open check procedure (p.$1)"):""}</div>
+    ${f.note?`<div class="notice">${esc(f.note)}</div>`:""}
+    ${fnBlock(f.code,unit)}
+    <div class="src">Source: ${P.cite} p.${f.tablePage} (error codes table); self-diagnosis ${diag}</div>
+    <div class="btnrow">${pageLink(P.key,f.tablePage)}${f.diagPages.length?pageLink(P.key,f.diagPages[0]).replace(/Open p\.(\d+) in the manual/,"Open check procedure (p.$1)"):""}</div>
     <div class="btnrow"><button class="btn" id="fd-go">Talk me through it</button><button class="btn sec" id="fd-esc">Escalate</button></div>
   </div>`;
   $("#fd-x").onclick=()=>{openCode=null;faultDetail();};
-  $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the J-series. What do I check?`,{code:f.code,pages:[f.tablePage,...f.diagPages],note:`Error codes table row: ${f.code} | ${f.meaning} | judgement: ${f.judgement} | verify: ${f.verify.join("; ")} (J-series SM p.${f.tablePage}).${fnNote(f.code,"J")}`});};
+  $("#fd-go").onclick=()=>{show("ask");ask(`${f.code} on the ${P.short}. What do I check?`,{code:f.code,pages:[f.tablePage,...f.diagPages].map(p=>({m:P.key,p})),note:`Error codes table row: ${f.code} | ${f.meaning} | judgement: ${f.judgement} | verify: ${f.verify.join("; ")} (${P.cite} p.${f.tablePage}).${f.note?" "+f.note:""}${fnNote(f.code,unit)}`});};
   $("#fd-esc").onclick=()=>{$("#e-code").value=f.code;$("#e-sym").value=`${f.code}: ${f.meaning}`;show("esc");};
 }
 $("#fq").addEventListener("input",renderFaults);

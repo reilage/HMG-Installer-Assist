@@ -29,22 +29,31 @@ const between = (t, a, b) => t.slice(t.indexOf(a), t.indexOf(b)).trim();
 /* ---------- Panasonic ---------- */
 const J = pages(read("manuals/panasonic/panasonic-mini-monobloc-r32-j-series-service-manual.md"));
 const K = pages(read("manuals/panasonic/panasonic-k-series-hydromodule-tank-installation-manual.md"));
+const K2 = pages(read("manuals/panasonic/panasonic-k-series-service-manual.md"));
 
-// self-diagnosis start page for each J-series code (section 19.5.x headings)
-const starts = {};
-for (const p of Object.keys(J).map(Number).sort((a, b) => a - b))
-  for (const m of J[p].matchAll(/^19\.5\.\d+ .*?\(([HF]\d\d)\)/gm))
-    if (!(m[1] in starts)) starts[m[1]] = p;
-const sp = [...new Set(Object.values(starts))].sort((a, b) => a - b);
-function diagPages(code) {
-  if (code === "F24") return [199, 200];
-  if (!(code in starts)) return [];
-  const s = starts[code], nxt = sp.filter(x => x > s), end = nxt.length ? nxt[0] : s + 1;
-  return Array.from({ length: end - s }, (_, i) => s + i);
+// Self-diagnosis pages for each code, from the section 19.5.x headings, e.g. "19.5.25 Outdoor High Pressure Protection (H98 / F95)".
+// Each section runs to the page before the next one starts; `last` is the last page of the final section.
+function diagFinder(P, last) {
+  const starts = {};
+  for (const p of Object.keys(P).map(Number).sort((a, b) => a - b))
+    for (const m of P[p].matchAll(/^\s*19\.5\.\d+ .*?\(([HF]\d\d(?: \/ [HF]\d\d)*)\)/gm))
+      for (const c of m[1].split(" / ")) if (!(c in starts)) starts[c] = p;
+  const sp = [...new Set(Object.values(starts))].sort((a, b) => a - b);
+  return code => {
+    if (!(code in starts)) return [];
+    const s = starts[code], nxt = sp.filter(x => x > s), end = nxt.length ? nxt[0] : (last || s) + 1;
+    return Array.from({ length: end - s }, (_, i) => s + i);
+  };
 }
+const jDiag = diagFinder(J);
 const HPAGE = new Set(["F12", "F14", "F15", "F16"]);
 const faults = JSON.parse(read("j-series-faults.json")).map(f => ({
-  ...f, tablePage: f.code[0] === "H" || HPAGE.has(f.code) ? 164 : 165, diagPages: diagPages(f.code),
+  ...f, tablePage: f.code[0] === "H" || HPAGE.has(f.code) ? 164 : 165, diagPages: f.code === "F24" ? [199, 200] : jDiag(f.code),
+}));
+// K-series error codes table (SM pp.209-210): H codes, F12-F16 and H98/F95 are on p.209, F20 onwards on p.210.
+const kDiag = diagFinder(K2, 258);
+const kfaults = JSON.parse(read("k-series-faults.json")).map(f => ({
+  ...f, tablePage: f.code[0] === "H" || HPAGE.has(f.code) || f.code === "F95" ? 209 : 210, diagPages: kDiag(f.code),
 }));
 
 /* ---------- Baxi Assure HP55 outdoor unit: quick reference and error codes ---------- */
@@ -87,8 +96,18 @@ const commFile = read("hmg-commissioning-panasonic.md");
 
 // J-series spare parts (SM section 22, pp.237-246): one entry per ref number, with the part number for each model
 // and the exploded views it's drawn in. The views get unit/key so the app can show them like the wiring diagrams.
+// Both units get the same shape for the app: models (the picker), views, and parts with the number per model in `no`
+// (null = not fitted on that model). A part belongs to the models whose list it is in (J-series: one list for all three).
 const jparts = JSON.parse(read("j-series-parts.json"));
-const parts = { J: { views: jparts.views.map(v => ({ ...v, unit: "J", key: "J" })), parts: jparts.parts } };
+const kparts = JSON.parse(read("k-series-parts.json"));
+const parts = {
+  J: {
+    models: [["05", "5 kW", "WH-MDC05J3E5"], ["07", "7 kW", "WH-MDC07J3E5"], ["09", "9 kW", "WH-MDC09J3E5"]].map(([id, label, model]) => ({ id, label, model, list: "J" })),
+    views: jparts.views.map(v => ({ ...v, list: "J", unit: "J", key: "J" })),
+    parts: jparts.parts.map(x => ({ ...x, list: "J", no: { "05": x.part05, "07": x.part07, "09": x.part09 }, qtyBy: { "05": x.qty05, "07": x.qty0709, "09": x.qty0709 } })),
+  },
+  K: { models: kparts.models, views: kparts.views.map(v => ({ ...v, unit: "K", key: "K2" })), parts: kparts.parts },
+};
 
 // Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
 // Drawings get unit so the app can show them like the wiring diagrams.
@@ -127,25 +146,27 @@ const fnotes = fn.split(/^## /m).slice(1).map(sec => {
 const TITLES = {
   J: { title: "Panasonic Service Manual, Mini Monobloc R32 J-series (WH-MDC05/07/09J3E5)", cite: "J-series SM" },
   K: { title: "Panasonic Installation Manual, Hydromodule + Tank K-series (WH-ADC0309K3E5/K6E5, WH-UDZ03-09KE5)", cite: "K-series IM" },
+  K2: { title: "Panasonic Service Manual, Hydromodule + Tank K-series (outdoor WH-UDZ03/05/07/09KE5, tank unit WH-ADC0309K0E5A), Order No PCZ2508021CE (2025)", cite: "K-series SM" },
   B: { title: "Baxi Installation, user and service manual, Assure HP55 R290 monobloc outdoor unit (7890198 v03)", cite: "Baxi HP55 IM" },
   B2: { title: "Baxi ASHP Control (indoor unit / controller) installation, user and service manual (7887625 v04)", cite: "Baxi ASHP Control IM" },
 };
 const full = {
   J: { ...TITLES.J, pages: J },
   K: { ...TITLES.K, pages: K },
+  K2: { ...TITLES.K2, pages: K2 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, parts, components,
+  nav, sizing, wiring, clearances, weatherComp, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, parts, components,
 };
 const lite = {
-  J: TITLES.J, K: TITLES.K, B2: TITLES.B2,
+  J: TITLES.J, K: TITLES.K, K2: TITLES.K2, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, fieldNoteList: fnotes, faults, parts, components,
+  nav, wiring, commissioning, fieldNoteList: fnotes, faults, kfaults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
-console.log(`Built knowledge: J ${Object.keys(J).length} pages, K ${Object.keys(K).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
-  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ` +
+console.log(`Built knowledge: J ${Object.keys(J).length} pages, K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
+  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ${parts.K.parts.length} K-series parts, ` +
   `components J ${components.J.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
   `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, K ${commissioning.K.flatMap(s => s.steps).length}.`);

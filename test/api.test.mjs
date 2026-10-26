@@ -86,7 +86,7 @@ test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi ge
   assert.match(b, /HMG has no Baxi commissioning procedure yet/);
 });
 
-test("the J-series parts list is in the J rules only, with the part number per model", async () => {
+test("each Panasonic unit's parts list is in its own rules only, with the part number per model", async () => {
   mock.seen.length = 0;
   for (const unit of ["J", "K", "B"]) await events(await ask({ unit, text: "Part number for the water PCB?" }));
   const [j, k, b] = mock.seen.map(s => s.body.system[0].text);
@@ -95,7 +95,31 @@ test("the J-series parts list is in the J rules only, with the part number per m
   assert.match(j, /^63 ELECTRONIC CONTROLLER \(MAIN\) - WATER .*\| 05: ACXA73C58300R, 07: ACXA73C58310R, 09: ACXA73C58320R \|/m);
   assert.match(j, /^33 ELECTRO MAGNETIC SWITCH .*05: not fitted, 07: CWA001023, 09: CWA001023 \| qty 05: 0, 07\/09: 1/m);
   assert.match(j, /confirm the number with the Panasonic parts supplier/);
-  for (const t of [k, b]) { assert.doesNotMatch(t, /J-SERIES PARTS LIST/); assert.match(t, /no parts list on file/); }
+  assert.match(k, /K-SERIES PARTS LIST/);
+  assert.match(k, /--- OUTDOOR WH-UDZ03KE5 \(3 kW\) ---\n1 CHASSY ASS’Y \| CWD52K1317 \| qty 1 \| k-parts-o03 \| SM p\.300$/m);
+  assert.match(k, /^37 ELECTRONIC CONTROLLER - MAIN \(PCB main board circuit board\) \| 05: ACXA73C91120R, 07: ACXA73C91130R, 09: ACXA73C91140R \| qty 1 \| keep in stock \| k-parts-o0509 \| SM p\.303\/305$/m);
+  assert.match(k, /^7 FAN MOTOR, DC 60W 3PH \| 05\/07\/09 all L6CBYYYL0422 \|/m);
+  assert.match(k, /--- TANK UNIT WH-ADC0309K0E5A ---/);
+  assert.match(k, /2025 service manual: confirm the number with the Panasonic parts supplier/);
+  for (const t of [j, b]) assert.doesNotMatch(t, /K-SERIES PARTS LIST/);
+  assert.doesNotMatch(k, /J-SERIES PARTS LIST/);
+  assert.doesNotMatch(b, /J-SERIES PARTS LIST/); assert.match(b, /no parts list on file/);
+});
+
+test("K-series questions use both K manuals, and the fault card sends the service manual pages", async () => {
+  mock.seen.length = 0;
+  await events(await ask({ unit: "K", text: "F15 on the outdoor unit, fan not turning" }));
+  const sent = JSON.stringify(mock.seen[0].body.messages);
+  assert.match(sent, /\[K-series SM, p\.240\]/, "F15 self-diagnosis page");
+  mock.seen.length = 0;
+  await events(await ask({ unit: "K", text: "H98 on the K-series. What do I check?", extra: { code: "H98", pages: [{ m: "K2", p: 209 }, { m: "K2", p: 235 }, { m: "J", p: 164 }] } }));
+  const sent2 = JSON.stringify(mock.seen[0].body.messages);
+  assert.match(sent2, /\[K-series SM, p\.209\][\s\S]*\[K-series SM, p\.235\]/);
+  assert.doesNotMatch(sent2, /J-series SM/, "never another unit's manual");
+  const k = mock.seen[0].body.system[0].text;
+  assert.match(k, /error codes table SM pp\.209-210/);
+  assert.match(k, /K-series SM installation diagram \(p\.94\) gives the same figures/);
+  assert.doesNotMatch(k, /K-series fault codes are not covered/);
 });
 
 test("each unit's rules list only its own components, with drawing numbers and fault codes", async () => {
@@ -139,9 +163,32 @@ test("static files are served", async () => {
     assert.equal((await fetch(BASE + p)).status, 200, p);
   const k = await (await fetch(BASE + "/knowledge.json")).json();
   assert.equal(k.J.pages, undefined, "manual text stays on the server");
+  assert.equal(k.K2.pages, undefined, "manual text stays on the server");
+  // every manual PDF the Manuals screen lists is there
+  const html = await (await fetch(BASE + "/")).text();
+  const pdfs = [...html.matchAll(/file:"([^"]+\.pdf)"/g)].map(m => m[1]);
+  assert.ok(pdfs.includes("Panasonic-K-series-SM-part3-pp205-306.pdf"));
+  for (const f of pdfs) assert.equal((await fetch(BASE + "/manuals/" + f, { method: "HEAD" })).status, 200, f);
   assert.equal(k.faults.length, 52);
   assert.equal(k.parts.J.parts.length, 100);
-  for (const v of k.parts.J.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);
+  assert.equal(k.kfaults.length, 52);
+  assert.deepEqual(k.kfaults.find(f => f.code === "H98").diagPages, [235, 236]);
+  assert.equal(k.kfaults.find(f => f.code === "F20").tablePage, 210);
+  assert.equal(k.parts.K.parts.length, 273);
+  for (const u of ["J", "K"]) {
+    const P = k.parts[u], lists = new Set(P.models.map(m => m.list)), views = new Set(P.views.map(v => v.id).concat(P.views.map(v => v.view)));
+    for (const v of P.views) assert.equal((await fetch(BASE + "/" + v.file)).status, 200, v.file);
+    for (const x of P.parts) {
+      assert.ok(lists.has(x.list), `${u} ${x.ref} list`);
+      for (const v of x.views) assert.ok(views.has(v), `${u} ${x.ref} view ${v}`);
+      for (const m of P.models.filter(m => m.list === x.list)) assert.ok(m.id in x.no, `${u} ${x.list} ${x.ref} has a number for ${m.id}`);
+    }
+  }
+  // component cards point at parts that exist
+  for (const u of ["J", "K"]) for (const c of k.components[u].components) for (const r of c.parts || []) {
+    const [l, n] = typeof r === "string" ? r.split(":") : [null, r];
+    assert.ok(k.parts[u].parts.some(x => x.ref === +n && (!l || x.list === l)), `${u} ${c.name}: part ${r}`);
+  }
   for (const u of ["J", "K", "B"]) {
     const C = k.components[u], ids = new Set(C.drawings.map(d => d.id));
     for (const d of C.drawings) assert.equal((await fetch(BASE + "/" + d.file)).status, 200, d.file);

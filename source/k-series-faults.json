@@ -1,0 +1,453 @@
+[
+ {
+  "code": "H12",
+  "meaning": "Indoor/outdoor capacity unmatched",
+  "judgement": "90 s after power supply",
+  "verify": [
+   "Indoor/outdoor connection wire",
+   "Indoor/outdoor PCB",
+   "Specification and combination table in catalogue"
+  ]
+ },
+ {
+  "code": "H15",
+  "meaning": "Outdoor compressor temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Compressor temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H20",
+  "meaning": "Water pump abnormality",
+  "judgement": "Continue for 10 s",
+  "verify": [
+   "Indoor PCB",
+   "Water pump (malfunction)"
+  ]
+ },
+ {
+  "code": "H23",
+  "meaning": "Indoor refrigerant liquid temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Refrigerant liquid temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H27",
+  "meaning": "Service valve error",
+  "judgement": "Continue for 5 min",
+  "verify": [
+   "High pressure sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H28",
+  "meaning": "Abnormal solar sensor",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Solar temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H31",
+  "meaning": "Abnormal swimming pool sensor",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Pool temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H36",
+  "meaning": "Abnormal buffer tank sensor",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Buffer tank sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H38",
+  "meaning": "Brand code not match",
+  "judgement": "When indoor and outdoor brand code not same",
+  "verify": []
+ },
+ {
+  "code": "H42",
+  "meaning": "Compressor low pressure abnormality",
+  "judgement": "\u2014",
+  "verify": [
+   "Outdoor pipe temperature sensor",
+   "Clogged expansion valve or strainer",
+   "Insufficient refrigerant",
+   "Outdoor PCB",
+   "Compressor"
+  ]
+ },
+ {
+  "code": "H43",
+  "meaning": "Abnormal Zone 1 sensor",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Water temperature Zone 1 sensor"
+  ]
+ },
+ {
+  "code": "H44",
+  "meaning": "Abnormal Zone 2 sensor",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Water temperature Zone 2 sensor"
+  ]
+ },
+ {
+  "code": "H62",
+  "meaning": "Water flow switch abnormality",
+  "judgement": "Continue for 1 min",
+  "verify": [
+   "Water flow switch"
+  ]
+ },
+ {
+  "code": "H63",
+  "meaning": "Refrigerant low pressure abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor low pressure sensor (defective or disconnected)"
+  ],
+  "note": "Marked * in the manual: not applicable for this system."
+ },
+ {
+  "code": "H64",
+  "meaning": "Refrigerant high pressure abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor high pressure sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H65",
+  "meaning": "Deice circulation error",
+  "judgement": "Continue for 10 s",
+  "verify": [
+   "Water flow switch sensor (defective or disconnected)",
+   "Water pump malfunction",
+   "Buffer tank (is used)"
+  ],
+  "note": "Marked * in the manual: not applicable for this system."
+ },
+ {
+  "code": "H67",
+  "meaning": "Abnormal external thermistor 1",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Room temperature Zone 1 sensor"
+  ]
+ },
+ {
+  "code": "H68",
+  "meaning": "Abnormal external thermistor 2",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Room temperature Zone 2 sensor"
+  ]
+ },
+ {
+  "code": "H70",
+  "meaning": "Back-up heater OLP abnormality",
+  "judgement": "Continue for 60 s",
+  "verify": [
+   "Back-up heater OLP (disconnection or activated)"
+  ]
+ },
+ {
+  "code": "H72",
+  "meaning": "Tank sensor abnormal",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Tank sensor"
+  ]
+ },
+ {
+  "code": "H74",
+  "meaning": "PCB communication error",
+  "judgement": "Communication or transfer error",
+  "verify": [
+   "Indoor main PCB and sub PCB"
+  ]
+ },
+ {
+  "code": "H75",
+  "meaning": "Low water temperature control",
+  "judgement": "Room heater disable and deice request to operate under low water temperature",
+  "verify": [
+   "Heater operation must enable to increase water temperature"
+  ]
+ },
+ {
+  "code": "H76",
+  "meaning": "Indoor - control panel communication abnormality",
+  "judgement": "\u2014",
+  "verify": [
+   "Indoor - control panel (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "H90",
+  "meaning": "Indoor/outdoor abnormal communication",
+  "judgement": "> 1 min after starting operation",
+  "verify": [
+   "Internal/external cable connections",
+   "Indoor/outdoor PCB"
+  ]
+ },
+ {
+  "code": "H91",
+  "meaning": "Tank heater OLP abnormality",
+  "judgement": "Continue for 60 s",
+  "verify": [
+   "Tank heater OLP (disconnection or activated)"
+  ]
+ },
+ {
+  "code": "H95",
+  "meaning": "Indoor/outdoor wrong connection",
+  "judgement": "\u2014",
+  "verify": [
+   "Indoor/outdoor supply voltage"
+  ]
+ },
+ {
+  "code": "H98",
+  "meaning": "Outdoor high pressure overload protection",
+  "judgement": "\u2014",
+  "verify": [
+   "Outdoor high pressure sensor",
+   "Water pump or water leakage",
+   "Clogged expansion valve or strainer",
+   "Excess refrigerant",
+   "Outdoor PCB"
+  ]
+ },
+ {
+  "code": "H99",
+  "meaning": "Indoor heat exchanger freeze prevention",
+  "judgement": "\u2014",
+  "verify": [
+   "Indoor heat exchanger",
+   "Refrigerant shortage"
+  ]
+ },
+ {
+  "code": "F12",
+  "meaning": "Pressure switch activate",
+  "judgement": "4 times within 20 min",
+  "verify": [
+   "Pressure switch"
+  ]
+ },
+ {
+  "code": "F14",
+  "meaning": "Outdoor compressor abnormal revolution",
+  "judgement": "4 times within 20 min",
+  "verify": [
+   "Outdoor compressor"
+  ]
+ },
+ {
+  "code": "F15",
+  "meaning": "Outdoor fan motor lock abnormality",
+  "judgement": "2 times within 30 min",
+  "verify": [
+   "Outdoor PCB",
+   "Outdoor fan motor"
+  ]
+ },
+ {
+  "code": "F16",
+  "meaning": "Total running current protection",
+  "judgement": "3 times within 20 min",
+  "verify": [
+   "Excess refrigerant",
+   "Outdoor PCB"
+  ]
+ },
+ {
+  "code": "F20",
+  "meaning": "Outdoor compressor overheating protection",
+  "judgement": "4 times within 30 min",
+  "verify": [
+   "Compressor tank temperature sensor",
+   "Clogged expansion valve or strainer",
+   "Insufficient refrigerant",
+   "Outdoor PCB",
+   "Compressor"
+  ]
+ },
+ {
+  "code": "F22",
+  "meaning": "IPM (power transistor) overheating protection",
+  "judgement": "3 times within 30 min",
+  "verify": [
+   "Improper heat exchange",
+   "IPM (power transistor)"
+  ]
+ },
+ {
+  "code": "F23",
+  "meaning": "Outdoor direct current (DC) peak detection",
+  "judgement": "7 times continuously",
+  "verify": [
+   "Outdoor PCB",
+   "Compressor"
+  ]
+ },
+ {
+  "code": "F24",
+  "meaning": "Refrigeration cycle abnormality",
+  "judgement": "2 times within 20 min",
+  "verify": [
+   "Insufficient refrigerant",
+   "Outdoor PCB",
+   "Compressor low compression"
+  ]
+ },
+ {
+  "code": "F25",
+  "meaning": "Cooling/heating cycle changeover abnormality",
+  "judgement": "4 times within 30 min",
+  "verify": [
+   "4-way valve",
+   "V-coil"
+  ]
+ },
+ {
+  "code": "F27",
+  "meaning": "Pressure switch abnormality",
+  "judgement": "Continue for 1 min",
+  "verify": [
+   "Pressure switch"
+  ]
+ },
+ {
+  "code": "F29",
+  "meaning": "Low discharge superheat",
+  "judgement": "1 time within 2550 min",
+  "verify": [
+   "Discharge temperature sensor",
+   "Discharge pressure sensor",
+   "Pressure switch",
+   "Outdoor PCB"
+  ]
+ },
+ {
+  "code": "F30",
+  "meaning": "Water outlet sensor 2 abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Water outlet sensor 2 (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F32",
+  "meaning": "Abnormal internal thermostat",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Control panel PCB thermostat"
+  ]
+ },
+ {
+  "code": "F36",
+  "meaning": "Outdoor air temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor air temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F37",
+  "meaning": "Indoor water inlet temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Water inlet temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F40",
+  "meaning": "Outdoor discharge pipe temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor discharge pipe temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F41",
+  "meaning": "PFC control",
+  "judgement": "4 times within 10 min",
+  "verify": [
+   "Voltage at PFC"
+  ]
+ },
+ {
+  "code": "F42",
+  "meaning": "Outdoor heat exchanger temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor heat exchanger temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F43",
+  "meaning": "Outdoor defrost sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor defrost sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F45",
+  "meaning": "Indoor water outlet temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Water outlet temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F46",
+  "meaning": "Outdoor current transformer open circuit",
+  "judgement": "\u2014",
+  "verify": [
+   "Insufficient refrigerant",
+   "Outdoor PCB",
+   "Compressor low"
+  ]
+ },
+ {
+  "code": "F48",
+  "meaning": "Outdoor EVA outlet temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor EVA outlet temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F49",
+  "meaning": "Outdoor bypass outlet temperature sensor abnormality",
+  "judgement": "Continue for 5 s",
+  "verify": [
+   "Outdoor bypass outlet temperature sensor (defective or disconnected)"
+  ]
+ },
+ {
+  "code": "F95",
+  "meaning": "Cooling high pressure overload protection",
+  "judgement": "\u2014",
+  "verify": [
+   "Outdoor high pressure sensor",
+   "Water pump or water leakage",
+   "Clogged expansion valve or strainer",
+   "Excess refrigerant",
+   "Outdoor PCB"
+  ]
+ }
+]
