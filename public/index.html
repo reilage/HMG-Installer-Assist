@@ -127,7 +127,9 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .sugg-box .suggest button{border:0;border-radius:0;box-shadow:none;background:none}
 .sugg-box .suggest button+button{border-top:1px solid var(--line)}
 .sugg-box .suggest button:hover{box-shadow:none;background:var(--sunk)}
-.composer .box-h{padding:0 2px 2px}
+.composer .box-row{display:flex;align-items:center;gap:8px;padding:0 2px 2px}.composer .box-h{flex:1}
+.composer .ghost{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;font-size:13.5px;font-weight:600}
+.composer .ghost svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
 .suggest button{display:flex;align-items:center;gap:12px;border:1px solid var(--card-line);background:var(--surface);border-radius:var(--r);padding:12px 12px 12px 12px;font-size:15px;text-align:left;box-shadow:var(--shadow);min-width:0}
 .suggest button .si{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
 .suggest button .si svg,.suggest button .chev{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -155,6 +157,12 @@ main>.wrap:has(>#v-ask:not([hidden])){min-height:100%;box-sizing:border-box;disp
 #v-ask{flex:1}
 #v-ask>.disclaimer{margin-top:auto}
 .seg.blue.ask-top button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 6px;font-size:14.5px}
+/* Questions left today: right half of the bar, a ring that empties as they're used. */
+.ask-top .qleft{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 6px;color:#fff;font-size:14.5px;font-weight:600;line-height:1.15;border-left:1px solid rgba(255,255,255,.55)}
+.ask-top .qleft b{font-size:19px;font-weight:700}
+.ask-top .qleft.out{background:var(--esc)}
+.ask-top .qleft svg.ring{width:26px;height:26px;stroke-width:3.2;transform:rotate(-90deg)}
+.ask-top .qleft .ring circle:first-child{stroke:rgba(255,255,255,.35)}
 .ask-top svg{flex:none;width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 #hist{display:flex;flex-direction:column;gap:12px}
 #hist-head{display:flex;align-items:center;gap:8px}#hist-head h2{flex:1;margin:0}
@@ -402,7 +410,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
     <div class="hero-row"><h2>How can we assist?</h2><span class="hero-k" id="hero-unit">J-series</span></div>
     <p class="hero-who" id="who" hidden></p>
   </div>
-  <div class="seg blue ask-top" id="ask-top" role="group" aria-label="Questions"><button id="new-chat" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New question</button><button id="hist-open"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>My questions history</button></div>
+  <div class="seg blue ask-top" id="ask-top" role="group" aria-label="Questions"><button id="hist-open"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>My questions history</button><div class="qleft" id="q-left" role="status" hidden></div></div>
   <div id="hist" hidden>
     <div id="hist-head"><h2>My questions history</h2><button class="ghost" id="hist-x">Close</button></div>
     <p class="src" id="hist-note"></p>
@@ -414,7 +422,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <div id="log" aria-live="polite"></div>
   <p class="disclaimer" id="disc">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site. Questions are saved to help Heat Merchants improve the service.</p>
   <div class="composer">
-    <h3 class="box-h">Ask a Question</h3>
+    <div class="box-row"><h3 class="box-h">Ask a Question</h3><button class="ghost" id="new-chat" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New question</button></div>
     <div class="attached" id="attached" hidden><img id="att-img" alt="Attached photo"><span>Photo attached</span><button class="ghost" id="att-x">Remove</button></div>
     <div class="row">
       <label class="iconbtn" id="photo-btn" title="Attach a photo of the display or label" hidden>
@@ -555,7 +563,7 @@ $("#req-f").onsubmit=async e=>{
 };
 $("#gate-f").onsubmit=async e=>{
   e.preventDefault();store.set("hmg-code",$("#gate-code").value.trim());
-  const c=await fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).catch(()=>null);
+  const c=await fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||"","X-Device-Id":DEVICE}}).then(r=>r.json()).catch(()=>null);
   if(c&&c.accessOk){$("#gate").hidden=true;applyConfig(c);}else $("#gate-note").textContent=c?(GATE_NOTE[c.denied]||GATE_NOTE.access_code):"No connection. Try again.";
 };
 /* Photos are shrunk on the phone before sending (max 1568 px, JPEG): quicker on site signal and inside the upload limit. */
@@ -1192,13 +1200,13 @@ async function ask(text,extra,{typed,fresh,spoken}={}){
     addDiagrams(b,sd.ids,text);
     if(spoken) addReadAloud(b,sd.body);
     turns.push({role:"user",content:(img?"[photo attached] ":"")+text},{role:"assistant",content:r.text});
-    keepLocal({unit,code:extra?.code,q:text,a:r.text,photo:!!img});$("#new-chat").hidden=false;
+    keepLocal({unit,code:extra?.code,q:text,a:r.text,photo:!!img});$("#new-chat").hidden=false;if(r.left!==null) showLeft(r.left);
     addActions(b,r.text);
     if(r.stored) addFresh(b,text,extra,r.stored.id,typed,spoken);
   }catch(e){
     if(e.code==="cancelled"){b.innerHTML=e.text?md(e.text)+`<p class="src">Stopped.</p>`:`<p class="src">Stopped.</p>`;}
     else{b.innerHTML=(e.text?md(e.text):"")+`<p class="src">${ERR[e.code]||"Connection problem. Try again."}</p>`;
-      if(e.code==="not_configured") aiOff();}
+      if(e.code==="not_configured") aiOff();if(e.code==="daily_limit") showLeft(0);}
   }finally{busy=null;setBusy(false);}
 }
 /* "Didn't help" on a stored answer: ask Claude afresh. Straight after it, that is the first question again (the stored answer leaves
@@ -1335,6 +1343,17 @@ function continueChat(chat,es){
 function startChat(id){
   if(busy) busy.abort();
   stopSpeaking();turns=[];chatId=id||newId();$("#log").innerHTML="";$("#new-chat").hidden=true;renderSuggest();
+}
+/* Questions left today (api/config, then each answer). Hidden when the assistant is off or there's no daily limit. */
+function showLeft(left){
+  const box=$("#q-left"),lim=CFG.dailyLimit;
+  if(left!==undefined) CFG.questionsLeft=left;left=CFG.questionsLeft;
+  box.hidden=!CFG.ai||!lim;if(box.hidden) return;
+  const known=left!==null&&left!==undefined,f=known?Math.min(1,left/lim):1,c=2*Math.PI*9;
+  box.classList.toggle("out",known&&!left);
+  box.title=known?`${left} of ${lim} questions left today. They reset at midnight.`:`${lim} questions a day`;
+  box.innerHTML=`<svg class="ring" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="9" stroke-dasharray="${(f*c).toFixed(1)} ${c.toFixed(1)}"/></svg>`
+    +(known?`<span><b>${left}</b>/${lim} left today</span>`:`<span><b>${lim}</b> a day</span>`);
 }
 $("#hist-open").onclick=openHist;$("#hist-x").onclick=closeHist;
 $("#new-chat").onclick=()=>startChat();
@@ -1684,7 +1703,7 @@ $("#fill").onclick=fillFromChat;
 /* ---------- start ---------- */
 function applyConfig(c){
   CFG=c;if(c.escalationTo){ESC_TO=c.escalationTo;document.querySelectorAll(".addr").forEach(a=>a.textContent=ESC_TO);}
-  $("#photo-btn").hidden=!c.ai;$("#fill").hidden=!c.ai;$("#ai-off").hidden=c.ai;
+  showLeft();$("#photo-btn").hidden=!c.ai;$("#fill").hidden=!c.ai;$("#ai-off").hidden=c.ai;
   /* Signed in with an installer code: show who, and fill their details into the escalation form. */
   const me=c.installer;$("#who").hidden=!me;
   if(me){
@@ -1698,7 +1717,7 @@ setUnit("J");
 /* Splash: logo while the app loads, at least half a second, never more than three. */
 (()=>{const t0=Date.now(),go=()=>setTimeout(()=>$("#splash").classList.add("gone"),Math.max(0,500-(Date.now()-t0)));
   Promise.race([kbReady,new Promise(r=>setTimeout(r,3000))]).then(go);})();
-fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||""}}).then(r=>r.json()).then(c=>{
+fetch("api/config",{headers:{"X-Access-Code":store.get("hmg-code")||"","X-Device-Id":DEVICE}}).then(r=>r.json()).then(c=>{
   applyConfig(c);if(c.accessCode&&!c.accessOk) showGate(!store.get("hmg-code")?"":c.denied==="account_off"?GATE_NOTE.account_off:"That code no longer works. Ask Heat Merchants for a new one.");
 }).catch(()=>aiOff());
 
