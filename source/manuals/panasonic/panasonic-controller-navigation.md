@@ -329,7 +329,7 @@ setting has a visible effect, it is listed below.
 |---|---|---|---|---|
 | External room thermostat (or internal, room thermistor, water temp) | System setup → Zone & Sensor | Without optional PCB: Water temperature / Room thermostat (Internal or External) / Room thermistor. Default "Room and Water temp." | Main screen sensor-type icon changes (p.18 lists Water temperature, Compensation curve, Direct, Room thermostat External, Room thermostat Internal, Room thermistor icons) | pp.23, 77; wiring examples pp.63-64 |
 | 2-zone / pool | System setup → Optional PCB connectivity = Yes, then Zone & Sensor → 1 or 2 zone | Pool only on zone 2 | Zone 1 / Zone 2 appear in Operation setup | pp.23, 77 |
-| Backup heater capacity | System setup → Heater capacity | 3 / 6 / 9 kW, options depend on model (factory: 3 kW heater on the WH-MXC09J3E5, 6 kW on the WH-MXC12J6E5, SM p.12, p.15) | Re-open item | pp.23, 77 |
+| Backup heater capacity | System setup → Heater capacity | 3 / 6 / 9 kW, options depend on model (HMG: 6 kW back-up heater on both the 9 kW and 12 kW T-Cap, Donal Reilly 26/10/2026) | Re-open item | pp.23, 77 |
 | Anti freezing | System setup → Anti freezing | Yes (default) / No | Re-open item | pp.23, 77 |
 | Tank connected | System setup → Tank connection | No (default) / Yes | Tank temp appears on main screen; Operation setup shows Tank | pp.23, 77 |
 | Tank heater internal/external | System setup → Tank heater | Internal (default) / External + ON time 0:20 | Re-open item. Also set Function setup → Tank heater ON to use it (p.78) | pp.24, 78 |
