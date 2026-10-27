@@ -36,5 +36,11 @@
     { "type": "Study", "temp": 21 },
     { "type": "Utility", "temp": 21 },
     { "type": "WC", "temp": 21 }
-  ]
+  ],
+  "cylinders": {
+    "_note": "HMG hot water cylinders for the quick survey (Donal Reilly). Size = the larger of min and people x perPerson + each bathroom after the first x perExtraBath; the smallest cylinder in the list at or above it. builtIn = ranges whose indoor unit already holds the hot water (litres), so they get no separate cylinder.",
+    "rule": { "perPerson": null, "perExtraBath": 0, "min": null },
+    "builtIn": { "L": 180, "K": 180 },
+    "list": []
+  }
 }
