@@ -749,3 +749,11 @@ test("prices: placeholder RRPs until HMG loads a list, standard discount per pro
   await admin({ action: "prices_clear" });
   assert.equal((await (await prices(a.code)).json()).placeholder, true);
 });
+
+test("Resend's test sender (no domain yet) copies nobody, since it can only deliver to the account's own address", async () => {
+  const { testSender } = await import("../lib/email.js");
+  assert.equal(testSender("HMG Installer Assistant <onboarding@resend.dev>"), true);
+  assert.equal(testSender("onboarding@resend.dev"), true);
+  assert.equal(testSender("HMG Installer Assistant <assist@hmgassist.com>"), false);
+  assert.equal(testSender(""), false);
+});
