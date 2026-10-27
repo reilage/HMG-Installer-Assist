@@ -326,6 +326,8 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 .qs-pick{font-size:14px;line-height:1.45}
 .qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
 table.qs-hp tr[data-p]{cursor:pointer}
+.qs-chg{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted)}
+.qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
 #qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
 table.qs-hp td:first-child,table.qs-list td:nth-child(2){font-family:var(--f-body)}
@@ -1275,13 +1277,16 @@ function calcSurvey(){
   /* The unit for the quote: the one tapped, else the selected unit's range, else the first that covers it. */
   const opts=S.ranges.map(r=>({r,z:w?qsUnit(r,w):null}));
   const order=[...opts].sort((a,b)=>(b.r.unit===unit)-(a.r.unit===unit));
-  if(!opts.some(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)) qs.pick="";
-  const def=order.find(o=>o.z), pick=opts.find(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)||def;
+  /* Any size that covers the heat loss can go on the quote (the smallest in each range is recommended). */
+  const all=w?order.flatMap(o=>o.r.sizes.filter(z=>z.covers*1000>=w).map(z=>({r:o.r,z,rec:z===o.z}))):[];
+  const key=o=>`${o.r.unit}${o.z.kw}`;
+  if(!all.some(o=>key(o)===qs.pick)) qs.pick="";
+  const def=all[0], pick=all.find(o=>key(o)===qs.pick)||def;
   hp.innerHTML=w?`<div class="src" style="font-weight:600">Design heat loss</div>
       <div class="sz-res"><span class="big">${fmt(w/1000)} kW</span><span class="of">${fmt(qsNum(qs.hli),2)} × ${fmt(area,1)} m²${qs.fromRooms?" (rooms)":""} × ${fmt(qs.tin-qs.tout,0)} K (${fmt(qs.tin,0)} °C in, ${fmt(qs.tout,0)} °C out) = ${Math.round(w)} W</span></div>
       <div class="src" style="font-weight:600;margin-top:4px">Heat pump · tap to choose for the quote</div>
       <table class="cu qs-hp"><thead><tr><th>Range</th><th>Unit</th><th>Covers</th></tr></thead><tbody>
-      ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${o===pick?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
+      ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${pick&&pick.r===o.r&&pick.z===o.z?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
         :`<tr class="small"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td colspan="2">Nothing big enough (largest covers ${o.r.sizes.at(-1).covers} kW)</td></tr>`).join("")}</tbody></table>
       ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> HMG code ${pick.z.hmg.map(h=>esc(h.code)).join(" + ")}.</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
     :`<p class="src" style="margin:0">${qs.fromRooms?"Enter the HLI and add rooms":"Enter the floor area and HLI"} to size the heat pump.</p>`;
@@ -1293,6 +1298,7 @@ function calcSurvey(){
   const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
+    ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
     ${pick||rads.length?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
       ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>1</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join(""):""}
       ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>${n}</td><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${r.code}</td></tr>`).join("")}
@@ -1304,6 +1310,7 @@ function calcSurvey(){
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
       <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
       <pre class="summary" id="qs-sum"></pre></div>`;
+  if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
   $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};qsSave();renderSurvey();};
   $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
