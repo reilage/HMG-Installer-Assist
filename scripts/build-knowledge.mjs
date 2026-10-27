@@ -106,6 +106,7 @@ const fn = read("hmg-field-notes.md");
 const sizing = read("hmg-primary-pipe-sizing.md");
 const clearances = read("hmg-outdoor-unit-clearances.md");
 const weatherComp = read("hmg-weather-compensation.md");
+const volume = read("hmg-buffer-volume.md");
 const zones = read("hmg-r290-exclusion-zones.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");
@@ -185,7 +186,7 @@ const full = {
   K3: { ...TITLES.K3, pages: K3 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
+  nav, sizing, wiring, clearances, weatherComp, volume, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 const lite = {
   J: TITLES.J, T: TITLES.T, L: TITLES.L, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
