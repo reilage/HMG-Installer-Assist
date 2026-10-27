@@ -11,7 +11,7 @@ HMG's rule for retrofit systems: how much water volume the heat pump needs, when
 | Heat pump | HMG minimum total volume |
 |---|---|
 | Panasonic J-series Mini Monobloc 5, 7 and 9 kW (WH-MDC05/07/09J3E5) | **30 L** |
-| Panasonic K-series split 5, 7 and 9 kW (WH-UDZ05/07/09KE5) | **30 L** |
+| Panasonic K-series split 3, 5, 7 and 9 kW (WH-UDZ03/05/07/09KE5) | **30 L** |
 | Panasonic L-series R290 5, 7 and 9 kW (WH-WDG05/07/09LE5) | **30 L** |
 | Baxi Assure HP55 4 and 6 kW | **30 L** |
 | Panasonic J-series T-Cap 9 and 12 kW (WH-MXC09J3E5 / WH-MXC12J6E5) | **50 L** |
@@ -19,13 +19,26 @@ HMG's rule for retrofit systems: how much water volume the heat pump needs, when
 
 This is the **total volume available to the heat pump** (Donal Reilly, 27/10/2026).
 
-Not covered: the K-series 3 kW (WH-UDZ03KE5). HMG has not given a figure for it.
+**Use the HMG figures** (Donal Reilly, 27/10/2026). Where a manual gives a different minimum (e.g. the Baxi HP55 IM p.40 table), HMG's figure is the one to work to.
 
 ## 2. Zone it upstairs and downstairs first (HMG recommended)
 
 For retrofit, HMG recommends one heating zone upstairs and one downstairs. That gives the volume above. **If the volume is there, no buffer is required.**
 
-## 3. Not enough volume: 2-port volumiser on the return (HMG preferred)
+## 3. Underfloor heating: leave wet-room loops open instead of a volumiser
+
+On underfloor heating, instead of fitting a volumiser, leave enough UFH loops **permanently open** (no actuator, or an actuator that is never closed) in wet rooms such as the **utility, bathroom, WC or ensuite**, so the open loops hold the required volume (Donal Reilly, 27/10/2026).
+
+Open loop length needed, 16 mm UFH pipe with a 2 mm wall (12 mm bore, 0.113 L per metre):
+
+| HMG volume | Open loop length needed |
+|---|---|
+| **30 L** | about **265 m** of open loop |
+| **50 L** | about **442 m** of open loop |
+
+Worked out as bore area π × 0.006² m² = 0.000113 m² = 0.113 L/m; 30 ÷ 0.113 = 265 m, 50 ÷ 0.113 = 442 m. The loop length is the full length of pipe in the open loops, flow and return. For example, a 100 m loop holds about 11.3 L, so three 100 m loops (34 L) cover 30 L and five 100 m loops (57 L) cover 50 L. Count the water in any radiator or other zone that is also always open towards the total.
+
+## 4. Not enough volume: 2-port volumiser on the return (HMG preferred)
 
 If the volume isn't there, HMG's preferred fix is a **2-port volumiser on the return**. It goes in series, so the flow passes straight through it. Use either:
 
@@ -36,10 +49,10 @@ The volumiser's water counts towards the total, so pick the one that makes up th
 
 **Why:** a 2-port volumiser on the return adds volume **without a hydraulic break**. **HMG prefer to avoid a hydraulic break where possible.**
 
-## 4. Bypass valve: where it goes
+## 5. Bypass valve: where it goes
 
 - **No buffer, or a 2-port volumiser on the return:** a bypass valve is **required**. Set it so that, with every zone closed, the full flow goes through the bypass at the **nominal flow rate of the chosen heat pump**. This is the same check as the HMG commissioning checklist, stage 7 "Flow rate, all zones closed (bypass)".
-- **4-port buffer (a hydraulic break):** **no bypass is required between the heat pump and the buffer.** A bypass **is required on the secondary side**, between the buffer and the heating emitters. HMG has not given a setting figure for the secondary bypass.
+- **4-port buffer (a hydraulic break):** **no bypass is required between the heat pump and the buffer.** A bypass **is required on the secondary side**, between the buffer and the heating emitters. The installer sets the secondary bypass to suit the system design and requirements (Donal Reilly, 27/10/2026).
 
 Nominal flow rates (ΔT 5):
 
@@ -52,7 +65,7 @@ Nominal flow rates (ΔT 5):
 
 Panasonic flow read-out: [Menu] › System check › System information › Pump flowrate (J-series SM p.24). The minimum is 15 l/min with the main pump running (J-series SM p.63, T-Cap SM p.62).
 
-## 5. Manual notes that go with this
+## 6. Manual notes that go with this
 
 **Expansion vessel (the upper limit of system volume).** Adding a volumiser or buffer adds water, so check the built-in expansion vessel still covers the system.
 
@@ -70,9 +83,7 @@ Water only, litres:
 | 35 °C underfloor | 27 | 29 | 77 | 81 | 91 |
 | 45 °C low temp rads / fan convectors | 23 | 23 | 49 | 54 | 59 |
 
-- The HMG figures (30 L on the 4 and 6 kW, 50 L on the 8, 11 and 13 kW) cover the manual's radiator figures, except the 11 and 13 kW (54 and 59 L).
-- The HMG figures don't cover the manual's underfloor figures on the 8, 11 and 13 kW.
-- **Where the Baxi manual figure is higher, give both figures and work to the higher one.**
+- HMG works to its own figures (30 L on the 4 and 6 kW, 50 L on the 8, 11 and 13 kW), not this table (Donal Reilly, 27/10/2026).
 - With glycol, the Baxi figures are higher again (pp.40-41).
 
 The Panasonic manuals give no minimum volume, so the HMG figure is the only figure for the Panasonic units.

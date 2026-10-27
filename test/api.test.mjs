@@ -132,12 +132,13 @@ test("the HMG volume, bypass and volumiser rule is in the rules, with each unit'
     assert.match(x, /HMG DESIGN GUIDANCE \(system volume, bypass, volumiser\)/);
     assert.match(x, /minimum TOTAL volume available to the heat pump/);
     assert.match(x, /HMG prefer to avoid a hydraulic break/);
+    assert.match(x, /about 265 m of open loop for 30 L and 442 m for 50 L/);
     assert.match(x, /With a 4-port buffer, no bypass is needed between the heat pump and the buffer, but one is required on the secondary side/);
   }
   assert.match(j, /Mini Monobloc \(5, 7 and 9 kW\) it is 30 L/);
   assert.match(t, /T-Cap \(9 and 12 kW\) it is 50 L/);
   assert.match(b, /30 L on the 4 and 6 kW and 50 L on the 8, 11 and 13 kW/);
-  assert.match(k, /K-series 5, 7 and 9 kW it is 30 L. HMG has no figure for the 3 kW/);
+  assert.match(k, /K-series 3, 5, 7 and 9 kW it is 30 L/);
   assert.match(l, /L-series 5, 7 and 9 kW it is 30 L/);
 });
 
