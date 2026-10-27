@@ -107,6 +107,9 @@ const sizing = read("hmg-primary-pipe-sizing.md");
 const clearances = read("hmg-outdoor-unit-clearances.md");
 const weatherComp = read("hmg-weather-compensation.md");
 const volume = read("hmg-buffer-volume.md");
+// HMG radiator list (Warmhaus Standard steel panel radiators): output at ΔT 50 and n per radiator
+const radiatorText = read("hmg-radiators.md");
+const radiators = JSON.parse(read("warmhaus-radiators.json")).radiators;
 const zones = read("hmg-r290-exclusion-zones.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");
@@ -186,17 +189,17 @@ const full = {
   K3: { ...TITLES.K3, pages: K3 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, volume, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
+  nav, sizing, wiring, clearances, weatherComp, volume, radiatorText, radiators, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 const lite = {
   J: TITLES.J, T: TITLES.T, L: TITLES.L, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
+  nav, wiring, commissioning, radiators, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));
 fs.writeFileSync(path.join(root, "public", "knowledge.json"), JSON.stringify(lite));
 console.log(`Built knowledge: J ${Object.keys(J).length} pages, T-Cap ${Object.keys(T).length} (${tfaults.length} codes, ${parts.T.parts.length} parts), L-series ${Object.keys(L).length} (${lfaults.length} codes, ${parts.L.parts.length} parts), K IM ${Object.keys(K).length}, K SM ${Object.keys(K2).length} (${kfaults.length} codes), K tank SM ${Object.keys(K3).length}, Baxi HP55 ${Object.keys(BXP).length} (${bxfaults.length} codes), ` +
-  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ${parts.K.parts.length} K-series parts, ` +
+  `ASHP Control ${Object.keys(CTP).length} (${ctfaults.length} codes), ${faults.length} J-series codes, ${fnotes.length} field notes, ${radiators.length} radiators, ${wiring.length} diagrams, ${parts.J.parts.length} J-series parts, ${parts.K.parts.length} K-series parts, ` +
   `components J ${components.J.components.length}, T ${components.T.components.length}, L ${components.L.components.length}, K ${components.K.components.length}, Baxi ${components.B.components.length}, ` +
   `commissioning J ${commissioning.J.flatMap(s => s.steps).length} steps, T ${commissioning.T.flatMap(s => s.steps).length}, L ${commissioning.L.flatMap(s => s.steps).length}, K ${commissioning.K.flatMap(s => s.steps).length}.`);

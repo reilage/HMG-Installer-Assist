@@ -270,7 +270,7 @@ a.pg{color:var(--accent);font-weight:600;font-size:14px}
 /* Sizing */
 .sz-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sz-in label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
-.sz-in input{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font:500 16px var(--f-mono);color:var(--fg);min-width:0}
+.sz-in input,.sz-in select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font:500 16px var(--f-mono);color:var(--fg);min-width:0}
 .kw{display:flex;flex-wrap:wrap;gap:8px}
 .kw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font:700 16px var(--f-mono)}
 .kw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
@@ -311,6 +311,7 @@ table.cl td:first-child{white-space:normal}
 table.cl td.bad{color:var(--warn);font-weight:700}
 #wc-e button{font:600 15px var(--f-body)}
 #wc-body table.cu td:first-child{font-family:var(--f-body)}
+#rd-out table.cu td{white-space:nowrap}
 
 /* Escalate */
 form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -464,12 +465,13 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-size" hidden>
-  <div><h2>Install</h2><p class="lede" id="size-lede">What each component inside the unit is, primary pipe sizing, outdoor unit clearances and the HMG heating curve, for the selected unit.</p></div>
-  <div class="seg blue" id="install-seg" role="group" aria-label="Install topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button></div>
+  <div><h2>Install</h2><p class="lede" id="size-lede">What each component inside the unit is, primary pipe sizing, outdoor unit clearances, the HMG heating curve and radiator selection, for the selected unit.</p></div>
+  <div class="seg blue" id="install-seg" role="group" aria-label="Install topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="rd" aria-pressed="false">Radiators</button></div>
   <div id="cl-body" hidden></div>
   <div id="ez-body" hidden></div>
   <div id="size-body" hidden></div>
   <div id="wc-body" hidden></div>
+  <div id="rd-body" hidden></div>
   <div id="cp-body" class="view"></div>
 </section>
 
@@ -524,7 +526,7 @@ let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=nu
 
 /* ---------- knowledge ---------- */
 /* knowledge.json here is the small part the screens need. The manual text stays on the server (api/ask). */
-const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}).catch(()=>{
+const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();renderRad();}).catch(()=>{
   $("#codes").textContent="Could not load the manuals for this page.";});
 const STOP=new Set("the and for with what how does when this that from have are can not but you your its into then than there which where why why should would could after before about unit heat pump showing show shows check checks".split(" "));
 function toks(s){return (s.toLowerCase().match(/[a-z]\d\d\.\d{2,3}|[a-z]\d{2}|[a-z][a-z0-9\-]{2,}|\b[a-z][a-z0-9]\b|\d+(?:\.\d+)?/g)||[]).filter(w=>!STOP.has(w)&&(w.length!==2||/^\d/.test(w)||FCODES.B.has(w)));}
@@ -833,7 +835,7 @@ let clSize="small";
 /* Install topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
 function installTopic(s){
   document.querySelectorAll("#install-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.s===s));
-  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#cp-body").hidden=s!=="cp";
+  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#cp-body").hidden=s!=="cp";
 }
 document.querySelectorAll("#install-seg button").forEach(b=>b.onclick=()=>installTopic(b.dataset.s));
 function clFig(c,m){
@@ -1079,6 +1081,82 @@ function renderWC(){
     ${how}<div class="btnrow"><button class="btn sec" id="wc-ask">Ask about this</button></div>`;
   box.querySelectorAll("#wc-e button").forEach(b=>b.onclick=()=>{wcE=b.dataset.e;renderWC();});
   $("#wc-ask").onclick=()=>{show("ask");ask(`How do I set the HMG heating curve for ${c.name.toLowerCase()} on the ${u.short}?`);};
+}
+
+/* ---------- Radiators (HMG radiator list: Warmhaus Standard steel panels, Donal Reilly 27/10/2026) ---------- */
+/* Output at ΔT = ΔT 50 output × (ΔT ÷ 50)^n, each radiator's own n. HMG design: 45 °C flow, 5 °C drop (mean water 42.5 °C), 21 °C room. */
+const RAD_FLOW=45,RAD_DROP=5;
+let rd={mode:"size",w:1200,spec:"",other:1500,room:21,maxL:"",maxH:"",types:["11","22","33"]};
+const radDT=()=>RAD_FLOW-RAD_DROP/2-rd.room;
+const radOut=(r,dt=radDT())=>r.w50*Math.pow(dt/50,r.n);
+const radName=r=>`Type ${r.type} · ${r.h} H × ${r.l} L`;
+function renderRad(){
+  const box=$("#rd-body"),R=KB?.radiators;
+  if(!R){box.innerHTML=`<div class="notice">The radiator list hasn't loaded yet.</div>`;return;}
+  if(!rd.spec) rd.spec=R.find(r=>r.type==="22"&&r.h===600&&r.l===1000)?.code||R[0].code;
+  const opts=["11","22","33"].map(t=>`<optgroup label="Type ${t}">${R.filter(r=>r.type===t).map(r=>`<option value="${r.code}" ${r.code===rd.spec?"selected":""}>${radName(r)} (${r.code})</option>`).join("")}</optgroup>`).join("");
+  box.innerHTML=`<div class="panel">
+      <div class="kw" id="rd-mode"><button data-m="size" aria-pressed="${rd.mode==="size"}">Size for a room</button><button data-m="swap" aria-pressed="${rd.mode==="swap"}">Replace a radiator</button></div>
+      <div class="sz-in">
+        ${rd.mode==="size"?`<label>Room heat loss W<input id="rd-w" inputmode="numeric" value="${rd.w}"></label>`
+          :`<label style="grid-column:1/-1">Specified radiator<select id="rd-spec">${opts}<option value="other" ${rd.spec==="other"?"selected":""}>Other make (enter its ΔT 50 output)</option></select></label>
+            ${rd.spec==="other"?`<label>Its output at ΔT 50, W<input id="rd-other" inputmode="numeric" value="${rd.other}"></label>`:""}`}
+        <label>Room °C<select id="rd-room">${[18,20,21,22].map(t=>`<option ${t===rd.room?"selected":""}>${t}</option>`).join("")}</select></label>
+        <label>Max length mm<input id="rd-l" inputmode="numeric" placeholder="Any" value="${rd.maxL}"></label>
+        <label>Max height mm<input id="rd-h" inputmode="numeric" placeholder="Any" value="${rd.maxH}"></label>
+      </div>
+      <div class="src" style="font-weight:600">Types (depth off the wall)</div>
+      <div class="kw" id="rd-t">${[["11",50],["22",105],["33",160]].map(([t,d])=>`<button data-t="${t}" aria-pressed="${rd.types.includes(t)}">${t} · ${d} mm</button>`).join("")}</div>
+    </div>
+    <div class="panel" id="rd-out"></div>
+    <div class="panel">
+      <ul class="sz-notes">
+        <li>Outputs are at <b>45 °C flow</b> (the HMG maximum on radiators) with the HMG 5 °C drop: 45/40 °C, mean water 42.5 °C. At a 21 °C room that's ΔT 21.5, about a third of the ΔT 50 catalogue output.</li>
+        <li>Worked out with each radiator's own n-coefficient from the list (1.27 to 1.32): output = ΔT 50 output × (ΔT ÷ 50)<sup>n</sup>.</li>
+        <li>A replacement must give <b>at least</b> the specified radiator's output at 45 °C, never less. Types are compared at 45 °C, not at ΔT 50, because their n differs.</li>
+        <li>For another make, n 1.3 is used for the specified radiator. If its output is given at another ΔT, convert it to ΔT 50 first, or ask in the Ask tab.</li>
+      </ul>
+      <div class="src">Source: HMG radiator list (Warmhaus Standard steel panel radiators, 142 sizes); HMG weather compensation guidance (45 °C max flow on radiators).</div>
+    </div>`;
+  box.querySelectorAll("#rd-mode button").forEach(b=>b.onclick=()=>{rd.mode=b.dataset.m;renderRad();});
+  box.querySelectorAll("#rd-t button").forEach(b=>b.onclick=()=>{const t=b.dataset.t;rd.types=rd.types.includes(t)?rd.types.filter(x=>x!==t):[...rd.types,t].sort();b.setAttribute("aria-pressed",rd.types.includes(t));calcRad();});
+  const num=v=>parseFloat(String(v).replace(",","."));
+  if($("#rd-w")) $("#rd-w").oninput=e=>{rd.w=num(e.target.value);calcRad();};
+  if($("#rd-spec")) $("#rd-spec").onchange=e=>{rd.spec=e.target.value;renderRad();};
+  if($("#rd-other")) $("#rd-other").oninput=e=>{rd.other=num(e.target.value);calcRad();};
+  $("#rd-room").onchange=e=>{rd.room=+e.target.value;calcRad();};
+  $("#rd-l").oninput=e=>{rd.maxL=e.target.value.trim();calcRad();};
+  $("#rd-h").oninput=e=>{rd.maxH=e.target.value.trim();calcRad();};
+  calcRad();
+}
+function calcRad(){
+  const out=$("#rd-out"),R=KB?.radiators; if(!out||!R) return;
+  const dt=radDT(),maxL=parseFloat(rd.maxL)||1e9,maxH=parseFloat(rd.maxH)||1e9;
+  const spec=rd.mode==="swap"&&rd.spec!=="other"?R.find(r=>r.code===rd.spec):null;
+  const need=rd.mode==="size"?rd.w:spec?radOut(spec,dt):rd.other*Math.pow(dt/50,1.3);
+  if(!(need>0)){out.innerHTML=`<p class="src">Enter the ${rd.mode==="size"?"room heat loss":"specified radiator's output"}.</p>`;return;}
+  const fits=R.filter(r=>rd.types.includes(r.type)&&r.l<=maxL&&r.h<=maxH&&r!==spec);
+  /* One block per type, Type 22 first (what installers prefer), then 33, then 11: the closest three above the output in each.
+     A type that can't do it in one says so, with the biggest that fits and a pair of them. */
+  const out45=r=>Math.round(radOut(r,dt));
+  const row=(r,k)=>`<tr class="${k===0?"pick":""}"><td>${r.h}×${r.l}</td><td>${out45(r)}</td><td>${Math.round(r.w50)}</td><td>${r.code}</td></tr>`;
+  const block=t=>{
+    const all=fits.filter(r=>r.type===t).sort((a,b)=>radOut(a,dt)-radOut(b,dt)||a.h-b.h);
+    const ok=all.filter(r=>radOut(r,dt)>=need).slice(0,3);
+    const head=`<div class="src" style="font-weight:600;margin-top:6px">Type ${t} · ${({"11":50,"22":105,"33":160})[t]} mm deep</div>`;
+    if(ok.length) return head+`<table class="cu"><thead><tr><th>H×L mm</th><th>W at 45 °C</th><th>W at ΔT 50</th><th>Code</th></tr></thead><tbody>${ok.map(row).join("")}</tbody></table>`;
+    if(!all.length) return head+`<p class="src" style="margin:0">No Type ${t} fits that space.</p>`;
+    const big=all[all.length-1], half=all.find(r=>radOut(r,dt)>=need/2);
+    return head+`<p class="src" style="margin:0">No single Type ${t} in that space gives ${Math.round(need)} W. The biggest, ${big.h}×${big.l} (${big.code}), gives ${out45(big)} W.${half?` Two of the <b>${half.h}×${half.l}</b> (${half.code}) give ${Math.round(2*radOut(half,dt))} W between them.`:""}</p>`;
+  };
+  const order=["22","33","11"].filter(t=>rd.types.includes(t));
+  out.innerHTML=`<div class="src" style="font-weight:600">${rd.mode==="size"?"Needs at least":spec?`${radName(spec)} gives`:"The specified radiator gives about"}</div>
+    <div class="sz-res"><span class="big">${Math.round(need)} W</span><span class="of">at 45 °C flow, ${rd.room} °C room (ΔT ${fmt(dt)})${spec?` · ${Math.round(spec.w50)} W at ΔT 50 · ${spec.code}`:rd.mode==="swap"?` · from ${rd.other} W at ΔT 50, n 1.3`:""}</span></div>
+    ${order.length?order.map(block).join(""):`<p class="src">Pick at least one type.</p>`}
+    <p class="src" style="margin:0">Closest above first in each type. Every radiator in a table gives at least ${Math.round(need)} W at 45 °C.</p>
+    <div class="btnrow"><button class="btn sec" id="rd-ask">Ask about this</button></div>`;
+  $("#rd-ask").onclick=()=>{show("ask");ask(rd.mode==="size"?`What Warmhaus radiator do I need for ${Math.round(rd.w)} W at 45 °C flow, ${rd.room} °C room${rd.maxL?`, max length ${rd.maxL} mm`:""}${rd.maxH?`, max height ${rd.maxH} mm`:""}?`
+    :`The specified ${spec?`Warmhaus ${radName(spec).replace(" · "," ")}`:`radiator (${rd.other} W at ΔT 50)`} won't fit${rd.maxL||rd.maxH?` (space: ${[rd.maxL&&`max length ${rd.maxL} mm`,rd.maxH&&`max height ${rd.maxH} mm`].filter(Boolean).join(", ")})`:""}. What gives the same output at 45 °C?`);};
 }
 
 /* ---------- Pipe sizing (HMG method, Panasonic J/T-Cap/K/L only) ---------- */
