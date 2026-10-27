@@ -10,6 +10,7 @@ Cite as **"HMG quick survey guidance"** (Donal Reilly, 27/10/2026). A quick esti
 
 - The installer gives the **total floor area** (m²) and the **HLI** (Heat Loss Indicator, W/K per m²) from the BER assessment (DEAP).
 - Design heat loss (W) = HLI × floor area × design ΔT.
+- Floor area: the installer either types the BER total floor area, or adds the rooms and the app totals them (Donal Reilly, 27/10/2026). When totalling rooms, include halls, landings and every other room.
 - Design ΔT = inside 21 °C − outside −3 °C = **24 K**, unless the installer gives other temperatures.
 - Example: HLI 2.0 × 200 m² × 24 K = 9,600 W = 9.6 kW.
 
