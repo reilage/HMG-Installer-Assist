@@ -326,6 +326,7 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 .qs-pick{font-size:14px;line-height:1.45}
 .qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
 table.qs-hp tr[data-p]{cursor:pointer}
+#qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
 table.qs-hp td:first-child,table.qs-list td:nth-child(2){font-family:var(--f-body)}
 table.qs-list td:last-child{white-space:nowrap}
@@ -1187,7 +1188,10 @@ let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}
 const qsSave=()=>store.set(QS_KEY,JSON.stringify(qs));
 const qsNum=v=>parseFloat(String(v).replace(",","."));
 const qsTemp=t=>(KB?.survey?.rooms||[]).find(r=>r.type===t)?.temp??21;
-const qsLoss=()=>{const a=qsNum(qs.area),h=qsNum(qs.hli),dt=qs.tin-qs.tout;return a>0&&h>0&&dt>0?h*a*dt:0;};
+/* Floor area: typed in, or the total of the rooms listed (Donal 27/10/2026). */
+const qsRoomArea=()=>qs.rooms.reduce((t,m)=>t+((qsNum(m.l)*qsNum(m.w))||0),0);
+const qsArea=()=>qs.fromRooms?qsRoomArea():qsNum(qs.area);
+const qsLoss=()=>{const a=qsArea(),h=qsNum(qs.hli),dt=qs.tin-qs.tout;return a>0&&h>0&&dt>0?h*a*dt:0;};
 /* Smallest unit in a range whose band covers the heat loss (W). */
 const qsUnit=(r,w)=>r.sizes.find(z=>z.covers*1000>=w);
 function qsRad(need,room,maxL){
@@ -1215,12 +1219,15 @@ function renderSurvey(){
   box.innerHTML=`<div class="panel">
       <span class="chip warn">Quick estimate · not a design</span>
       <p class="src" style="margin:0">From the BER: the total floor area and the HLI (Heat Loss Indicator, W/K per m²). It sizes the heat pump and picks a Warmhaus radiator for each room, ready to request an HMG quote.</p>
+      <div class="src" style="font-weight:600">Floor area</div>
+      <div class="kw" id="qs-src"><button data-r="0" aria-pressed="${!qs.fromRooms}">Enter it</button><button data-r="1" aria-pressed="${!!qs.fromRooms}">Add up the rooms</button></div>
       <div class="sz-in">
         <label>Floor area m²<input id="qs-area" inputmode="decimal" placeholder="e.g. 150" value="${esc(String(qs.area))}"></label>
         <label>HLI W/K·m²<input id="qs-hli" inputmode="decimal" placeholder="e.g. 1.8" value="${esc(String(qs.hli))}"></label>
         <label>Inside °C<input id="qs-tin" inputmode="decimal" value="${qs.tin}"></label>
         <label>Outside °C<input id="qs-tout" inputmode="decimal" value="${qs.tout}"></label>
       </div>
+      <p class="src" id="qs-area-note" style="margin:0"></p>
     </div>
     <div class="panel" id="qs-hp"></div>
     <div class="panel">
@@ -1232,7 +1239,8 @@ function renderSurvey(){
     </div>
     <div class="panel" id="qs-out"></div>`;
   const bind=(id,k,n)=>$(id).oninput=e=>{qs[k]=n?qsNum(e.target.value):e.target.value.trim();qsSave();calcSurvey();};
-  bind("#qs-area","area");bind("#qs-hli","hli");bind("#qs-tin","tin",1);bind("#qs-tout","tout",1);
+  bind("#qs-area","area");
+  $("#qs-src").querySelectorAll("button").forEach(b=>b.onclick=()=>{qs.fromRooms=b.dataset.r==="1";qsSave();renderSurvey();});bind("#qs-hli","hli");bind("#qs-tin","tin",1);bind("#qs-tout","tout",1);
   $("#qs-maxh").onchange=e=>{qs.maxH=e.target.value;qsSave();calcSurvey();};
   $("#qs-add").onclick=()=>{const t=$("#qs-add-t").value,n=qs.rooms.filter(r=>r.type===t).length;
     qs.rooms.push({type:t,name:n?`${t} ${n+1}`:t,l:"",w:"",t:qsTemp(t),maxL:""});qsSave();renderRooms();calcSurvey();
@@ -1257,20 +1265,24 @@ function renderRooms(){
 }
 function calcSurvey(){
   const S=KB?.survey,hp=$("#qs-hp"),out=$("#qs-out");if(!S||!hp) return;
-  const w=qsLoss(),rooms=qsRooms();
+  const w=qsLoss(),rooms=qsRooms(),area=qsArea();
+  /* Adding up the rooms: the floor area box shows the total and can't be typed in. */
+  const ab=$("#qs-area");ab.readOnly=!!qs.fromRooms;ab.classList.toggle("qs-auto",!!qs.fromRooms);
+  if(qs.fromRooms){ab.value=area?fmt(area,1):"";ab.placeholder="Add rooms below";}
+  $("#qs-area-note").innerHTML=qs.fromRooms?`Total of ${qs.rooms.length} room${qs.rooms.length===1?"":"s"} below. Add every room, halls and landings too, so the total is right.`:"";
   /* The unit for the quote: the one tapped, else the selected unit's range, else the first that covers it. */
   const opts=S.ranges.map(r=>({r,z:w?qsUnit(r,w):null}));
   const order=[...opts].sort((a,b)=>(b.r.unit===unit)-(a.r.unit===unit));
   if(!opts.some(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)) qs.pick="";
   const def=order.find(o=>o.z), pick=opts.find(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)||def;
   hp.innerHTML=w?`<div class="src" style="font-weight:600">Design heat loss</div>
-      <div class="sz-res"><span class="big">${fmt(w/1000)} kW</span><span class="of">${fmt(qsNum(qs.hli),2)} × ${fmt(qsNum(qs.area),1)} m² × ${fmt(qs.tin-qs.tout,0)} K (${fmt(qs.tin,0)} °C in, ${fmt(qs.tout,0)} °C out) = ${Math.round(w)} W</span></div>
+      <div class="sz-res"><span class="big">${fmt(w/1000)} kW</span><span class="of">${fmt(qsNum(qs.hli),2)} × ${fmt(area,1)} m²${qs.fromRooms?" (rooms)":""} × ${fmt(qs.tin-qs.tout,0)} K (${fmt(qs.tin,0)} °C in, ${fmt(qs.tout,0)} °C out) = ${Math.round(w)} W</span></div>
       <div class="src" style="font-weight:600;margin-top:4px">Heat pump · tap to choose for the quote</div>
       <table class="cu qs-hp"><thead><tr><th>Range</th><th>Unit</th><th>Covers</th></tr></thead><tbody>
       ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${o===pick?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
         :`<tr class="small"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td colspan="2">Nothing big enough (largest covers ${o.r.sizes.at(-1).covers} kW)</td></tr>`).join("")}</tbody></table>
       ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> (${esc(pick.z.model)}).</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
-    :`<p class="src" style="margin:0">Enter the floor area and HLI to size the heat pump.</p>`;
+    :`<p class="src" style="margin:0">${qs.fromRooms?"Enter the HLI and add rooms":"Enter the floor area and HLI"} to size the heat pump.</p>`;
   hp.querySelectorAll("tr[data-p]").forEach(tr=>tr.onclick=()=>{qs.pick=tr.dataset.p;qsSave();calcSurvey();});
   /* Per room: heat loss and radiator. */
   rooms.forEach((m,i)=>{const el=$("#qs-p"+i);if(!el) return;
@@ -1292,7 +1304,7 @@ function calcSurvey(){
       <pre class="summary" id="qs-sum"></pre></div>`;
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
   $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};qsSave();renderSurvey();};
-  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${qs.area} m², HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
+  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list);
 }
 function quoteRequest(w,pick,rooms,list){
@@ -1304,7 +1316,7 @@ Site: ${[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"}
 Installer: ${[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"}
 
 Survey (from the BER)
-Floor area: ${qs.area} m²
+Floor area: ${fmt(qsArea(),1)} m²${qs.fromRooms?` (total of the ${qs.rooms.length} rooms)`:""}
 HLI: ${qs.hli} W/K·m²
 Design temperatures: ${qs.tin} °C inside, ${qs.tout} °C outside
 Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
