@@ -492,6 +492,15 @@ test("with email on, the approver gets a link that approves the request and emai
   const sent = mock.seen.at(-1);
   assert.deepEqual(sent.body.to, ["pd@doyle.ie"]); assert.ok(sent.body.text.includes(a.installer.code));
   assert.equal((await approve("approve")).status, 404, "the link only works once");
+
+  // a quick survey quote request carries the quote list as a CSV attachment
+  const csv = "\ufeffProduct,Qty,Code\r\nMotorised valve,2,U37935\r\n";
+  const q = await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "Quote request", body: "list", attachment: { filename: "HMG-quote-D01.csv", csv } }) });
+  assert.equal(q.status, 200);
+  const qa = mock.seen.at(-1).body.attachments;
+  assert.equal(qa[0].filename, "HMG-quote-D01.csv"); assert.equal(Buffer.from(qa[0].content, "base64").toString("utf8"), csv);
+  await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "x", body: "y", attachment: { filename: "../evil.exe", csv: "z" } }) });
+  assert.equal(mock.seen.at(-1).body.attachments, undefined, "only a .csv name is attached");
 });
 
 test("fault trends: each question is saved, counted per unit and installer, and Claude writes the weekly summary", async () => {
