@@ -162,11 +162,12 @@ test("the HMG quick survey (BER HLI sizing, HMG bands, disclaimer) is in the rul
   for (const x of mock.seen.map(s => s.body.system[0].text)) {
     assert.match(x, /HMG HEAT PUMP SELECTION BANDS/);
     assert.match(x, /HLI \(W\/K per m², from the BER\) × total floor area \(m²\) × design ΔT/);
-    assert.match(x, /Panasonic J-series Mini Monobloc R32: 5 kW \(WH-MDC05J3E5\) covers up to 5 kW; 7 kW \(WH-MDC07J3E5\) covers up to 7 kW; 9 kW \(WH-MDC09J3E5\) covers up to 8 kW/);
-    assert.match(x, /Panasonic J-series T-Cap R32: 9 kW \(WH-MXC09J3E5\) covers up to 9 kW; 12 kW \(WH-MXC12J6E5\) covers up to 12 kW/);
+    assert.match(x, /Panasonic J-series Mini Monobloc R32: 5 kW \(HMG code UE0208\) covers up to 5 kW; 7 kW \(HMG code UE0209\) covers up to 7 kW; 9 kW \(HMG code UE0210\) covers up to 8 kW/);
+    assert.match(x, /Panasonic J-series T-Cap R32: 9 kW \(HMG code U39412\) covers up to 9 kW; 12 kW \(HMG code U39413\) covers up to 12 kW/);
     assert.match(x, /Baxi Assure HP55 R290: 4 kW .* covers up to 4\.9 kW; 6 kW .* covers up to 6\.1 kW; 8 kW .* covers up to 7\.8 kW; 11 kW .* covers up to 12\.1 kW; 13 kW .* covers up to 13\.7 kW/);
     assert.match(x, /Panasonic K-series split: 5 kW .* covers up to 5 kW; 7 kW .* covers up to 7 kW; 9 kW .* covers up to 8 kW/);
     assert.match(x, /21 °C for every room/);
+    assert.match(x, /4 kW \(HMG code UM0074 Baxi Assure HP55 4 kW outdoor unit \+ UE0035 Baxi indoor controller/);
     assert.match(x, /no total floor area, add up the room areas/);
     assert.match(x, /A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance/);
     assert.match(x, /Source: HMG quick survey guidance/);
