@@ -1136,17 +1136,24 @@ function calcRad(){
   const need=rd.mode==="size"?rd.w:spec?radOut(spec,dt):rd.other*Math.pow(dt/50,1.3);
   if(!(need>0)){out.innerHTML=`<p class="src">Enter the ${rd.mode==="size"?"room heat loss":"specified radiator's output"}.</p>`;return;}
   const fits=R.filter(r=>rd.types.includes(r.type)&&r.l<=maxL&&r.h<=maxH&&r!==spec);
-  const ok=fits.filter(r=>radOut(r,dt)>=need).sort((a,b)=>radOut(a,dt)-radOut(b,dt)||a.d-b.d).slice(0,8);
-  const row=(r,k)=>`<tr class="${k===0?"pick":""}"><td>${r.type}</td><td>${r.h}×${r.l}</td><td>${Math.round(radOut(r,dt))}</td><td>${Math.round(r.w50)}</td><td>${r.code}</td></tr>`;
-  let pair="";
-  if(!ok.length){
-    const half=fits.filter(r=>radOut(r,dt)>=need/2).sort((a,b)=>radOut(a,dt)-radOut(b,dt))[0];
-    pair=`<div class="notice">No single Warmhaus radiator in that space gives ${Math.round(need)} W at 45 °C. ${half?`Two of the <b>${radName(half)}</b> (${half.code}) give ${Math.round(2*radOut(half,dt))} W between them.`:"Allow a bigger space or a deeper type, or split the load over more radiators."}</div>`;
-  }
+  /* One block per type, Type 22 first (what installers prefer), then 33, then 11: the closest three above the output in each.
+     A type that can't do it in one says so, with the biggest that fits and a pair of them. */
+  const out45=r=>Math.round(radOut(r,dt));
+  const row=(r,k)=>`<tr class="${k===0?"pick":""}"><td>${r.h}×${r.l}</td><td>${out45(r)}</td><td>${Math.round(r.w50)}</td><td>${r.code}</td></tr>`;
+  const block=t=>{
+    const all=fits.filter(r=>r.type===t).sort((a,b)=>radOut(a,dt)-radOut(b,dt)||a.h-b.h);
+    const ok=all.filter(r=>radOut(r,dt)>=need).slice(0,3);
+    const head=`<div class="src" style="font-weight:600;margin-top:6px">Type ${t} · ${({"11":50,"22":105,"33":160})[t]} mm deep</div>`;
+    if(ok.length) return head+`<table class="cu"><thead><tr><th>H×L mm</th><th>W at 45 °C</th><th>W at ΔT 50</th><th>Code</th></tr></thead><tbody>${ok.map(row).join("")}</tbody></table>`;
+    if(!all.length) return head+`<p class="src" style="margin:0">No Type ${t} fits that space.</p>`;
+    const big=all[all.length-1], half=all.find(r=>radOut(r,dt)>=need/2);
+    return head+`<p class="src" style="margin:0">No single Type ${t} in that space gives ${Math.round(need)} W. The biggest, ${big.h}×${big.l} (${big.code}), gives ${out45(big)} W.${half?` Two of the <b>${half.h}×${half.l}</b> (${half.code}) give ${Math.round(2*radOut(half,dt))} W between them.`:""}</p>`;
+  };
+  const order=["22","33","11"].filter(t=>rd.types.includes(t));
   out.innerHTML=`<div class="src" style="font-weight:600">${rd.mode==="size"?"Needs at least":spec?`${radName(spec)} gives`:"The specified radiator gives about"}</div>
     <div class="sz-res"><span class="big">${Math.round(need)} W</span><span class="of">at 45 °C flow, ${rd.room} °C room (ΔT ${fmt(dt)})${spec?` · ${Math.round(spec.w50)} W at ΔT 50 · ${spec.code}`:rd.mode==="swap"?` · from ${rd.other} W at ΔT 50, n 1.3`:""}</span></div>
-    ${pair}${ok.length?`<table class="cu"><thead><tr><th>Type</th><th>H×L mm</th><th>W at 45 °C</th><th>W at ΔT 50</th><th>Code</th></tr></thead><tbody>${ok.map(row).join("")}</tbody></table>
-    <p class="src" style="margin:0">Closest above first. Every radiator listed gives at least ${Math.round(need)} W at 45 °C.</p>`:""}
+    ${order.length?order.map(block).join(""):`<p class="src">Pick at least one type.</p>`}
+    <p class="src" style="margin:0">Closest above first in each type. Every radiator in a table gives at least ${Math.round(need)} W at 45 °C.</p>
     <div class="btnrow"><button class="btn sec" id="rd-ask">Ask about this</button></div>`;
   $("#rd-ask").onclick=()=>{show("ask");ask(rd.mode==="size"?`What Warmhaus radiator do I need for ${Math.round(rd.w)} W at 45 °C flow, ${rd.room} °C room${rd.maxL?`, max length ${rd.maxL} mm`:""}${rd.maxH?`, max height ${rd.maxH} mm`:""}?`
     :`The specified ${spec?`Warmhaus ${radName(spec).replace(" · "," ")}`:`radiator (${rd.other} W at ΔT 50)`} won't fit${rd.maxL||rd.maxH?` (space: ${[rd.maxL&&`max length ${rd.maxL} mm`,rd.maxH&&`max height ${rd.maxH} mm`].filter(Boolean).join(", ")})`:""}. What gives the same output at 45 °C?`);};

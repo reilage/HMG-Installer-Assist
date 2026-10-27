@@ -150,6 +150,7 @@ test("the HMG radiator list (Warmhaus) is in the rules for every unit, with the 
     assert.match(x, /Source: HMG radiator list \(Warmhaus\)/);
     assert.match(x, /45\/40 °C, mean water 42\.5 °C, and a 21 °C room/);
     assert.match(x, /never less/);
+    assert.match(x, /Installers prefer Type 22.*always give the closest Type 22 first, then the closest Type 33/);
     // Type 22 600 x 1000: 1710 W at ΔT 50, n 1.3 → 1710 × (21.5/50)^1.3 = 571 W at 21 °C, 1710 × (24.5/50)^1.3 = 676 W at 18 °C
     assert.match(x, /U28195 \| Type 22 \| 600 H x 1000 L mm \| 105 mm deep \| ΔT50 1710 W \| n 1\.3 \| at 45 °C flow: 571 W \(21 °C room\), 676 W \(18 °C room\)/);
   }

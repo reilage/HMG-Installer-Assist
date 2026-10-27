@@ -24,6 +24,7 @@ The list gives each radiator's output at **ΔT 50** (the catalogue figure: 75/65
 - Compare at 45 °C, not at ΔT 50: Types 11, 22 and 33 have slightly different n, so the same ΔT 50 output isn't quite the same at 45 °C.
 - Respect the space the installer has: maximum length, maximum height, and depth off the wall (Type 33 is 160 mm deep).
 - Give the closest options above the required output (not wildly oversized), with code, size and both outputs.
+- **Installers prefer Type 22** (Donal Reilly, 27/10/2026): always give the closest Type 22 first, then the closest Type 33. If no single Type 22 in the space is enough, say so, give the biggest Type 22 that fits and offer two Type 22s, then the Type 33.
 - A taller or deeper radiator can be shorter; a lower one needs to be longer or have more panels.
 
 ## 2. Radiator for a required output at 45 °C flow
