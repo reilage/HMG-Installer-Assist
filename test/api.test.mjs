@@ -142,6 +142,19 @@ test("the HMG volume, bypass and volumiser rule is in the rules, with each unit'
   assert.match(l, /L-series 5, 7 and 9 kW it is 30 L/);
 });
 
+test("the HMG radiator list (Warmhaus) is in the rules for every unit, with the output at 45 °C flow worked out", async () => {
+  mock.seen.length = 0;
+  for (const unit of ["J", "T", "B", "K", "L"]) await events(await ask({ unit, text: "What radiator do I need for 1200 W at 45 degrees?" }));
+  for (const x of mock.seen.map(s => s.body.system[0].text)) {
+    assert.match(x, /HMG RADIATOR LIST \(Warmhaus/);
+    assert.match(x, /Source: HMG radiator list \(Warmhaus\)/);
+    assert.match(x, /45\/40 °C, mean water 42\.5 °C, and a 21 °C room/);
+    assert.match(x, /never less/);
+    // Type 22 600 x 1000: 1710 W at ΔT 50, n 1.3 → 1710 × (21.5/50)^1.3 = 571 W at 21 °C, 1710 × (24.5/50)^1.3 = 676 W at 18 °C
+    assert.match(x, /U28195 \| Type 22 \| 600 H x 1000 L mm \| 105 mm deep \| ΔT50 1710 W \| n 1\.3 \| at 45 °C flow: 571 W \(21 °C room\), 676 W \(18 °C room\)/);
+  }
+});
+
 test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi gets none", async () => {
   mock.seen.length = 0;
   for (const unit of ["J", "K", "B", "T", "L"]) await events(await ask({ unit, text: "Talk me through commissioning" }));
