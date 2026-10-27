@@ -356,7 +356,7 @@ form input,form textarea{border:1px solid var(--line);background:var(--surface);
 form textarea{min-height:76px;resize:vertical}
 /* Quote request preview (tables). */
 .qs-doc{display:flex;flex-direction:column;gap:14px;border:1px solid var(--card-line);border-radius:12px;padding:14px;background:var(--surface)}
-/* Save as PDF: only the quotation is printed, always black on white. */
+/* Download PDF, when the PDF maker can't load: only the quotation is printed, always black on white. */
 .qs-print{display:none}
 @media print{
   body.qs-printing>*:not(#qs-print){display:none!important}
@@ -1475,7 +1475,7 @@ function calcSurvey(){
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${pr.tot?QS_PRICE_DISC:QS_DISC}</div>
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
-    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Save as PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Download PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
       <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-csv">Download quote list (CSV)</button><button class="btn sec" id="qs-share" hidden>Share email + CSV</button><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
       <div class="qs-doc" id="qs-sum"></div></div>`;
@@ -1495,7 +1495,7 @@ const qsCsv=lines=>{const p=qsPriced(lines),t=p.tot;
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";};
 /* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
    The server renders the same shape as an HTML email (lib/quote-email.js). */
-/* pdf: the installer's own copy (Save as PDF): titled a quotation, no CSV note and no discount % column. */
+/* pdf: the installer's own copy (Download PDF): titled a quotation, no CSV note and no discount % column. */
 function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
   const mixed=qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH);
   const hot=cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L, `
@@ -1520,16 +1520,63 @@ function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
         {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
 }
-/* Save as PDF (Donal 27/10/2026): the quotation on its own branded page, with the disclaimer, through the phone's or
-   browser's print sheet (Save as PDF / Save to Files). It's also saved to My surveys, and HMG keeps a copy, as with
-   Request HMG quote. The PDF is named after the page title. */
-function qsPdf(w,pick,rooms,cyl,lines){
+/* Download PDF (Donal 27/10/2026): the quotation as a branded A4 PDF file, with the disclaimer, made on the phone and
+   downloaded straight away (no print sheet). It's also saved to My surveys, and HMG keeps a copy, as with Request HMG
+   quote. jsPDF (public/vendor, MIT) loads the first time. If it can't load (no signal), the print sheet is used. */
+let qsJsPdf=null;
+const qsScript=src=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.append(s);});
+const qsPdfLib=()=>qsJsPdf||=qsScript("vendor/jspdf.umd.min.js").then(()=>qsScript("vendor/jspdf.plugin.autotable.min.js"))
+  .then(()=>window.jspdf.jsPDF).catch(e=>{qsJsPdf=null;throw e;});
+const qsDataUrl=src=>fetch(src).then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b);}));
+/* The PDF's built-in font only has the Windows Latin characters (€ ° ² × – · are fine): anything else gets a stand-in. */
+const QS_WIN="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
+const qsPdfT=s=>String(s??"").replace(/−/g,"-").replace(/→/g,"->").replace(/≤/g,"<=").replace(/≥/g,">=")
+  .replace(/[^\n\x20-\xff]/g,c=>QS_WIN.includes(c)?c:"-");
+async function qsPdfFile(d,name,day){
+  const JsPDF=await qsPdfLib(),logo=await qsDataUrl("brand/hmg-logo.png").catch(()=>null);
+  const pdf=new JsPDF({unit:"mm",format:"a4",compress:true}),M=14,W=210-2*M,H=297,blue=[0,119,168],ink=[34,34,34],grey=[85,85,85];
+  let y=M;
+  const need=h=>{if(y+h>H-M-8){pdf.addPage();y=M;}};
+  const text=(s,size,{bold,colour=ink,gap=1.5}={})=>{pdf.setFont("helvetica",bold?"bold":"normal");pdf.setFontSize(size);pdf.setTextColor(...colour);
+    const ls=pdf.splitTextToSize(qsPdfT(s),W),h=ls.length*size*0.42;need(h);pdf.text(ls,M,y+size*0.35);y+=h+gap;};
+  if(logo) pdf.addImage(logo,"PNG",M,y,30,18);
+  pdf.setFont("helvetica","bold");pdf.setFontSize(14);pdf.setTextColor(...ink);pdf.text("Heat Merchants Group",M+35,y+7);
+  pdf.setFont("helvetica","normal");pdf.setFontSize(10);pdf.setTextColor(...grey);pdf.text(day.toLocaleDateString("en-IE",{day:"numeric",month:"long",year:"numeric"}),M+35,y+13);
+  y+=22;pdf.setDrawColor(0,169,224);pdf.setLineWidth(0.8);pdf.line(M,y,M+W,y);y+=6;
+  text(d.title,14,{bold:true,gap:3});
+  const right=/^(Qty|Area|Heat loss|Output|RRP|Net)$/;
+  const table=(o)=>{pdf.autoTable({startY:y,margin:{left:M,right:M,bottom:M+8},styles:{font:"helvetica",fontSize:9,textColor:ink,cellPadding:1.6,lineColor:[204,204,204],lineWidth:0.2},
+    headStyles:{fillColor:blue,textColor:255,fontStyle:"bold"},...o});y=pdf.lastAutoTable.finalY+5;};
+  for(const b of d.blocks){
+    if(!b.h){ /* the disclaimer, boxed */
+      pdf.setFont("helvetica","bold");pdf.setFontSize(9.5);const ls=pdf.splitTextToSize(qsPdfT(b.note),W-6),h=ls.length*4+5;need(h);
+      pdf.setDrawColor(201,138,0);pdf.setLineWidth(0.4);pdf.roundedRect(M,y,W,h,1.5,1.5);
+      pdf.setTextColor(...ink);pdf.text(ls,M+3,y+5.5);y+=h+5;continue;}
+    need(18);text(b.h,11,{bold:true,colour:blue,gap:1});
+    if(b.note) text(b.note,9,{colour:grey,gap:1.5});
+    if(b.kv) table({body:b.kv.map(r=>r.map(qsPdfT)),theme:"plain",columnStyles:{0:{fontStyle:"bold",cellWidth:48}},
+      didParseCell:c=>{if(b.h==="Price"&&/^(Net|Total inc)/.test(c.row.raw[0])) c.cell.styles.fontStyle="bold";}});
+    if(b.rows) table({head:[b.cols.map(c=>c.h)],body:b.rows.map(r=>r.map(qsPdfT)),theme:"grid",
+      columnStyles:Object.fromEntries(b.cols.map((c,i)=>[i,right.test(c.h)?{halign:"right"}:{}]).filter(([,s])=>s.halign)),
+      didParseCell:c=>{if(c.section==="head"&&right.test(b.cols[c.column.index].h)) c.cell.styles.halign="right";}});
+  }
+  /* Every page: the non-binding line and the page number. */
+  const n=pdf.getNumberOfPages();
+  for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(...grey);
+    pdf.text(qsPdfT(QP?QS_NONBINDING:"Quick estimate only: a full heat loss design is required."),M,H-8);pdf.text(`Page ${i} of ${n}`,M+W,H-8,{align:"right"});}
+  pdf.save(name+".pdf");
+}
+async function qsPdf(w,pick,rooms,cyl,lines){
   qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
-  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date();
+  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date(),b=$("#qs-pdf");
+  const name=`HMG-quotation-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
+  b.disabled=true;b.textContent="Making PDF…";
+  try{await qsPdfFile(doc,name,day);b.textContent="PDF downloaded";setTimeout(()=>{b.textContent="Download PDF";b.disabled=false;},2500);return;}
+  catch{b.textContent="Download PDF";b.disabled=false;}
+  /* No PDF maker (first use with no signal): the print sheet, where the phone can save it as a PDF. */
   $("#qs-print").innerHTML=`<div class="qp-head"><img src="brand/hmg-logo.png" alt="Heat Merchants Group" width="110" height="65"><div><b>Heat Merchants Group</b><span>${day.toLocaleDateString("en-IE",{day:"numeric",month:"long",year:"numeric"})}</span></div></div>`
     +`<div class="qs-doc">${qsDocHtml(doc)}</div>`;
-  const title=document.title;
-  document.title=`HMG-quotation-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
+  const title=document.title;document.title=name;
   document.body.classList.add("qs-printing");
   const done=()=>{document.body.classList.remove("qs-printing");document.title=title;window.removeEventListener("afterprint",done);};
   window.addEventListener("afterprint",done);
