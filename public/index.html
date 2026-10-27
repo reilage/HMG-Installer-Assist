@@ -330,7 +330,7 @@ table.qs-hp tr[data-p]{cursor:pointer}
 .qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
 #qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
-table.qs-hp td:first-child,table.qs-list td:nth-child(2){font-family:var(--f-body)}
+table.qs-hp td:first-child,table.qs-list td:first-child{font-family:var(--f-body)}
 table.qs-list td:last-child{white-space:nowrap}
 .btn:disabled{opacity:.5}
 
@@ -1334,10 +1334,10 @@ function calcSurvey(){
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
-    ${pick||rads.length||cyl?.cyl?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
-      ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>1</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join(""):""}
-      ${(cyl?.lines||[]).map(h=>`<tr class="pick"><td>${h.qty}</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join("")}
-      ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>${n}</td><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${r.code}</td></tr>`).join("")}
+    ${pick||rads.length||cyl?.cyl?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th></tr></thead><tbody>
+      ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>${esc(h.item)}</td><td>1</td><td>${esc(h.code)}</td></tr>`).join(""):""}
+      ${(cyl?.lines||[]).map(h=>`<tr class="pick"><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td></tr>`).join("")}
+      ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${n}</td><td>${r.code}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
@@ -1367,18 +1367,18 @@ Design temperatures: ${qs.tin} °C inside, ${qs.tout} °C outside
 Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
 
 Heat pump
-${pick?qsHmg(pick).map(h=>`1 × ${h.item} (HMG ${h.code})`).join("\n")+`\nCovers a heat loss up to ${pick.z.covers} kW`:"—"}
+${pick?qsHmg(pick).map(h=>`${h.item} · Qty 1 · HMG ${h.code}`).join("\n")+`\nCovers a heat loss up to ${pick.z.covers} kW`:"—"}
 
 Hot water
 ${cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"—":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L
 `+(cyl.built?`Built into the indoor unit (${cyl.built} L), no separate cylinder${cyl.need>cyl.built?". NEEDS MORE THAN THE BUILT-IN TANK: please advise":""}`
-  :cyl.lines.map(h=>`${h.qty} × ${h.item} (HMG ${h.code})`).join("\n"))}
+  :cyl.lines.map(h=>`${h.item} · Qty ${h.qty} · HMG ${h.code}`).join("\n"))}
 
 Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH} mm high`:""})
 ${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
 
 Radiator totals
-${Object.values(list).map(({r,n})=>`${n} × Warmhaus Type ${r.type} ${r.h}×${r.l} (${r.code})`).join("\n")||"—"}
+${Object.values(list).map(({r,n})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code}`).join("\n")||"—"}
 
 ${QS_DISC}`;
   $("#qs-sum").textContent=body;
