@@ -16,8 +16,10 @@
 //       { action: "prices_set", text, exVat, vat }  load a price list pasted from Excel (code + RRP per row) → { prices, unknown, missing }
 //       { action: "prices_vat", exVat, vat }   change only ex/inc VAT and the VAT rate → { prices }
 //       { action: "prices_clear" }             back to placeholder prices → { ok }
+//       { action: "discounts_set", discounts } the standard discount % per product group → { discounts }
 // "list" also returns the access requests waiting for approval, as requests: [...].
-// discount: % off RRP on this installer's quick survey quote (0 to 100).
+// discounts: this installer's own % off RRP for any product group that differs from the standard, {J: 35} (0 to 100);
+//   a group left blank gets the standard discount.
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
 import { accountsOn, listInstallers, addInstaller, updateInstaller, deleteInstaller, listRequests, approveRequest, deleteRequest, publicRequest } from "../lib/accounts.js";
@@ -26,7 +28,7 @@ import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
 import { allSurveys } from "../lib/surveys.js";
-import { getPrices, setPrices, setVat, clearPrices, catalogue } from "../lib/prices.js";
+import { getPrices, setPrices, setVat, clearPrices, catalogue, GROUPS, getStandard, setStandard } from "../lib/prices.js";
 import { storedOn, listAnswers, editAnswer, deleteAnswer, clearAnswers } from "../lib/answers.js";
 import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
 
@@ -48,11 +50,12 @@ export default async function handler(req, res) {
   try {
     switch (b.action) {
       case "list": {
-        const [list, requests] = await Promise.all([listInstallers(), listRequests()]);
+        const [list, requests, standard] = await Promise.all([listInstallers(), listRequests(), getStandard()]);
         const counts = list.length ? (await run(["MGET", ...list.flatMap(i => [dayKey("i:" + i.id), monthKey("i:" + i.id)])]))[0] : [];
         return send(res, 200, {
+          groups: GROUPS.map(({ id, name }) => ({ id, name })), standard,
           store: storeKind(), defaultLimit: dailyLimit(), email: emailEnabled(), requests: requests.map(publicRequest),
-          installers: list.map((i, n) => ({ ...i, today: +(counts[2 * n] || 0), month: +(counts[2 * n + 1] || 0) })),
+          installers: list.map((i, n) => ({ ...i, discounts: i.discounts || {}, today: +(counts[2 * n] || 0), month: +(counts[2 * n + 1] || 0) })),
         });
       }
       case "add": {
@@ -98,7 +101,7 @@ export default async function handler(req, res) {
       case "surveys":
         return send(res, 200, { surveys: (await allSurveys()).slice(0, 300) });
       case "prices":
-        return send(res, 200, { prices: await getPrices(), catalogue: catalogue() });
+        return send(res, 200, { prices: await getPrices(), catalogue: catalogue(), groups: GROUPS.map(({ id, name }) => ({ id, name })), standard: await getStandard() });
       case "prices_set": {
         const p = await setPrices(b);
         console.log(JSON.stringify({ evt: "prices_set", count: Object.keys(p.items).length, unknown: p.unknown.length, missing: p.missing.length }));
@@ -106,6 +109,8 @@ export default async function handler(req, res) {
       }
       case "prices_vat":
         return send(res, 200, { prices: await setVat(b) });
+      case "discounts_set":
+        return send(res, 200, { discounts: await setStandard(b.discounts) });
       case "prices_clear":
         await clearPrices();
         return send(res, 200, { ok: true });

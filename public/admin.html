@@ -88,6 +88,8 @@ table.sv.kv th{width:35%;color:var(--muted);font-weight:600}
 details.inst summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 details.inst summary::-webkit-details-marker{display:none}
 .mono{font-family:var(--f-mono);font-weight:700}
+.disc-h{font-size:13.5px;font-weight:600;color:var(--muted);margin-bottom:6px;cursor:pointer}
+.disc-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
 </style>
 </head>
 <body>
@@ -105,7 +107,7 @@ details.inst summary::-webkit-details-marker{display:none}
     <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button><button role="tab" aria-selected="false" data-tab="surveys">Surveys</button><button role="tab" aria-selected="false" data-tab="prices">Prices</button></div>
     <div id="t-prices" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
       <h2>Prices</h2>
-      <p class="src">The RRP for each HMG code on the quick survey quote list. Each installer's discount is set on their account (Installers tab), and their quote shows the RRP, their discount and the net price. The price list is kept in the app's own store (Upstash), not in the app's code.</p>
+      <p class="src">The RRP for each HMG code on the quick survey quote list. Each product group has a standard discount (below), and an installer can have their own % for a group on their account (Installers tab). Their quote shows the RRP, the discount and the net price. The price list is kept in the app's own store (Upstash), not in the app's code.</p>
       <div class="notice" id="pr-status"></div>
       <form class="panel" id="pr-form" style="display:flex;flex-direction:column;gap:10px">
         <h2>Load a price list</h2>
@@ -116,6 +118,12 @@ details.inst summary::-webkit-details-marker{display:none}
           <label>VAT % to add (ex VAT only)<input id="pr-vat" inputmode="decimal" placeholder="Blank = don't show VAT"></label>
         </div>
         <div class="btnrow"><button class="btn" type="submit">Load price list</button><button class="btn sec sm" type="button" id="pr-vat-save">Save VAT only</button><button class="btn bad sm" type="button" id="pr-clear">Back to placeholder prices</button><span class="src" id="pr-note"></span></div>
+      </form>
+      <form class="panel" id="sd-form" style="display:flex;flex-direction:column;gap:10px">
+        <h2>Standard discounts</h2>
+        <p class="src" style="margin:0">% off RRP for each product group, for every installer. To give one installer a different % for a group, set it on their account (Installers tab, Edit).</p>
+        <div class="disc-g" id="sd-g"></div>
+        <div class="btnrow"><button class="btn" type="submit">Save standard discounts</button><span class="src" id="sd-note"></span></div>
       </form>
       <div class="panel"><div class="btnrow" style="justify-content:space-between"><h2>Price list</h2><input id="pr-q" type="search" placeholder="Search product or code" aria-label="Search prices" style="max-width:220px"></div><div id="pr-list" class="sv-wrap"></div></div>
     </div>
@@ -153,7 +161,7 @@ details.inst summary::-webkit-details-marker{display:none}
         <label>Mobile<input id="a-mobile" inputmode="tel" autocomplete="off"></label>
         <label>Email<input id="a-email" type="email" inputmode="email" autocomplete="off"></label>
         <label>Questions per day<input id="a-limit" inputmode="numeric" placeholder="Blank = standard"></label>
-        <label>Discount % off RRP<input id="a-discount" inputmode="decimal" placeholder="0"></label>
+        <div class="full" id="a-disc"></div>
         <div class="full btnrow"><button class="btn" type="submit">Add and create code</button><span class="src" id="add-note"></span></div>
         <div class="full share" id="new-share" hidden></div>
       </form>
@@ -193,9 +201,15 @@ async function load(){
   $("#mem-warn").hidden=DATA.store!=="memory";
   renderRequests();
   $("#a-limit").placeholder=`Blank = standard (${DATA.defaultLimit||"no limit"})`;
+  if(!$("#a-disc").innerHTML) $("#a-disc").innerHTML=discFields({});
   render();
 }
 
+/* Discount % off RRP for each product group (lib/prices.js GROUPS): it differs by group (Donal 27/10/2026). */
+/* HMG sets a standard discount per group (Prices tab); an installer's own % for a group overrides it, blank = standard. */
+const discFields=d=>`<details class="disc"${Object.keys(d||{}).length?" open":""}><summary class="disc-h">Own discount % off RRP (blank = standard)</summary><div class="disc-g">${(DATA.groups||[]).map(g=>`<label>${esc(g.name)}<input data-disc="${g.id}" value="${d?.[g.id]??""}" inputmode="decimal" placeholder="${DATA.standard?.[g.id]||0} (standard)"></label>`).join("")}</div></details>`;
+const discVals=f=>Object.fromEntries([...f.querySelectorAll("[data-disc]")].map(x=>[x.dataset.disc,x.value.trim()]));
+const discText=d=>{const on=(DATA.groups||[]).filter(g=>d?.[g.id]!==undefined);return on.length?"standard, except "+on.map(g=>`${esc(g.name)} ${d[g.id]}%`).join(" · "):"standard";};
 const limitOf=i=>i.limit===null||i.limit===undefined?DATA.defaultLimit:i.limit;
 const shareText=i=>`Your HMG Installer Assistant code is ${i.code}. Open ${location.origin}/ on your phone and enter it once. It's personal to you, so please don't share it.`;
 function shareBox(i){
@@ -219,12 +233,13 @@ function render(){
       <label>Name<input name="name" value="${esc(i.name)}" required></label><label>Company<input name="company" value="${esc(i.company)}"></label>
       <label>Mobile<input name="mobile" value="${esc(i.mobile)}" inputmode="tel"></label><label>Email<input name="email" value="${esc(i.email)}" type="email"></label>
       <label>Questions per day<input name="limit" value="${i.limit??""}" inputmode="numeric" placeholder="Blank = standard (${DATA.defaultLimit||"no limit"})"></label>
-      <label>Discount % off RRP<input name="discount" value="${i.discount||""}" inputmode="decimal" placeholder="0"></label>
+      <div style="grid-column:1/-1">${discFields(i.discounts)}</div>
       <div class="btnrow" style="grid-column:1/-1"><button class="btn sm" type="submit">Save</button><button class="btn sec sm" type="button" data-act="cancel">Cancel</button></div></form>`;
     return `<div class="inst${i.active?"":" off"}" data-id="${i.id}">
       <div class="top"><span class="name">${esc(i.name)}</span>${i.active?(full?`<span class="chip full">Used today's questions</span>`:""):`<span class="chip off">Switched off</span>`}</div>
       <div class="src">${[i.company,i.mobile,i.email].filter(Boolean).map(esc).join(" · ")||"No contact details"}</div>
-      <div class="src"><span class="code" style="font-size:15px;color:var(--fg)">${esc(i.code)}</span> · Today ${i.today}${lim?` of ${lim}`:""} · This month ${i.month}${i.limit!==null&&i.limit!==undefined?` · Own limit: ${i.limit||"none"}`:""} · Discount ${i.discount||0}%</div>
+      <div class="src"><span class="code" style="font-size:15px;color:var(--fg)">${esc(i.code)}</span> · Today ${i.today}${lim?` of ${lim}`:""} · This month ${i.month}${i.limit!==null&&i.limit!==undefined?` · Own limit: ${i.limit||"none"}`:""}</div>
+      <div class="src">Discount off RRP: ${discText(i.discounts)}</div>
       <div class="share" data-share hidden>${shareBox(i)}</div>
       <div class="btnrow">
         <button class="btn sec sm" data-act="share">Send code</button>
@@ -283,15 +298,16 @@ document.addEventListener("submit",async e=>{
   const f=e.target.closest("[data-edit]"); if(!f) return;
   e.preventDefault();
   const v=n=>f.elements[n].value;
-  try{await admin({action:"update",id:f.dataset.edit,name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit").trim()===""?null:v("limit"),discount:v("discount")});editing=null;await load();}
+  try{await admin({action:"update",id:f.dataset.edit,name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit").trim()===""?null:v("limit"),discounts:discVals(f)});editing=null;await load();}
   catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
 });
 $("#add").onsubmit=async e=>{
   e.preventDefault();
   const v=id=>$("#a-"+id).value.trim();
   try{
-    const {installer:i}=await admin({action:"add",name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit")===""?null:v("limit"),discount:v("discount")});
-    for(const k of ["name","company","mobile","email","limit","discount"]) $("#a-"+k).value="";
+    const {installer:i}=await admin({action:"add",name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit")===""?null:v("limit"),discounts:discVals($("#add"))});
+    for(const k of ["name","company","mobile","email","limit"]) $("#a-"+k).value="";
+    $("#add").querySelectorAll("[data-disc]").forEach(x=>x.value="");
     $("#add-note").textContent=`${i.name} added. Send them their code:`;
     $("#new-share").innerHTML=shareBox(i);$("#new-share").hidden=false;
     await load();
@@ -404,7 +420,12 @@ document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=async()=>{
 /* ---------- Prices (lib/prices.js) ---------- */
 let PR=null;
 const eur=n=>"€"+(+n).toLocaleString("en-IE",{minimumFractionDigits:2,maximumFractionDigits:2});
-async function loadPrices(){PR=await admin({action:"prices"});renderPrices();}
+async function loadPrices(){PR=await admin({action:"prices"});renderPrices();
+  $("#sd-g").innerHTML=PR.groups.map(g=>`<label>${esc(g.name)}<input data-sd="${g.id}" value="${PR.standard[g.id]||""}" inputmode="decimal" placeholder="0"></label>`).join("");}
+$("#sd-form").onsubmit=async e=>{e.preventDefault();const note=$("#sd-note");
+  try{const d=(await admin({action:"discounts_set",discounts:Object.fromEntries([...document.querySelectorAll("[data-sd]")].map(x=>[x.dataset.sd,x.value.trim()]))})).discounts;
+    PR.standard=d;if(DATA) DATA.standard=d;note.textContent="Saved.";}
+  catch(err){note.textContent=MSG[err.code]||"Something went wrong. Try again.";}};
 function renderPrices(extra){
   const p=PR.prices,q=$("#pr-q").value.trim().toLowerCase();
   $("#pr-ex").value=p.exVat===false?"inc":"ex";$("#pr-vat").value=p.vat??"";

@@ -1213,9 +1213,12 @@ function calcRad(){
    Rooms: HLI × room area × (room °C − outside), then the closest Type 22 above at 45 °C flow (pair of 22s, then a 33). */
 const QS_KEY="hmg-survey";
 const QS_DISC="Quick estimate only, from the BER HLI. A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance.";
-/* Prices (Donal Reilly 27/10/2026): the guide price must be checked by the branch, and needs the full SR 50 design. */
-const QS_PRICE_DISC="Quick estimate only, from the BER HLI. The prices are a guide to work from: this quotation must be verified by your local HMG branch, along with a full SR 50 heat loss calculation by HMG Technical Design for designer sign-off and professional indemnity insurance.";
-/* The price list (api/prices, lib/prices.js): RRP per HMG code and this installer's discount %. Null until loaded. */
+/* Prices (Donal Reilly 27/10/2026): the quotation is non-binding, every price must be verified by the branch or BDM, and it
+   needs the full SR 50 design. On every priced quote: app, quote request, email and saved survey. */
+const QS_NONBINDING="Non-binding quotation: each price must be verified by your local HMG branch or BDM.";
+const QS_PRICE_DISC="Quick estimate only, from the BER HLI. This quotation is non-binding: each price must be verified by your local HMG branch or BDM, along with a full SR 50 heat loss calculation by HMG Technical Design for designer sign-off and professional indemnity insurance.";
+/* The price list (api/prices, lib/prices.js): RRP per HMG code, each code's product group and this installer's discount %
+   for each group (it differs by group, Donal 27/10/2026). Null until loaded. */
 let QP=null;
 function qsLoadPrices(){
   fetch("api/prices",{method:"POST",headers:{"Content-Type":"application/json","X-Access-Code":store.get("hmg-code")||"","X-Device-Id":DEVICE},body:"{}"})
@@ -1223,19 +1226,19 @@ function qsLoadPrices(){
 }
 const eur=n=>"€"+(+n).toLocaleString("en-IE",{minimumFractionDigits:2,maximumFractionDigits:2});
 const r2=n=>Math.round(n*100)/100;
-/* Prices on the quote lines: RRP each, the installer's discount, net for the line; and the totals. */
+/* Prices on the quote lines: RRP each, the installer's discount for that product group, net for the line; and the totals. */
 function qsPriced(lines){
   if(!QP) return {lines,tot:null};
-  const d=+QP.discount||0;
-  const out=lines.map(h=>{const rrp=QP.items?.[h.code];return rrp==null?{...h,rrp:null,net:null}:{...h,rrp,net:r2(h.qty*rrp*(1-d/100))};});
+  const out=lines.map(h=>{const rrp=QP.items?.[h.code],d=+(QP.discounts?.[QP.groups?.[h.code]])||0;
+    return rrp==null?{...h,rrp:null,d:0,net:null}:{...h,rrp,d,net:r2(h.qty*rrp*(1-d/100))};});
   const priced=out.filter(h=>h.rrp!=null),gross=r2(priced.reduce((t,h)=>t+h.qty*h.rrp,0)),net=r2(priced.reduce((t,h)=>t+h.net,0));
   const vat=QP.exVat!==false&&QP.vat!=null?r2(net*QP.vat/100):null;
-  return {lines:out,tot:{d,gross,off:r2(gross-net),net,vat,total:vat!=null?r2(net+vat):null,missing:out.filter(h=>h.rrp==null).length,exVat:QP.exVat!==false,rate:QP.vat,placeholder:QP.placeholder}};
+  return {lines:out,tot:{d:priced.some(h=>h.d),gross,off:r2(gross-net),net,vat,total:vat!=null?r2(net+vat):null,missing:out.filter(h=>h.rrp==null).length,exVat:QP.exVat!==false,rate:QP.vat,placeholder:QP.placeholder}};
 }
 /* The totals as label/value pairs, for the app, the quote request and the email. */
 function qsTotRows(t){
   const vt=t.exVat?"ex VAT":"inc VAT";
-  return [["Total at RRP",`${eur(t.gross)} ${vt}`],...(t.d?[[`Account discount (${t.d}%)`,`−${eur(t.off)}`]]:[]),[`Net ${vt}`,eur(t.net)],
+  return [["Total at RRP",`${eur(t.gross)} ${vt}`],...(t.d?[["Account discount",`−${eur(t.off)}`]]:[]),[`Net ${vt}`,eur(t.net)],
     ...(t.vat!=null?[[`VAT at ${t.rate}%`,eur(t.vat)],["Total inc VAT",eur(t.total)]]:[])];
 }
 let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:"",name:""};
@@ -1446,12 +1449,13 @@ function calcSurvey(){
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
     ${lines.length?(pr.tot?`${pr.tot.placeholder?`<span class="chip warn">Placeholder prices · not HMG prices yet</span>`:""}
-      <table class="cu qs-list qs-priced"><thead><tr><th>Product</th><th>Qty</th><th>RRP</th><th>${pr.tot.d?`Net −${pr.tot.d}%`:"Net"}</th></tr></thead><tbody>
-      ${pr.lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}<div class="qs-sub"><span>${esc(h.code)}</span>${h.room?` · ${esc(h.room)}`:""}</div></td><td>${h.qty}</td>${h.rrp==null?`<td colspan="2">Price from branch</td>`:`<td>${eur(h.rrp)}</td><td>${eur(h.net)}</td>`}</tr>`).join("")}
+      <table class="cu qs-list qs-priced"><thead><tr><th>Product</th><th>Qty</th><th>RRP</th><th>Net</th></tr></thead><tbody>
+      ${pr.lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}<div class="qs-sub"><span>${esc(h.code)}</span>${h.room?` · ${esc(h.room)}`:""}</div></td><td>${h.qty}</td>${h.rrp==null?`<td colspan="2">Price from branch</td>`:`<td>${eur(h.rrp)}</td><td>${eur(h.net)}${h.d?`<div class="qs-sub">−${h.d}%</div>`:""}</td>`}</tr>`).join("")}
     </tbody></table>`
     :`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th><th>Room</th></tr></thead><tbody>
       ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td><td>${esc(h.room||"")}</td></tr>`).join("")}
     </tbody></table>`)+`${pr.tot?`<table class="cu qs-tot"><tbody>${qsTotRows(pr.tot).map(([k,v],i,a)=>`<tr${i===a.length-1||k.startsWith("Net")?` class="net"`:""}><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>
+      <p class="src" style="margin:0"><b>${QS_NONBINDING}</b></p>
       ${pr.tot.missing?`<p class="src" style="margin:0">${pr.tot.missing} line${pr.tot.missing===1?" has":"s have"} no price yet and ${pr.tot.missing===1?"isn't":"aren't"} in the total: your branch will price ${pr.tot.missing===1?"it":"them"}.</p>`:""}`:""}${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${pr.tot?QS_PRICE_DISC:QS_DISC}</div>
@@ -1471,7 +1475,7 @@ function calcSurvey(){
 /* Quote list as CSV (Product, Qty, Code, Room, then RRP, Discount %, Net as plain numbers so they paste into Excel or
    the ERP as numbers), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. One row per line, no totals. */
 const qsCsv=lines=>{const p=qsPriced(lines),t=p.tot;
-  return "\ufeff"+[["Product","Qty","Code","Room",...(t?["RRP","Discount %","Net"]:[])],...p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",...(t?(h.rrp==null?["","",""]:[h.rrp.toFixed(2),t.d,h.net.toFixed(2)]):[])])]
+  return "\ufeff"+[["Product","Qty","Code","Room",...(t?["RRP","Discount %","Net"]:[])],...p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",...(t?(h.rrp==null?["","",""]:[h.rrp.toFixed(2),h.d,h.net.toFixed(2)]):[])])]
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";};
 /* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
    The server renders the same shape as an HTML email (lib/quote-email.js). */
@@ -1489,10 +1493,10 @@ function qsDoc(w,pick,rooms,cyl,lines,me){
       rows:rooms.map(m=>[m.name,`${fmt(m.area,1)} m²`,`${Math.round(m.loss)} W${m.t!==21?` (${m.t} °C)`:""}`,m.rad?`${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}`:"Needs a design",m.rad?m.rad.r.code:"",m.rad?`${m.rad.w} W`:""])}]:[]),
     ...(()=>{const p=qsPriced(lines),t=p.tot;
       if(!t) return [{h:"Quote list",note:"Also attached as a CSV file (Product, Qty, Code, Room).",cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"}],rows:lines.map(h=>[h.item,h.qty,h.code,h.room||""])}];
-      return [{h:"Quote list",note:`Also attached as a CSV file (Product, Qty, Code, Room, RRP, Discount %, Net). RRP each ${t.exVat?"ex":"inc"} VAT${t.d?`, less the installer's ${t.d}% account discount`:""}.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
+      return [{h:"Quote list",note:`Also attached as a CSV file (Product, Qty, Code, Room, RRP, Discount %, Net). RRP each ${t.exVat?"ex":"inc"} VAT${t.d?", less the installer's account discount for each product group":""}.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
         cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"},{h:"RRP",t:"RRP "},{h:"Disc.",t:"less "},{h:"Net",t:"net "}],
-        rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null||!t.d?"":`${t.d}%`,h.rrp==null?"":eur(h.net)])},
-        {h:"Price",kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
+        rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null||!h.d?"":`${h.d}%`,h.rrp==null?"":eur(h.net)])},
+        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
 }
 function qsDocText(d){

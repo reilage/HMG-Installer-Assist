@@ -1,8 +1,9 @@
 // POST /api/prices  →  the quick survey price list (lib/prices.js) and this installer's discount. Free: no Claude call.
-// → { items: {CODE: rrp}, exVat, vat, at, placeholder, discount, account }
-// The shared access code gets the RRPs with no discount; a personal installer code gets that installer's discount.
+// → { items: {CODE: rrp}, groups: {CODE: group}, exVat, vat, at, placeholder, discounts: {group: %}, account }
+// The shared access code gets the RRPs with no discount; a personal installer code gets HMG's standard discount for
+// each product group, or the installer's own where they have one (lib/prices.js).
 import { send, checkAccess, onlyPost } from "../lib/http.js";
-import { getPrices } from "../lib/prices.js";
+import { getPrices, catalogue, discountsOf, getStandard } from "../lib/prices.js";
 
 export default async function handler(req, res) {
   if (!onlyPost(req, res)) return;
@@ -10,7 +11,9 @@ export default async function handler(req, res) {
   if (!who) return;
   try {
     const p = await getPrices();
-    send(res, 200, { items: p.items, exVat: p.exVat, vat: p.vat, at: p.at, placeholder: p.placeholder, discount: who.installer?.discount || 0, account: !!who.installer });
+    const groups = Object.fromEntries(catalogue().map(c => [c.code, c.group]));
+    send(res, 200, { items: p.items, groups, exVat: p.exVat, vat: p.vat, at: p.at, placeholder: p.placeholder,
+      discounts: who.installer ? discountsOf(who.installer, await getStandard()) : {}, account: !!who.installer });
   } catch (e) {
     console.error(JSON.stringify({ evt: "prices_error", message: e.message }));
     send(res, 503, { error: "unavailable" });
