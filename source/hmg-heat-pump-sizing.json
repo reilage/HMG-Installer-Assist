@@ -1,0 +1,36 @@
+{
+  "_note": "HMG heat pump selection bands (Donal Reilly, 27/10/2026): the largest design heat loss in kW each unit covers. Used by Install › Quick survey and Ask. K-series: bands not given yet, so it is left out of the selection until HMG gives them.",
+  "design": { "inside": 21, "outside": -3 },
+  "ranges": [
+    { "unit": "J", "name": "Panasonic J-series Mini Monobloc R32", "sizes": [
+      { "kw": 5, "covers": 5, "model": "WH-MDC05J3E5" },
+      { "kw": 7, "covers": 7, "model": "WH-MDC07J3E5" },
+      { "kw": 9, "covers": 8, "model": "WH-MDC09J3E5" } ] },
+    { "unit": "T", "name": "Panasonic J-series T-Cap R32", "sizes": [
+      { "kw": 9, "covers": 9, "model": "WH-MXC09J3E5" },
+      { "kw": 12, "covers": 12, "model": "WH-MXC12J6E5" } ] },
+    { "unit": "L", "name": "Panasonic L-series R290", "sizes": [
+      { "kw": 5, "covers": 5, "model": "WH-WDG05LE5 + WH-ADC0509L3E51 tank unit" },
+      { "kw": 7, "covers": 7, "model": "WH-WDG07LE5 + WH-ADC0509L3E51 tank unit" },
+      { "kw": 9, "covers": 8, "model": "WH-WDG09LE5 + WH-ADC0509L3E51 tank unit" } ] },
+    { "unit": "B", "name": "Baxi Assure HP55 R290", "sizes": [
+      { "kw": 4, "covers": 4.9, "model": "HP55-4-1-PHMB" },
+      { "kw": 6, "covers": 6.1, "model": "HP55-6-1-PHMB" },
+      { "kw": 8, "covers": 7.8, "model": "HP55-8-1-PHMB" },
+      { "kw": 11, "covers": 12.1, "model": "HP55-11-1-PHMB (or HP55-11-3-PHMB 3-phase)" },
+      { "kw": 13, "covers": 13.7, "model": "HP55-13-1-PHMB (or HP55-13-3-PHMB 3-phase)" } ] }
+  ],
+  "rooms": [
+    { "type": "Living room", "temp": 21 },
+    { "type": "Kitchen / diner", "temp": 21 },
+    { "type": "Dining room", "temp": 21 },
+    { "type": "Kitchen", "temp": 18 },
+    { "type": "Bedroom", "temp": 18 },
+    { "type": "Bathroom", "temp": 22 },
+    { "type": "Ensuite", "temp": 22 },
+    { "type": "Hall / landing", "temp": 18 },
+    { "type": "Study", "temp": 21 },
+    { "type": "Utility", "temp": 18 },
+    { "type": "WC", "temp": 18 }
+  ]
+}
