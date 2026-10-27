@@ -3,6 +3,7 @@ import { send, accessRequired, identify } from "../lib/http.js";
 import { accountsOn, publicInstaller } from "../lib/accounts.js";
 import { dailyLimit, leftToday } from "../lib/quota.js";
 import { emailEnabled, escalationTo } from "./escalate.js";
+import { testSender } from "../lib/email.js";
 
 export default async function handler(req, res) {
   const who = await identify(req);
@@ -15,6 +16,7 @@ export default async function handler(req, res) {
     accounts: accountsOn(),
     installer: who.installer ? publicInstaller(who.installer) : null,
     email: emailEnabled(),
+    emailCopy: emailEnabled() && !testSender(), // Resend's test sender can't copy the installer
     escalationTo: escalationTo(),
     dailyLimit: quota.limit,
     questionsLeft: quota.left,
