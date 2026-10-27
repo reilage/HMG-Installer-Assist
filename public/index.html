@@ -356,6 +356,21 @@ form input,form textarea{border:1px solid var(--line);background:var(--surface);
 form textarea{min-height:76px;resize:vertical}
 /* Quote request preview (tables). */
 .qs-doc{display:flex;flex-direction:column;gap:14px;border:1px solid var(--card-line);border-radius:12px;padding:14px;background:var(--surface)}
+/* Save as PDF: only the quotation is printed, always black on white. */
+.qs-print{display:none}
+@media print{
+  body.qs-printing>*:not(#qs-print){display:none!important}
+  body.qs-printing{background:#fff!important}
+  body.qs-printing #qs-print{display:block;color:#222;--fg:#222;--muted:#555;--line:#ccc;--surface:#fff;--card-line:#fff;--accent-soft:#eef7fb}
+  #qs-print .qs-doc{border:0;padding:0;background:#fff}
+  #qs-print .qs-scroll{overflow:visible}
+  #qs-print .qs-doc .qs-scroll table.cu td{white-space:normal}
+  #qs-print section{break-inside:avoid}
+  #qs-print .qs-doc-n{font-size:12.5px;color:#222;border:1px solid #c98a00;border-radius:6px;padding:8px}
+  @page{margin:14mm}
+}
+.qp-head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+.qp-head b{display:block;font:18px var(--f-display)}.qp-head span{font-size:13px;color:#555}
 .qs-doc-t{font:20px/1.2 var(--f-display);color:var(--fg);border-bottom:3px solid var(--hmg-cyan);padding-bottom:8px}
 .qs-doc section{display:flex;flex-direction:column;gap:6px}
 .qs-doc .src{margin:0}
@@ -1450,7 +1465,7 @@ function calcSurvey(){
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
     ${lines.length?(pr.tot?`${pr.tot.placeholder?`<span class="chip warn">Placeholder prices · not HMG prices yet</span>`:""}
       <table class="cu qs-list qs-priced"><thead><tr><th>Product</th><th>Qty</th><th>RRP</th><th>Net</th></tr></thead><tbody>
-      ${pr.lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}<div class="qs-sub"><span>${esc(h.code)}</span>${h.room?` · ${esc(h.room)}`:""}</div></td><td>${h.qty}</td>${h.rrp==null?`<td colspan="2">Price from branch</td>`:`<td>${eur(h.rrp)}</td><td>${eur(h.net)}${h.d?`<div class="qs-sub">−${h.d}%</div>`:""}</td>`}</tr>`).join("")}
+      ${pr.lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}<div class="qs-sub"><span>${esc(h.code)}</span>${h.room?` · ${esc(h.room)}`:""}</div></td><td>${h.qty}</td>${h.rrp==null?`<td colspan="2">Price from branch</td>`:`<td>${eur(h.rrp)}</td><td>${eur(h.net)}</td>`}</tr>`).join("")}
     </tbody></table>`
     :`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th><th>Room</th></tr></thead><tbody>
       ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td><td>${esc(h.room||"")}</td></tr>`).join("")}
@@ -1460,7 +1475,7 @@ function calcSurvey(){
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${pr.tot?QS_PRICE_DISC:QS_DISC}</div>
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
-    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Save as PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
       <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-csv">Download quote list (CSV)</button><button class="btn sec" id="qs-share" hidden>Share email + CSV</button><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
       <div class="qs-doc" id="qs-sum"></div></div>`;
@@ -1471,6 +1486,7 @@ function calcSurvey(){
     qs={area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:"",name:""};qsSave();renderSurvey();};
   $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}${+m.h&&+m.h!==+qs.radH?` (radiator ${m.h} mm high)`:""}`).join("; ")}. Which Warmhaus radiators, ${qsH()} mm high?`:""));};
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
+  $("#qs-pdf").onclick=()=>qsPdf(w,pick,rooms,cyl,lines);
 }
 /* Quote list as CSV (Product, Qty, Code, Room, then RRP, Discount %, Net as plain numbers so they paste into Excel or
    the ERP as numbers), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. One row per line, no totals. */
@@ -1479,11 +1495,12 @@ const qsCsv=lines=>{const p=qsPriced(lines),t=p.tot;
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";};
 /* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
    The server renders the same shape as an HTML email (lib/quote-email.js). */
-function qsDoc(w,pick,rooms,cyl,lines,me){
+/* pdf: the installer's own copy (Save as PDF): titled a quotation, no CSV note and no discount % column. */
+function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
   const mixed=qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH);
   const hot=cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L, `
     +(cyl.built?`built into the indoor unit (${cyl.built} L)${cyl.need>cyl.built?". Needs more than the built-in tank: please advise":""}`:cyl.cyl?cyl.type.name.toLowerCase():"please advise");
-  return {title:`Quote request – ${qs.name?.trim()||"HMG quick survey"}`,blocks:[
+  return {title:`${pdf?"Quotation":"Quote request"} – ${qs.name?.trim()||"HMG quick survey"}`,blocks:[
     {h:"Site and installer",kv:[...(qs.name?.trim()?[["Survey name",qs.name.trim()]]:[]),["Site",[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"],["Installer",[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"]]},
     {h:"Survey (from the BER)",kv:[["Floor area",`${fmt(qsArea(),1)} m²${qs.fromRooms?` (total of the ${qs.rooms.length} rooms)`:""}`],["HLI",`${qs.hli} W/K·m²`],
       ["Design temperatures",`${qs.tin} °C inside, ${qs.tout} °C outside`],["Design heat loss",`${fmt(w/1000)} kW (${Math.round(w)} W)`],
@@ -1492,12 +1509,31 @@ function qsDoc(w,pick,rooms,cyl,lines,me){
       cols:[{h:"Room"},{h:"Area"},{h:"Heat loss"},{h:"Radiator"},{h:"Code",t:"HMG "},{h:"Output"}],
       rows:rooms.map(m=>[m.name,`${fmt(m.area,1)} m²`,`${Math.round(m.loss)} W${m.t!==21?` (${m.t} °C)`:""}`,m.rad?`${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}`:"Needs a design",m.rad?m.rad.r.code:"",m.rad?`${m.rad.w} W`:""])}]:[]),
     ...(()=>{const p=qsPriced(lines),t=p.tot;
-      if(!t) return [{h:"Quote list",note:"Also attached as a CSV file (Product, Qty, Code, Room).",cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"}],rows:lines.map(h=>[h.item,h.qty,h.code,h.room||""])}];
+      if(!t) return [{h:"Quote list",note:pdf?"":"Also attached as a CSV file (Product, Qty, Code, Room).",cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"}],rows:lines.map(h=>[h.item,h.qty,h.code,h.room||""])}];
+      if(pdf) return [{h:"Quote list",note:`RRP each ${t.exVat?"ex":"inc"} VAT; net after your account discount.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
+        cols:[{h:"Product"},{h:"Qty"},{h:"Code"},{h:"Room"},{h:"RRP"},{h:"Net"}],
+        rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null?"":eur(h.net)])},
+        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: your branch will price ${t.missing===1?"it":"them"}`]]:[])]}];
       return [{h:"Quote list",note:`Also attached as a CSV file (Product, Qty, Code, Room, RRP, Discount %, Net). RRP each ${t.exVat?"ex":"inc"} VAT${t.d?", less the installer's account discount for each product group":""}.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
         cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"},{h:"RRP",t:"RRP "},{h:"Disc.",t:"less "},{h:"Net",t:"net "}],
         rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null||!h.d?"":`${h.d}%`,h.rrp==null?"":eur(h.net)])},
         {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
+}
+/* Save as PDF (Donal 27/10/2026): the quotation on its own branded page, with the disclaimer, through the phone's or
+   browser's print sheet (Save as PDF / Save to Files). It's also saved to My surveys, and HMG keeps a copy, as with
+   Request HMG quote. The PDF is named after the page title. */
+function qsPdf(w,pick,rooms,cyl,lines){
+  qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
+  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date();
+  $("#qs-print").innerHTML=`<div class="qp-head"><img src="brand/hmg-logo.png" alt="Heat Merchants Group" width="110" height="65"><div><b>Heat Merchants Group</b><span>${day.toLocaleDateString("en-IE",{day:"numeric",month:"long",year:"numeric"})}</span></div></div>`
+    +`<div class="qs-doc">${qsDocHtml(doc)}</div>`;
+  const title=document.title;
+  document.title=`HMG-quotation-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
+  document.body.classList.add("qs-printing");
+  const done=()=>{document.body.classList.remove("qs-printing");document.title=title;window.removeEventListener("afterprint",done);};
+  window.addEventListener("afterprint",done);
+  setTimeout(()=>window.print(),50);
 }
 function qsDocText(d){
   return [d.title,...d.blocks.map(b=>[b.h,b.note&&b.h?b.note:"",...(b.kv||[]).map(([k,v])=>`${k}: ${v}`),
@@ -2191,5 +2227,6 @@ if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWo
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)){$("#install-t").innerHTML="Add HMG Installer Assistant to your home screen: tap <b>Share</b>, then <b>Add to Home Screen</b>.";box.hidden=false;}
 })();
 </script>
+<div id="qs-print" class="qs-print"></div>
 </body>
 </html>
