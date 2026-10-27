@@ -1518,18 +1518,36 @@ function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
 }
 /* Download PDF (Donal 27/10/2026): the quotation as a branded A4 PDF file, with the disclaimer, made on the phone and
-   downloaded straight away (no print sheet). It's also saved to My surveys, and HMG keeps a copy, as with Request HMG
+   downloaded straight away (no print sheet), with the products' data sheets after it. It's also saved to My surveys, and HMG keeps a copy, as with Request HMG
    quote. jsPDF (public/vendor, MIT) loads the first time. If it can't load (no signal), the print sheet is used. */
 let qsJsPdf=null;
 const qsScript=src=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.append(s);});
 const qsPdfLib=()=>qsJsPdf||=qsScript("vendor/jspdf.umd.min.js").then(()=>qsScript("vendor/jspdf.plugin.autotable.min.js"))
   .then(()=>window.jspdf.jsPDF).catch(e=>{qsJsPdf=null;throw e;});
+let qsPdfJoin=null;
+const qsJoinLib=()=>qsPdfJoin||=qsScript("vendor/pdf-lib.min.js").then(()=>window.PDFLib).catch(e=>{qsPdfJoin=null;throw e;});
+/* Data sheets added after the quotation, one per product on it (Donal 27/10/2026): the heat pump range (indoor unit or
+   controller included), the cylinder range and the Warmhaus radiators. The PDFs are in public/datasheets/. */
+const QS_SHEETS={J:["panasonic-j-series","Panasonic J-series Mini Monobloc 5, 7 and 9 kW"],T:["panasonic-t-cap","Panasonic T-Cap 9 and 12 kW"],
+  K:["panasonic-k-series","Panasonic K-series 5, 7 and 9 kW with indoor unit"],L:["panasonic-l-series","Panasonic L-series 5, 7 and 9 kW with indoor unit"],
+  B:["baxi-assure-hp55","Baxi Assure HP55 R290, all sizes, with indoor controller"],cyl_pre:["xylinder-cylinders","Xylinder pre-plumbed cylinders"],
+  cyl_non:["panasonic-aquarea-cylinder","Panasonic Aquarea cylinder"],rad:["warmhaus-radiators","Warmhaus radiators"]};
+const qsSheets=(pick,cyl,rooms)=>[pick&&pick.r.unit,cyl?.cyl&&"cyl_"+cyl.type.id,rooms.some(m=>m.rad)&&"rad"].filter(k=>k&&QS_SHEETS[k]).map(k=>QS_SHEETS[k]);
+/* The quotation with the data sheets after it. A sheet that can't be fetched is left out (the list on page 1 still names it). */
+async function qsJoin(quote,sheets){
+  const {PDFDocument}=await qsJoinLib(),out=await PDFDocument.load(quote);
+  for(const [f] of sheets){
+    try{const src=await PDFDocument.load(await (await fetch(`datasheets/${f}.pdf`)).arrayBuffer(),{ignoreEncryption:true});
+      (await out.copyPages(src,src.getPageIndices())).forEach(pg=>out.addPage(pg));}catch{}
+  }
+  return out.save();
+}
 const qsDataUrl=src=>fetch(src).then(r=>r.blob()).then(b=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(f.result);f.readAsDataURL(b);}));
 /* The PDF's built-in font only has the Windows Latin characters (€ ° ² × – · are fine): anything else gets a stand-in. */
 const QS_WIN="€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ";
 const qsPdfT=s=>String(s??"").replace(/−/g,"-").replace(/→/g,"->").replace(/≤/g,"<=").replace(/≥/g,">=")
   .replace(/[^\n\x20-\xff]/g,c=>QS_WIN.includes(c)?c:"-");
-async function qsPdfFile(d,name,day){
+async function qsPdfFile(d,day){
   const JsPDF=await qsPdfLib(),logo=await qsDataUrl("brand/hmg-logo.png").catch(()=>null);
   const pdf=new JsPDF({unit:"mm",format:"a4",compress:true}),M=14,W=210-2*M,H=297,blue=[0,119,168],ink=[34,34,34],grey=[85,85,85];
   let y=M;
@@ -1561,14 +1579,19 @@ async function qsPdfFile(d,name,day){
   const n=pdf.getNumberOfPages();
   for(let i=1;i<=n;i++){pdf.setPage(i);pdf.setFont("helvetica","normal");pdf.setFontSize(8);pdf.setTextColor(...grey);
     pdf.text(qsPdfT(QP?QS_NONBINDING:"Quick estimate only: a full heat loss design is required."),M,H-8);pdf.text(`Page ${i} of ${n}`,M+W,H-8,{align:"right"});}
-  pdf.save(name+".pdf");
+  return pdf.output("arraybuffer");
 }
 async function qsPdf(w,pick,rooms,cyl,lines){
   qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
-  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date(),b=$("#qs-pdf");
+  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date(),b=$("#qs-pdf"),sheets=qsSheets(pick,cyl,rooms);
+  if(sheets.length) doc.blocks.splice(-1,0,{h:"Data sheets",note:`Attached after this quotation: ${sheets.map(x=>x[1]).join("; ")}.`});
   const name=`HMG-quotation-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
   b.disabled=true;b.textContent="Making PDF…";
-  try{await qsPdfFile(doc,name,day);b.textContent="PDF downloaded";setTimeout(()=>{b.textContent="Download PDF";b.disabled=false;},2500);return;}
+  try{let bytes=await qsPdfFile(doc,day);
+    if(sheets.length) bytes=await qsJoin(bytes,sheets).catch(()=>bytes);
+    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));a.download=name+".pdf";
+    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+    b.textContent="PDF downloaded";setTimeout(()=>{b.textContent="Download PDF";b.disabled=false;},2500);return;}
   catch{b.textContent="Download PDF";b.disabled=false;}
   /* No PDF maker (first use with no signal): the print sheet, where the phone can save it as a PDF. */
   $("#qs-print").innerHTML=`<div class="qp-head"><img src="brand/hmg-logo.png" alt="Heat Merchants Group" width="110" height="65"><div><b>Heat Merchants Group</b><span>${day.toLocaleDateString("en-IE",{day:"numeric",month:"long",year:"numeric"})}</span></div></div>`
