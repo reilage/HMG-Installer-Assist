@@ -1332,27 +1332,31 @@ function calcSurvey(){
       :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`);});
   const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
+  /* The quote list (Product, Qty, Code): shown here, and sent to HMG as a CSV for their ERP (Donal 27/10/2026). */
+  const lines=[...(pick?qsHmg(pick).map(h=>({item:h.item,qty:1,code:h.code,pick:1})):[]),...(cyl?.lines||[]).map(h=>({...h,pick:1})),
+    ...Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>({item:`Warmhaus Type ${r.type} ${r.h}×${r.l}`,qty:n,code:r.code}))];
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
-    ${pick||rads.length||cyl?.cyl?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th></tr></thead><tbody>
-      ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>${esc(h.item)}</td><td>1</td><td>${esc(h.code)}</td></tr>`).join(""):""}
-      ${(cyl?.lines||[]).map(h=>`<tr class="pick"><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td></tr>`).join("")}
-      ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${n}</td><td>${r.code}</td></tr>`).join("")}
+    ${lines.length?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th></tr></thead><tbody>
+      ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
-    <div class="btnrow"><button class="btn" id="qs-quote" ${pick||rads.length||cyl?.cyl?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
-      <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
+      <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-csv">Download quote list (CSV)</button><button class="btn sec" id="qs-share" hidden>Share email + CSV</button><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
       <pre class="summary" id="qs-sum"></pre></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
   $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
   $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
-  $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl);
+  $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
 }
-function quoteRequest(w,pick,rooms,list,cyl){
+/* Quote list as CSV (Product, Qty, Code), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. */
+const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code"],...lines.map(h=>[h.item,h.qty,h.code])]
+  .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";
+function quoteRequest(w,pick,rooms,list,cyl,lines){
   const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
   const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir||"location?"}`;
   const body=`Quote request – HMG quick survey
@@ -1382,11 +1386,20 @@ ${Object.values(list).map(({r,n})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qt
 
 ${QS_DISC}`;
   $("#qs-sum").textContent=body;
+  const csv=qsCsv(lines),fname=`HMG-quote-${(qs.eir||"site").replace(/[^\w-]+/g,"").slice(0,20)||"site"}-${new Date().toISOString().slice(0,10)}.csv`;
+  const csvFile=()=>new File([csv],fname,{type:"text/csv"});
+  $("#qs-csv").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=fname;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);};
+  /* Phones: share the email text with the CSV attached, straight into the mail app. */
+  const canShare=(()=>{try{return !!navigator.canShare?.({files:[csvFile()]});}catch{return false;}})();
+  $("#qs-share").hidden=!canShare;
+  $("#qs-share").onclick=async()=>{try{await navigator.share({title:subject,text:`To: ${ESC_TO}\n\n${body}`,files:[csvFile()]});}catch{}};
   $("#qs-mail").href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;
   $("#qs-send").hidden=!CFG.email;$("#qs-send").disabled=false;$("#qs-note").textContent="";
-  $("#qs-how").innerHTML=CFG.email?`Tap <b>Send to Heat Merchants</b>, or <b>Open email</b> to send it from your own mail app.`:`Tap <b>Open email</b>, check it, and press Send. It goes to <span class="addr">${esc(ESC_TO)}</span>.${me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too."}`;
+  $("#qs-how").innerHTML=(CFG.email?`Tap <b>Send to Heat Merchants</b>: the quote list goes with it as a CSV file. Or send it from your own mail app.`
+    :`Send it to <span class="addr">${esc(ESC_TO)}</span> with the quote list attached: ${canShare?`tap <b>Share email + CSV</b> and pick your mail app, or `:""}tap <b>Download quote list (CSV)</b>, then <b>Open email</b> and attach the file.`)
+    +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");
   $("#qs-send").onclick=async()=>{const btn=$("#qs-send"),note=$("#qs-note");btn.disabled=true;note.textContent="Sending…";
-    try{const r=await api("escalate",{subject,body,replyTo:me("email")});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
+    try{const r=await api("escalate",{subject,body,replyTo:me("email"),attachment:{filename:fname,csv}});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
     catch{note.textContent="Couldn't send it. Use Open email instead.";btn.disabled=false;}};
   $("#qs-copy").onclick=async()=>{try{await navigator.clipboard.writeText(`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`);$("#qs-copy").textContent="Copied";}catch{$("#qs-copy").textContent="Select the text below";}setTimeout(()=>$("#qs-copy").textContent="Copy text",2000);};
   $("#qs-sent").hidden=false;$("#qs-sent").scrollIntoView({behavior:"smooth"});
