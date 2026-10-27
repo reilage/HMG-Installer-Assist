@@ -1653,7 +1653,7 @@ function quoteRequest(w,pick,rooms,list,cyl,lines){
   const shareOk=(()=>{try{return !!navigator.canShare?.({files:[new File(["x"],"x.pdf",{type:"application/pdf"})]});}catch{return false;}})();
   let how=CFG.email?"app":shareOk?"share":"mail";
   const btn=$("#qs-send"),note=$("#qs-note"),label="Send Email & Quick Design";
-  const tell=()=>{$("#qs-how").innerHTML=(how==="app"?`Sends this design request to HMG Technical Design (<span class="addr">${esc(ESC_TO)}</span>) with the quotation PDF${sheets.length?", data sheets":""} and quote list CSV attached, and a copy to you.`
+  const tell=()=>{$("#qs-how").innerHTML=(how==="app"?`Sends this design request to HMG Technical Design (<span class="addr">${esc(ESC_TO)}</span>) with the quotation PDF${sheets.length?", data sheets":""} and quote list CSV attached${CFG.emailCopy?", and a copy to you":""}.`
     :how==="share"?`Opens your mail app with this design request written and the quotation PDF and quote list CSV attached. Send it to <span class="addr">${esc(ESC_TO)}</span>.`
     :`Opens your email with this design request written to <span class="addr">${esc(ESC_TO)}</span>, and downloads the quotation PDF and quote list CSV: attach both before sending.`)
     +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");};
@@ -1669,7 +1669,7 @@ function quoteRequest(w,pick,rooms,list,cyl,lines){
       try{const p=await slim;
         const r=await api("escalate",{subject,body,doc,replyTo:me("email"),attachment:{filename:csvName,csv},
           ...(p?{pdf:{filename:p.name,data:await b64(p.bytes)},sheets:p.sheets.map(x=>x[0])}:{})});
-        if(!r.ok) throw 0;note.textContent="Sent to HMG Technical Design. A copy has gone to you.";btn.textContent="Sent";return;}
+        if(!r.ok) throw 0;note.textContent=`Sent to HMG Technical Design.${CFG.emailCopy?" A copy has gone to you.":""}`;btn.textContent="Sent";return;}
       catch{how=shareOk?"share":"mail";tell();btn.disabled=false;note.textContent="Couldn't send it from the app. Tap again to send it from your own email.";return;}
     }
     const p=await full;

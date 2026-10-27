@@ -31,6 +31,8 @@ Until this is set up, Escalate opens the installer's own email app with everythi
 1. Create an account at https://resend.com and verify the `heatmerchants.ie` domain (your IT person adds a few DNS records).
 2. Add to Vercel: `RESEND_API_KEY`, and `ESCALATION_FROM` (for example `HMG Installer Assistant <siteassist@heatmerchants.ie>`). Optionally `ESCALATION_TO` if escalations should go somewhere other than donal.reilly@heatmerchants.ie, and `APPROVAL_TO` if access requests should go somewhere other than the escalation address.
 
+**Trying it without a domain (prototype):** set `ESCALATION_FROM` to `HMG Installer Assistant <onboarding@resend.dev>` and `ESCALATION_TO` to the email address your Resend account is under. Resend's test sender only delivers to that one address, so the app sends design requests and escalations there with no copy to the installer, and approved installers' codes aren't emailed (send them from the admin page).
+
 ## Running costs
 
 - **Claude**: paid per question to Anthropic. Ask uses Claude Opus 5.5 ($4 per million tokens in, $20 per million out). A question sends roughly 15,000 to 25,000 tokens of rules and manual pages; the rules part is cached, so repeat questions within a few minutes cost much less. Expect a few cent per question. "Fill from chat" uses the much cheaper Claude Haiku 5.5. The Anthropic console shows exact usage.
