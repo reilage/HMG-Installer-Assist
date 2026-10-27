@@ -688,3 +688,41 @@ test("my surveys: each quote request is saved on the installer's account, and HM
   assert.equal(all[0].doc.blocks[0].rows[0][2], "U37935");
   assert.equal(all[2].name, "Kelly extension", "HMG sees the survey name too");
 });
+
+test("prices: placeholder RRPs until HMG loads a list, each installer's discount, pasted from Excel", async () => {
+  await stop(app);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "shared-code", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "0", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  const admin = async body => (await fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) })).json();
+  const prices = code => fetch(BASE + "/api/prices", { method: "POST", headers: { "Content-Type": "application/json", ...(code ? { "X-Access-Code": code } : {}) }, body: "{}" });
+  assert.equal((await prices()).status, 401);
+
+  // placeholders for every code in the app, marked as such
+  const { prices: p0, catalogue } = await admin({ action: "prices" });
+  assert.equal(p0.placeholder, true);
+  assert.equal(catalogue.length, new Set(catalogue.map(c => c.code)).size, "each code once");
+  for (const c of ["UE0208", "U88454", "UE0035", "UB7317", "U37935"]) assert.ok(catalogue.some(x => x.code === c), c);
+  assert.ok(catalogue.every(c => p0.items[c.code] > 0));
+
+  // the discount is per installer; the shared code gets RRP only
+  const { installer: a } = await admin({ action: "add", name: "Seán Murphy", discount: "22.5" });
+  assert.equal(a.discount, 22.5);
+  assert.equal((await (await prices(a.code)).json()).discount, 22.5);
+  const shared = await (await prices("shared-code")).json();
+  assert.equal(shared.discount, 0); assert.equal(shared.placeholder, true);
+  assert.equal((await admin({ action: "update", id: a.id, discount: "150" })).installer.discount, 100);
+  await admin({ action: "update", id: a.id, discount: "15" });
+
+  // pasted from Excel (tab-separated, € and thousands commas), headings and unpriced rows skipped
+  assert.equal((await admin({ action: "prices_set", text: "Category\tProduct\tHMG code\tRRP (€)\n" })).error, "no_prices");
+  const set = await admin({ action: "prices_set", exVat: true, vat: "13.5", text: "Category\tProduct\tHMG code\tRRP (€)\nHeat pump\tJ-series 5 kW\tUE0208\t€5,250.00\nHot water cylinder\t200 L Xylinder Pre-Plumbed Cylinder\tUB7317\t\nKit\tMotorised valve\tu37935\t118,50\nNew\tSomething new\tU99999\t42\n" });
+  assert.deepEqual(set.prices.items, { UE0208: 5250, U37935: 118.5, U99999: 42 });
+  assert.deepEqual(set.unknown, ["U99999"]);
+  assert.ok(set.missing.includes("UB7317"));
+  const mine = await (await prices(a.code)).json();
+  assert.equal(mine.placeholder, false); assert.equal(mine.vat, 13.5); assert.equal(mine.exVat, true); assert.equal(mine.discount, 15);
+  assert.equal(mine.items.UB7317, undefined, "no price: the branch prices it");
+
+  assert.equal((await admin({ action: "prices_vat", exVat: false, vat: "23" })).prices.vat, null, "inc VAT prices add no VAT");
+  await admin({ action: "prices_clear" });
+  assert.equal((await (await prices(a.code)).json()).placeholder, true);
+});

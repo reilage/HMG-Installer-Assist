@@ -12,7 +12,12 @@
 //       { action: "answer_delete", id }        → { ok }
 //       { action: "answers_clear", unit? }     clear all stored answers, or one unit's → { cleared }
 //       { action: "surveys" }                  saved quick surveys (lib/surveys.js), newest 300 → { surveys: [{id, at, installer, title, site, doc}] }
+//       { action: "prices" }                   the quick survey price list (lib/prices.js) → { prices: {items, exVat, vat, at, placeholder}, catalogue: [{cat, item, code}] }
+//       { action: "prices_set", text, exVat, vat }  load a price list pasted from Excel (code + RRP per row) → { prices, unknown, missing }
+//       { action: "prices_vat", exVat, vat }   change only ex/inc VAT and the VAT rate → { prices }
+//       { action: "prices_clear" }             back to placeholder prices → { ok }
 // "list" also returns the access requests waiting for approval, as requests: [...].
+// discount: % off RRP on this installer's quick survey quote (0 to 100).
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
 import { accountsOn, listInstallers, addInstaller, updateInstaller, deleteInstaller, listRequests, approveRequest, deleteRequest, publicRequest } from "../lib/accounts.js";
@@ -21,6 +26,7 @@ import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
 import { allSurveys } from "../lib/surveys.js";
+import { getPrices, setPrices, setVat, clearPrices, catalogue } from "../lib/prices.js";
 import { storedOn, listAnswers, editAnswer, deleteAnswer, clearAnswers } from "../lib/answers.js";
 import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
 
@@ -37,7 +43,7 @@ export default async function handler(req, res) {
   if (!accountsOn()) return send(res, 503, { error: "accounts_off" });
   if (!sameSecret(req.headers["x-admin-code"] || "", process.env.ADMIN_CODE)) return send(res, 401, { error: "admin_code" });
   let b;
-  try { b = await readJson(req, 60_000); } catch { return send(res, 400, { error: "bad_request" }); }
+  try { b = await readJson(req, 400_000); } catch { return send(res, 400, { error: "bad_request" }); }
 
   try {
     switch (b.action) {
@@ -91,6 +97,18 @@ export default async function handler(req, res) {
         return send(res, 200, { cleared: await clearAnswers(b.unit) });
       case "surveys":
         return send(res, 200, { surveys: (await allSurveys()).slice(0, 300) });
+      case "prices":
+        return send(res, 200, { prices: await getPrices(), catalogue: catalogue() });
+      case "prices_set": {
+        const p = await setPrices(b);
+        console.log(JSON.stringify({ evt: "prices_set", count: Object.keys(p.items).length, unknown: p.unknown.length, missing: p.missing.length }));
+        return send(res, 200, { prices: { items: p.items, exVat: p.exVat, vat: p.vat, at: p.at, placeholder: false }, unknown: p.unknown, missing: p.missing });
+      }
+      case "prices_vat":
+        return send(res, 200, { prices: await setVat(b) });
+      case "prices_clear":
+        await clearPrices();
+        return send(res, 200, { ok: true });
       case "decline":
         await deleteRequest(String(b.id || ""));
         return send(res, 200, { ok: true });
@@ -99,6 +117,7 @@ export default async function handler(req, res) {
     }
   } catch (e) {
     if (e.code === "name_required") return send(res, 400, { error: "name_required" });
+    if (e.code === "no_prices") return send(res, 400, { error: "no_prices" });
     console.error(JSON.stringify({ evt: "admin_error", message: e.message }));
     send(res, 503, { error: "unavailable" });
   }
