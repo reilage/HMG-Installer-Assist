@@ -1,8 +1,10 @@
 // POST /api/escalate  →  emails an escalation to Heat Merchants Technical Support, with a copy to the installer.
 // Off until an email service is set up (lib/email.js). Until then the app uses the mailto link only.
-// Body: { subject, body, replyTo, attachment? }  attachment = { filename: "x.csv", csv } (the quick survey quote list)
+// Body: { subject, body, replyTo, attachment?, doc? }  attachment = { filename: "x.csv", csv } (the quick survey quote list);
+// doc = the quote request as sections and tables, sent as the HTML version of the email (lib/quote-email.js).
 import { send, readJson, checkAccess, onlyPost, clip } from "../lib/http.js";
 import { emailEnabled, escalationTo, sendEmail, EMAIL } from "../lib/email.js";
+import { quoteHtml } from "../lib/quote-email.js";
 
 export { emailEnabled, escalationTo };
 
@@ -17,7 +19,7 @@ export default async function handler(req, res) {
   const a = b.attachment, attachments = a && /^[\w.-]{1,80}\.csv$/.test(String(a.filename || "")) && typeof a.csv === "string" && a.csv.length <= 50_000
     ? [{ filename: a.filename, content: Buffer.from(a.csv, "utf8").toString("base64") }] : undefined;
 
-  if (!(await sendEmail({ to: escalationTo(), cc: replyTo, replyTo, subject, text, attachments }))) return send(res, 502, { error: "email_failed" });
+  if (!(await sendEmail({ to: escalationTo(), cc: replyTo, replyTo, subject, text, html: quoteHtml(b.doc) || undefined, attachments }))) return send(res, 502, { error: "email_failed" });
   console.log(JSON.stringify({ evt: "escalate", subject }));
   send(res, 200, { ok: true });
 }
