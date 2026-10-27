@@ -110,6 +110,10 @@ const volume = read("hmg-buffer-volume.md");
 // HMG radiator list (Warmhaus Standard steel panel radiators): output at ΔT 50 and n per radiator
 const radiatorText = read("hmg-radiators.md");
 const radiators = JSON.parse(read("warmhaus-radiators.json")).radiators;
+// HMG quick survey: heat pump selection bands per unit and default room temperatures (Donal Reilly 27/10/2026)
+const surveyText = read("hmg-quick-survey.md");
+const survey = JSON.parse(read("hmg-heat-pump-sizing.json"));
+delete survey._note;
 const zones = read("hmg-r290-exclusion-zones.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");
@@ -135,7 +139,7 @@ const parts = {
   L: { models: lparts.models, views: lparts.views.map(v => ({ ...v, key: "L", unit: "L" })), parts: lparts.parts },
 };
 
-// Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
+// Component identifier (Design › Components): labelled drawings from the manuals and what each numbered part is.
 // Drawings get unit so the app can show them like the wiring diagrams.
 const { _about, ...compSrc } = JSON.parse(read("components.json"));
 const components = Object.fromEntries(Object.entries(compSrc).map(([u, c]) => [u, { ...c, drawings: c.drawings.map(d => ({ ...d, unit: u })) }]));
@@ -189,12 +193,12 @@ const full = {
   K3: { ...TITLES.K3, pages: K3 },
   B: { ...TITLES.B, pages: BXP, quickref: bxq, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
   B2: { ...TITLES.B2, pages: CTP, quickref: ctq },
-  nav, sizing, wiring, clearances, weatherComp, volume, radiatorText, radiators, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
+  nav, sizing, wiring, clearances, weatherComp, volume, radiatorText, radiators, surveyText, survey, zones, commText, fieldNotes: fn, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 const lite = {
   J: TITLES.J, T: TITLES.T, L: TITLES.L, K: TITLES.K, K2: TITLES.K2, K3: TITLES.K3, B2: TITLES.B2,
   B: { ...TITLES.B, faults: bxfaults, nav: bxnav, ctlFaults: ctfaults },
-  nav, wiring, commissioning, radiators, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
+  nav, wiring, commissioning, radiators, survey, fieldNoteList: fnotes, faults, kfaults, tfaults, lfaults, parts, components,
 };
 fs.mkdirSync(path.join(root, "data"), { recursive: true });
 fs.writeFileSync(path.join(root, "data", "knowledge.json"), JSON.stringify(full));

@@ -35,4 +35,4 @@ The list gives each radiator's output at **ΔT 50** (the catalogue figure: 75/65
 
 ## In the app
 
-Install › Radiators does both: size for a heat loss, or replace a specified radiator, with maximum length/height and the room temperature. Ask does the same and gives the Warmhaus code.
+Design › Radiators does both: size for a heat loss, or replace a specified radiator, with maximum length/height and the room temperature. Ask does the same and gives the Warmhaus code.

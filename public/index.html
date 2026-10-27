@@ -151,7 +151,7 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .attached{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
 .attached img{height:40px;border-radius:6px}
 /* My questions */
-/* History / new question: same blue button bar as Install and Controller. */
+/* History / new question: same blue button bar as Design and Controller. */
 /* Ask fills the screen so the question box always sits at the bottom, by the thumb and the keyboard, even before the chat is long. */
 main>.wrap:has(>#v-ask:not([hidden])){min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;padding-bottom:0}
 #v-ask{flex:1}
@@ -251,7 +251,7 @@ a.pg{color:var(--accent);font-weight:600;font-size:14px}
 .pt-tag.diff{background:var(--warn-soft)}
 .pt-none{color:var(--muted);font-style:italic}
 
-/* Component identifier (Install › Components) */
+/* Component identifier (Design › Components) */
 .cp-draw{display:flex;flex-wrap:wrap;gap:8px}
 .cp-draw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font:600 14px var(--f-body);text-align:left}
 .cp-draw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
@@ -292,12 +292,16 @@ table.cu+table.cu{margin-top:8px}
 .seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start;flex-wrap:wrap;max-width:100%}
 .seg button{border:0;background:none;padding:7px 14px;border-radius:6px;font-size:14.5px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
-/* Install and Controller topics: blue buttons with white dividers, like the bottom menu. */
+/* Design and Controller topics: blue buttons with white dividers, like the bottom menu. */
 .seg.blue{display:flex;flex-wrap:nowrap;align-self:stretch;background:var(--hmg-cyan);border-radius:10px;padding:0;overflow:hidden;box-shadow:var(--shadow)}
 .seg.blue button{flex:1 1 0;min-width:0;border-radius:0;padding:11px 2px;font-size:12.5px;line-height:1.2;color:#fff;text-align:center}
 .seg.blue button+button{border-left:1px solid rgba(255,255,255,.55)}
 .seg.blue button:active{background:rgba(0,0,0,.12)}
 .seg.blue button[aria-pressed="true"]{background:var(--hmg-grey);color:#fff;box-shadow:none}
+/* Design has more topics than fit in one row on a phone: two rows of up to four, white lines between. */
+#install-seg{flex-wrap:wrap;gap:1px;background:rgba(255,255,255,.55);border:1px solid var(--hmg-cyan)}
+#install-seg button{flex:1 1 calc(25% - 1px);background:var(--hmg-cyan);border-left:0}
+#install-seg button[aria-pressed="true"]{background:var(--hmg-grey)}
 .seg.blue :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .cl-fig{width:100%;max-width:360px;height:auto;align-self:center}
 .cl-fig .u{fill:var(--sunk);stroke:var(--fg);stroke-width:1.5}
@@ -312,6 +316,20 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 #wc-e button{font:600 15px var(--f-body)}
 #wc-body table.cu td:first-child{font-family:var(--f-body)}
 #rd-out table.cu td{white-space:nowrap}
+.qs-room{border:1px solid var(--card-line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.qs-rooms{display:flex;flex-direction:column;gap:8px}
+.qs-rh{display:flex;gap:8px;align-items:center}
+.qs-name{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font:600 15px var(--f-body);color:var(--fg)}
+.qs-rh .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
+.qs-4{grid-template-columns:repeat(4,1fr)}
+.qs-4 label{font-size:12px}
+.qs-pick{font-size:14px;line-height:1.45}
+.qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
+table.qs-hp tr[data-p]{cursor:pointer}
+table.qs-hp td:nth-child(n+2){white-space:nowrap}
+table.qs-hp td:first-child,table.qs-list td:nth-child(2){font-family:var(--f-body)}
+table.qs-list td:last-child{white-space:nowrap}
+.btn:disabled{opacity:.5}
 
 /* Escalate */
 form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -465,13 +483,14 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-size" hidden>
-  <div><h2>Install</h2><p class="lede" id="size-lede">What each component inside the unit is, primary pipe sizing, outdoor unit clearances, the HMG heating curve and radiator selection, for the selected unit.</p></div>
-  <div class="seg blue" id="install-seg" role="group" aria-label="Install topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="rd" aria-pressed="false">Radiators</button></div>
+  <div><h2>Design</h2><p class="lede" id="size-lede">Size the system from the BER, pick radiators, set the heating curve and size the pipework. Plus clearances and what each component inside the unit is, for the selected unit.</p></div>
+  <div class="seg blue" id="install-seg" role="group" aria-label="Design topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="rd" aria-pressed="false">Radiators</button><button data-s="qs" aria-pressed="false">Quick survey</button></div>
   <div id="cl-body" hidden></div>
   <div id="ez-body" hidden></div>
   <div id="size-body" hidden></div>
   <div id="wc-body" hidden></div>
   <div id="rd-body" hidden></div>
+  <div id="qs-body" class="view" hidden></div>
   <div id="cp-body" class="view"></div>
 </section>
 
@@ -510,7 +529,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <button role="tab" data-v="faults" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>Fault codes</button>
   <button role="tab" data-v="ctrl" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="5"/><path d="M9 15h.01M12 15h.01M15 15h.01M12 18h.01"/></svg>Controller</button>
   <button role="tab" data-v="docs" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>Manuals</button>
-  <button role="tab" data-v="size" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8M14 3v4"/><circle cx="14" cy="10" r="3"/></svg>Install</button>
+  <button role="tab" data-v="size" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8M14 3v4"/><circle cx="14" cy="10" r="3"/></svg>Design</button>
   <button role="tab" data-v="esc" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 6h18v12H3z"/><path d="M3 7l9 6 9-6"/></svg>Escalate</button>
 </div></nav>
 
@@ -526,7 +545,7 @@ let unit="J", KB=null, CFG={ai:false,email:false}, turns=[], busy=null, photo=nu
 
 /* ---------- knowledge ---------- */
 /* knowledge.json here is the small part the screens need. The manual text stays on the server (api/ask). */
-const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();renderRad();}).catch(()=>{
+const kbReady=fetch("knowledge.json").then(r=>r.json()).then(d=>{KB=d;indexCodes();renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();renderRad();renderSurvey();}).catch(()=>{
   $("#codes").textContent="Could not load the manuals for this page.";});
 const STOP=new Set("the and for with what how does when this that from have are can not but you your its into then than there which where why why should would could after before about unit heat pump showing show shows check checks".split(" "));
 function toks(s){return (s.toLowerCase().match(/[a-z]\d\d\.\d{2,3}|[a-z]\d{2}|[a-z][a-z0-9\-]{2,}|\b[a-z][a-z0-9]\b|\d+(?:\.\d+)?/g)||[]).filter(w=>!STOP.has(w)&&(w.length!==2||/^\d/.test(w)||FCODES.B.has(w)));}
@@ -693,7 +712,7 @@ function setUnit(u){
   unit=u;for(const k of ["J","T","L","K","B"]) $("#u-"+k).setAttribute("aria-pressed",u===k);
   $("#unit-name").textContent=UNITS[u].pill;unitMenu(false);
   $("#e-model").value=UNITS[u].name;
-  renderSuggest();renderDocs();renderSizing();renderClear();renderZones();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();}
+  renderSuggest();renderDocs();renderSizing();renderClear();renderZones();renderWC();if(KB){renderFaults();renderTasks();renderWiring();renderComm();renderParts();renderComp();qs.pick="";calcSurvey();}
 }
 $("#u-J").onclick=()=>setUnit("J");$("#u-T").onclick=()=>setUnit("T");$("#u-L").onclick=()=>setUnit("L");$("#u-K").onclick=()=>setUnit("K");$("#u-B").onclick=()=>setUnit("B");
 function unitMenu(open){$("#unit-menu").hidden=!open;$("#unit-btn").setAttribute("aria-expanded",open);}
@@ -832,10 +851,10 @@ function listParts(){
 const CLEAR={J:{rear:300,right:300,left:100,front:1000},T:{rear:300,right:300,left:100,front:1000},B:{rear:300,right:300,left:100,front:1000},K:{rear:100,right:300,left:100,front:1000},L:{rear:300,right:300,left:100,front:1000}};
 const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
-/* Install topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
+/* Design topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
 function installTopic(s){
   document.querySelectorAll("#install-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.s===s));
-  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#cp-body").hidden=s!=="cp";
+  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#qs-body").hidden=s!=="qs";$("#cp-body").hidden=s!=="cp";
 }
 document.querySelectorAll("#install-seg button").forEach(b=>b.onclick=()=>installTopic(b.dataset.s));
 function clFig(c,m){
@@ -1157,6 +1176,158 @@ function calcRad(){
     <div class="btnrow"><button class="btn sec" id="rd-ask">Ask about this</button></div>`;
   $("#rd-ask").onclick=()=>{show("ask");ask(rd.mode==="size"?`What Warmhaus radiator do I need for ${Math.round(rd.w)} W at 45 °C flow, ${rd.room} °C room${rd.maxL?`, max length ${rd.maxL} mm`:""}${rd.maxH?`, max height ${rd.maxH} mm`:""}?`
     :`The specified ${spec?`Warmhaus ${radName(spec).replace(" · "," ")}`:`radiator (${rd.other} W at ΔT 50)`} won't fit${rd.maxL||rd.maxH?` (space: ${[rd.maxL&&`max length ${rd.maxL} mm`,rd.maxH&&`max height ${rd.maxH} mm`].filter(Boolean).join(", ")})`:""}. What gives the same output at 45 °C?`);};
+}
+
+/* ---------- Quick survey (HMG quick survey guidance, Donal Reilly 27/10/2026) ---------- */
+/* Heat loss = BER HLI × floor area × (inside − outside). Unit = smallest in each range whose HMG band covers it.
+   Rooms: HLI × room area × (room °C − outside), then the closest Type 22 above at 45 °C flow (pair of 22s, then a 33). */
+const QS_KEY="hmg-survey";
+const QS_DISC="Quick estimate only, from the BER HLI. A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance.";
+let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};
+const qsSave=()=>store.set(QS_KEY,JSON.stringify(qs));
+const qsNum=v=>parseFloat(String(v).replace(",","."));
+const qsTemp=t=>(KB?.survey?.rooms||[]).find(r=>r.type===t)?.temp??21;
+const qsLoss=()=>{const a=qsNum(qs.area),h=qsNum(qs.hli),dt=qs.tin-qs.tout;return a>0&&h>0&&dt>0?h*a*dt:0;};
+/* Smallest unit in a range whose band covers the heat loss (W). */
+const qsUnit=(r,w)=>r.sizes.find(z=>z.covers*1000>=w);
+function qsRad(need,room,maxL){
+  const R=KB?.radiators||[],dt=RAD_FLOW-RAD_DROP/2-room,out=r=>Math.round(radOut(r,dt)),maxH=+qs.maxH||1e9,L=maxL||1e9;
+  const of=t=>R.filter(r=>r.type===t&&r.h<=maxH&&r.l<=L).sort((a,b)=>out(a)-out(b)||b.h-a.h);
+  const t22=of("22"),one=t22.find(r=>out(r)>=need);
+  if(one) return {r:one,qty:1,w:out(one)};
+  const pair=t22.find(r=>out(r)>=need/2);
+  if(pair) return {r:pair,qty:2,w:2*out(pair),note:"No single Type 22 fits"};
+  const t33=of("33").find(r=>out(r)>=need);
+  if(t33) return {r:t33,qty:1,w:out(t33),note:"No Type 22 pair fits"};
+  return null;
+}
+function qsRooms(){
+  const h=qsNum(qs.hli);
+  return qs.rooms.map(m=>{
+    const area=qsNum(m.l)*qsNum(m.w),dt=m.t-qs.tout,loss=h>0&&area>0&&dt>0?h*area*dt:0;
+    return {...m,area,loss,rad:loss>0?qsRad(loss,m.t,qsNum(m.maxL)):null};
+  });
+}
+function renderSurvey(){
+  const box=$("#qs-body"),S=KB?.survey;
+  if(!S){box.innerHTML=`<div class="notice">The survey figures haven't loaded yet.</div>`;return;}
+  const types=S.rooms.map(r=>r.type);
+  box.innerHTML=`<div class="panel">
+      <span class="chip warn">Quick estimate · not a design</span>
+      <p class="src" style="margin:0">From the BER: the total floor area and the HLI (Heat Loss Indicator, W/K per m²). It sizes the heat pump and picks a Warmhaus radiator for each room, ready to request an HMG quote.</p>
+      <div class="sz-in">
+        <label>Floor area m²<input id="qs-area" inputmode="decimal" placeholder="e.g. 150" value="${esc(String(qs.area))}"></label>
+        <label>HLI W/K·m²<input id="qs-hli" inputmode="decimal" placeholder="e.g. 1.8" value="${esc(String(qs.hli))}"></label>
+        <label>Inside °C<input id="qs-tin" inputmode="decimal" value="${qs.tin}"></label>
+        <label>Outside °C<input id="qs-tout" inputmode="decimal" value="${qs.tout}"></label>
+      </div>
+    </div>
+    <div class="panel" id="qs-hp"></div>
+    <div class="panel">
+      <div class="box-h" style="margin:0">Rooms</div>
+      <p class="src" style="margin:0">Length and width in metres. Every room is 21 °C unless you change it.</p>
+      <div class="sz-in"><label>Max radiator height mm<select id="qs-maxh">${[["",`Any`],[500],[600],[700],[900]].map(([v,t])=>`<option value="${v}" ${String(qs.maxH)===String(v)?"selected":""}>${t||v}</option>`).join("")}</select></label></div>
+      <div id="qs-rooms" class="qs-rooms"></div>
+      <div class="btnrow"><select id="qs-add-t" class="qs-sel">${types.map(t=>`<option>${esc(t)}</option>`).join("")}</select><button class="btn sec" id="qs-add">Add room</button></div>
+    </div>
+    <div class="panel" id="qs-out"></div>`;
+  const bind=(id,k,n)=>$(id).oninput=e=>{qs[k]=n?qsNum(e.target.value):e.target.value.trim();qsSave();calcSurvey();};
+  bind("#qs-area","area");bind("#qs-hli","hli");bind("#qs-tin","tin",1);bind("#qs-tout","tout",1);
+  $("#qs-maxh").onchange=e=>{qs.maxH=e.target.value;qsSave();calcSurvey();};
+  $("#qs-add").onclick=()=>{const t=$("#qs-add-t").value,n=qs.rooms.filter(r=>r.type===t).length;
+    qs.rooms.push({type:t,name:n?`${t} ${n+1}`:t,l:"",w:"",t:qsTemp(t),maxL:""});qsSave();renderRooms();calcSurvey();
+    $("#qs-rooms").lastElementChild?.querySelector("[data-k=l]")?.focus();};
+  renderRooms();calcSurvey();
+}
+function renderRooms(){
+  $("#qs-rooms").innerHTML=qs.rooms.length?qs.rooms.map((m,i)=>`<div class="qs-room" data-i="${i}">
+      <div class="qs-rh"><input data-k="name" class="qs-name" value="${esc(m.name)}" aria-label="Room name"><button class="cp-x" data-x="${i}" aria-label="Remove room">Remove</button></div>
+      <div class="sz-in qs-4">
+        <label>Length m<input data-k="l" inputmode="decimal" value="${esc(String(m.l))}"></label>
+        <label>Width m<input data-k="w" inputmode="decimal" value="${esc(String(m.w))}"></label>
+        <label>Room °C<input data-k="t" inputmode="decimal" value="${m.t}"></label>
+        <label>Max L mm<input data-k="maxL" inputmode="numeric" placeholder="Any" value="${esc(String(m.maxL))}"></label>
+      </div>
+      <div class="src qs-pick" id="qs-p${i}"></div></div>`).join("")
+    :`<p class="src" style="margin:0">No rooms yet. Pick a room type and tap <b>Add room</b>.</p>`;
+  $("#qs-rooms").querySelectorAll("input[data-k]").forEach(inp=>inp.oninput=()=>{
+    const m=qs.rooms[+inp.closest(".qs-room").dataset.i],k=inp.dataset.k;
+    m[k]=k==="t"?qsNum(inp.value):inp.value.trim();qsSave();calcSurvey();});
+  $("#qs-rooms").querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{qs.rooms.splice(+b.dataset.x,1);qsSave();renderRooms();calcSurvey();});
+}
+function calcSurvey(){
+  const S=KB?.survey,hp=$("#qs-hp"),out=$("#qs-out");if(!S||!hp) return;
+  const w=qsLoss(),rooms=qsRooms();
+  /* The unit for the quote: the one tapped, else the selected unit's range, else the first that covers it. */
+  const opts=S.ranges.map(r=>({r,z:w?qsUnit(r,w):null}));
+  const order=[...opts].sort((a,b)=>(b.r.unit===unit)-(a.r.unit===unit));
+  if(!opts.some(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)) qs.pick="";
+  const def=order.find(o=>o.z), pick=opts.find(o=>o.z&&`${o.r.unit}${o.z.kw}`===qs.pick)||def;
+  hp.innerHTML=w?`<div class="src" style="font-weight:600">Design heat loss</div>
+      <div class="sz-res"><span class="big">${fmt(w/1000)} kW</span><span class="of">${fmt(qsNum(qs.hli),2)} × ${fmt(qsNum(qs.area),1)} m² × ${fmt(qs.tin-qs.tout,0)} K (${fmt(qs.tin,0)} °C in, ${fmt(qs.tout,0)} °C out) = ${Math.round(w)} W</span></div>
+      <div class="src" style="font-weight:600;margin-top:4px">Heat pump · tap to choose for the quote</div>
+      <table class="cu qs-hp"><thead><tr><th>Range</th><th>Unit</th><th>Covers</th></tr></thead><tbody>
+      ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${o===pick?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
+        :`<tr class="small"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td colspan="2">Nothing big enough (largest covers ${o.r.sizes.at(-1).covers} kW)</td></tr>`).join("")}</tbody></table>
+      ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> (${esc(pick.z.model)}).</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
+    :`<p class="src" style="margin:0">Enter the floor area and HLI to size the heat pump.</p>`;
+  hp.querySelectorAll("tr[data-p]").forEach(tr=>tr.onclick=()=>{qs.pick=tr.dataset.p;qsSave();calcSurvey();});
+  /* Per room: heat loss and radiator. */
+  rooms.forEach((m,i)=>{const el=$("#qs-p"+i);if(!el) return;
+    el.innerHTML=!m.loss?(qsNum(qs.hli)>0?"Enter length and width.":"Enter the HLI above.")
+      :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`);});
+  const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
+  const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
+  out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
+    ${pick||rads.length?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
+      ${pick?`<tr class="pick"><td>1</td><td>${esc(pick.r.name)} ${pick.z.kw} kW</td><td>${esc(pick.z.model.split(" ")[0])}</td></tr>`:""}
+      ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>${n}</td><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${r.code}</td></tr>`).join("")}
+    </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
+    :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
+    <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
+    <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${pick||rads.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
+      <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
+      <pre class="summary" id="qs-sum"></pre></div>`;
+  $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
+  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};qsSave();renderSurvey();};
+  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${qs.area} m², HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
+  $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list);
+}
+function quoteRequest(w,pick,rooms,list){
+  const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
+  const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:"radiators"} – ${qs.eir||"location?"}`;
+  const body=`Quote request – HMG quick survey
+
+Site: ${[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"}
+Installer: ${[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"}
+
+Survey (from the BER)
+Floor area: ${qs.area} m²
+HLI: ${qs.hli} W/K·m²
+Design temperatures: ${qs.tin} °C inside, ${qs.tout} °C outside
+Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
+
+Heat pump
+${pick?`1 × ${pick.r.name} ${pick.z.kw} kW (${pick.z.model}), covers up to ${pick.z.covers} kW`:"—"}
+
+Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH} mm high`:""})
+${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
+
+Radiator totals
+${Object.values(list).map(({r,n})=>`${n} × Warmhaus Type ${r.type} ${r.h}×${r.l} (${r.code})`).join("\n")||"—"}
+
+${QS_DISC}`;
+  $("#qs-sum").textContent=body;
+  $("#qs-mail").href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;
+  $("#qs-send").hidden=!CFG.email;$("#qs-send").disabled=false;$("#qs-note").textContent="";
+  $("#qs-how").innerHTML=CFG.email?`Tap <b>Send to Heat Merchants</b>, or <b>Open email</b> to send it from your own mail app.`:`Tap <b>Open email</b>, check it, and press Send. It goes to <span class="addr">${esc(ESC_TO)}</span>.${me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too."}`;
+  $("#qs-send").onclick=async()=>{const btn=$("#qs-send"),note=$("#qs-note");btn.disabled=true;note.textContent="Sending…";
+    try{const r=await api("escalate",{subject,body,replyTo:me("email")});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
+    catch{note.textContent="Couldn't send it. Use Open email instead.";btn.disabled=false;}};
+  $("#qs-copy").onclick=async()=>{try{await navigator.clipboard.writeText(`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`);$("#qs-copy").textContent="Copied";}catch{$("#qs-copy").textContent="Select the text below";}setTimeout(()=>$("#qs-copy").textContent="Copy text",2000);};
+  $("#qs-sent").hidden=false;$("#qs-sent").scrollIntoView({behavior:"smooth"});
 }
 
 /* ---------- Pipe sizing (HMG method, Panasonic J/T-Cap/K/L only) ---------- */
