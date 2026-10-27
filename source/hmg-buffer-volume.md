@@ -1,8 +1,8 @@
-# HMG System Volume, Bypass and Volumiser Guidance (retrofit)
+# HMG System Volume, Bypass and Volumiser Guidance (retrofit and new build)
 
 Cite as **"HMG design guidance"** (Donal Reilly, 27/10/2026), plus any manual page used.
 
-HMG's rule for retrofit systems: how much water volume the heat pump needs, when a buffer or volumiser is needed, and where the bypass goes. It is the first HMG design rule. It is answered in Ask only (no app button, Donal Reilly 27/10/2026).
+HMG's rule for retrofit and new build systems (Donal Reilly, 27/10/2026): how much water volume the heat pump needs, when a buffer or volumiser is needed, and where the bypass goes. It is the first HMG design rule. It is answered in Ask only (no app button, Donal Reilly 27/10/2026).
 
 ---
 
@@ -23,7 +23,7 @@ This is the **total volume available to the heat pump** (Donal Reilly, 27/10/202
 
 ## 2. Zone it upstairs and downstairs first (HMG recommended)
 
-For retrofit, HMG recommends one heating zone upstairs and one downstairs. That gives the volume above. **If the volume is there, no buffer is required.**
+HMG recommends one heating zone upstairs and one downstairs. That gives the volume above. **If the volume is there, no buffer is required.**
 
 ## 3. Underfloor heating: leave wet-room loops open instead of a volumiser
 
@@ -88,4 +88,4 @@ Water only, litres:
 
 The Panasonic manuals give no minimum volume, so the HMG figure is the only figure for the Panasonic units.
 
-New build: this guidance is for retrofit.
+This guidance covers both retrofit and new build.
