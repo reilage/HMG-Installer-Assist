@@ -1,6 +1,6 @@
 // POST /api/surveys  →  saved quick surveys (lib/surveys.js). Free: no Claude call.
-// Body: { action: "save", state, doc, title, site } → { saved: {id, at}, account }   (on Request HMG quote)
-//       { action: "list" }        → { items: [{id, at, title, site}] }   newest first
+// Body: { action: "save", state, doc, name, title, site } → { saved: {id, at}, account }   (on Request HMG quote)
+//       { action: "list" }        → { items: [{id, at, name, title, site}] }   newest first
 //       { action: "open", id }    → { survey: {id, at, title, site, state} }
 //       { action: "delete", id }  → { ok }
 // Saving works with the shared access code too (HMG's copy only); list/open/delete need a personal installer code:
@@ -19,13 +19,13 @@ export default async function handler(req, res) {
   try {
     switch (b.action) {
       case "save": {
-        const saved = await saveSurvey({ who, state: b.state, doc: b.doc, title: b.title, site: b.site });
+        const saved = await saveSurvey({ who, state: b.state, doc: b.doc, name: b.name, title: b.title, site: b.site });
         return saved ? send(res, 200, { saved: { id: saved.id, at: saved.at }, account: !!who.installer }) : send(res, 400, { error: "bad_request" });
       }
       case "list": return send(res, 200, { items: await listSurveys(id) });
       case "open": {
         const s = await openSurvey(id, b.id);
-        return s ? send(res, 200, { survey: { id: s.id, at: s.at, title: s.title, site: s.site, state: s.state } }) : send(res, 404, { error: "not_found" });
+        return s ? send(res, 200, { survey: { id: s.id, at: s.at, name: s.name, title: s.title, site: s.site, state: s.state } }) : send(res, 404, { error: "not_found" });
       }
       case "delete": return send(res, 200, { ok: await deleteSurvey(id, b.id) });
       default: return send(res, 400, { error: "bad_request" });

@@ -104,7 +104,7 @@ details.inst summary::-webkit-details-marker{display:none}
   <div id="app" hidden>
     <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button><button role="tab" aria-selected="false" data-tab="surveys">Surveys</button></div>
     <div id="t-surveys" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
-      <div class="btnrow" style="justify-content:space-between"><h2>Surveys</h2><input id="sv-q" type="search" placeholder="Search site, installer, heat pump" aria-label="Search surveys"></div>
+      <div class="btnrow" style="justify-content:space-between"><h2>Surveys</h2><input id="sv-q" type="search" placeholder="Search name, site, installer, heat pump" aria-label="Search surveys"></div>
       <p class="src">Every quick survey an installer requests a quote for (or clears with New survey), newest first, with the quote list as sent. Installers see their own under My surveys in the app.</p>
       <div id="sv-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
@@ -367,9 +367,9 @@ const svDoc=d=>(d?.blocks||[]).map(b=>!b.h?`<p class="src">${esc(b.note||"")}</p
     :`<div class="sv-wrap"><table class="sv"><thead><tr>${(b.cols||[]).map(c=>`<th>${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${(b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`)).join("");
 function renderSurveys(){
   const q=$("#sv-q").value.trim().toLowerCase();
-  const list=SV.filter(s=>!q||[s.site,s.installer,s.title].join(" ").toLowerCase().includes(q));
-  $("#sv-list").innerHTML=list.length?list.map(s=>`<details class="inst"><summary><span class="name">${esc(s.site||"No site given")}</span><span class="src">${esc(new Date(s.at).toLocaleString("en-IE",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span>
-    <span class="src" style="flex-basis:100%">${esc(s.installer)}${s.title?` · ${esc(s.title)}`:""}</span></summary>${svDoc(s.doc)}</details>`).join("")
+  const list=SV.filter(s=>!q||[s.name,s.site,s.installer,s.title].join(" ").toLowerCase().includes(q));
+  $("#sv-list").innerHTML=list.length?list.map(s=>`<details class="inst"><summary><span class="name">${esc(s.name||s.site||"No site given")}</span><span class="src">${esc(new Date(s.at).toLocaleString("en-IE",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span>
+    <span class="src" style="flex-basis:100%">${s.name&&s.site?`${esc(s.site)} · `:""}${esc(s.installer)}${s.title?` · ${esc(s.title)}`:""}</span></summary>${svDoc(s.doc)}</details>`).join("")
     :`<p class="src">${SV.length?"No surveys match.":"No surveys yet. They're saved when an installer taps Request HMG quote."}</p>`;
 }
 async function loadSurveys(){SV=(await admin({action:"surveys"})).surveys;renderSurveys();}

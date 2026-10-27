@@ -661,7 +661,7 @@ test("my surveys: each quote request is saved on the installer's account, and HM
 
   const s1 = await (await sv({ action: "save", state: { hli: "2.2", rooms: [] }, doc, title: "Baxi HP55 8 kW", site: "Oranmore, H91" }, a.code)).json();
   assert.equal(s1.account, true);
-  await sv({ action: "save", state: { hli: "1.6", rooms: [] }, doc, title: "J-series 7 kW", site: "D01" }, a.code);
+  await sv({ action: "save", state: { hli: "1.6", rooms: [] }, doc, name: "  Kelly   extension ", title: "J-series 7 kW", site: "D01" }, a.code);
   await sv({ action: "save", state: { hli: "3" }, doc, title: "K-series 9 kW", site: "Cork" }, b.code);
   const shared = await (await sv({ action: "save", state: { hli: "1" }, doc, title: "L-series 5 kW", site: "Sligo" }, "shared-code")).json();
   assert.equal(shared.account, false, "shared code: HMG's copy only");
@@ -670,6 +670,8 @@ test("my surveys: each quote request is saved on the installer's account, and HM
   const mine = (await (await sv({ action: "list" }, a.code)).json()).items;
   assert.deepEqual(mine.map(e => e.site), ["D01", "Oranmore, H91"]);
   assert.equal(mine[0].state, undefined, "the list is light");
+  assert.equal(mine[0].name, "Kelly extension", "the survey name (homeowner or project) is kept, tidied");
+  assert.equal(mine[1].name, "");
   const open = (await (await sv({ action: "open", id: s1.saved.id }, a.code)).json()).survey;
   assert.equal(open.state.hli, "2.2");
   assert.equal((await sv({ action: "open", id: s1.saved.id }, b.code)).status, 404, "not someone else's");
@@ -684,4 +686,5 @@ test("my surveys: each quote request is saved on the installer's account, and HM
   assert.deepEqual(all.map(s => s.site), ["Sligo", "Cork", "D01", "Oranmore, H91"]);
   assert.deepEqual(all.map(s => s.installer), ["Shared access code", "Aoife Byrne", "Seán Murphy", "Seán Murphy"]);
   assert.equal(all[0].doc.blocks[0].rows[0][2], "U37935");
+  assert.equal(all[2].name, "Kelly extension", "HMG sees the survey name too");
 });
