@@ -321,6 +321,10 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 .qs-rh{display:flex;gap:8px;align-items:center}
 .qs-name{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font:600 15px var(--f-body);color:var(--fg)}
 .qs-rh .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
+.qs-top{display:flex;justify-content:flex-end}
+table.qs-saved td{font-family:var(--f-body);vertical-align:top}
+.qs-sv-b{text-align:right;white-space:nowrap}.qs-sv-b .btn{padding:6px 12px;margin-right:6px}
+.qs-sv-b .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
 .qs-hsel{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 6px;font:500 13px var(--f-body);color:var(--fg)}
 .qs-4{grid-template-columns:repeat(4,1fr)}
 .qs-4 label{font-size:12px}
@@ -1264,7 +1268,9 @@ function renderSurvey(){
   const box=$("#qs-body"),S=KB?.survey;
   if(!S){box.innerHTML=`<div class="notice">The survey figures haven't loaded yet.</div>`;return;}
   const types=S.rooms.map(r=>r.type);
-  box.innerHTML=`<div class="panel">
+  box.innerHTML=`<div class="qs-top"><button class="btn sec" id="qs-my">My surveys</button></div>
+    <div class="panel" id="qs-saved" hidden></div>
+    <div class="panel">
       <span class="chip warn">Quick estimate · not a design</span>
       <p class="src" style="margin:0">From the BER: the total floor area and the HLI (Heat Loss Indicator, W/K per m²). It sizes the heat pump and picks a Warmhaus radiator for each room, ready to request an HMG quote.</p>
       <div class="src" style="font-weight:600">Floor area</div>
@@ -1302,7 +1308,47 @@ function renderSurvey(){
   $("#qs-add").onclick=()=>{const t=$("#qs-add-t").value,n=qs.rooms.filter(r=>r.type===t).length;
     qs.rooms.push({type:t,name:n?`${t} ${n+1}`:t,l:"",w:"",t:qsTemp(t),maxL:""});qsSave();renderRooms();calcSurvey();
     $("#qs-rooms").lastElementChild?.querySelector("[data-k=l]")?.focus();};
+  $("#qs-my").onclick=()=>{const p=$("#qs-saved");p.hidden=!p.hidden;if(!p.hidden) renderSaved();};
   renderRooms();calcSurvey();
+}
+/* ---------- My surveys: each quote request is saved (lib/surveys.js) so it can be reopened from any phone, and HMG
+   keeps a copy on the admin page. Without a personal installer code they're kept on this phone instead. ---------- */
+const QS_LOCAL="hmg-surveys";
+const qsLocal=()=>{try{return JSON.parse(store.get(QS_LOCAL))||[];}catch{return [];}};
+let qsLastSaved="";
+const qsMe=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
+const qsTitle=(pick,cyl,rooms)=>[pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:"",cyl?.cyl?`${cyl.cyl.litres} L cylinder`:"",rooms.length?`${rooms.length} room${rooms.length===1?"":"s"}`:""].filter(Boolean).join(" · ");
+async function qsSaveRequest(doc,title,site){
+  const state=JSON.parse(JSON.stringify(qs)),key=JSON.stringify(state);
+  if(key===qsLastSaved) return;qsLastSaved=key;
+  let account=false;
+  try{const r=await api("surveys",{action:"save",state,doc,title,site});if(r.ok) account=(await r.json()).account;}catch{}
+  if(!account) store.set(QS_LOCAL,JSON.stringify([{id:String(Date.now()),at:new Date().toISOString(),title,site,state},...qsLocal()].slice(0,30)));
+  if(!$("#qs-saved")?.hidden) renderSaved();
+}
+let qsFrom="phone";
+async function renderSaved(){
+  const p=$("#qs-saved");p.innerHTML=`<p class="src" style="margin:0">Loading…</p>`;
+  let items=null;qsFrom="phone";
+  try{const r=await api("surveys",{action:"list"});if(r.ok){items=(await r.json()).items;qsFrom="account";}}catch{}
+  if(!items) items=qsLocal().map(({id,at,title,site})=>({id,at,title,site}));
+  const when=t=>new Date(t).toLocaleString("en-IE",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});
+  p.innerHTML=`<div class="box-h" style="margin:0">My surveys</div>
+    <p class="src" style="margin:0">Every survey you request a quote for is saved here${qsFrom==="account"?" on your account":" on this phone"}. Open one to change it or send it again.</p>
+    ${items.length?`<table class="cu qs-saved"><tbody>${items.map(e=>`<tr data-id="${esc(e.id)}"><td><b>${esc(e.site||"No site given")}</b><div class="src">${esc(e.title||"")}</div><div class="src">${when(e.at)}</div></td>
+      <td class="qs-sv-b"><button class="btn sec" data-open>Open</button><button class="cp-x" data-del aria-label="Delete survey">Delete</button></td></tr>`).join("")}</tbody></table>`
+      :`<p class="src" style="margin:0">None yet. They're saved when you tap <b>Request HMG quote</b>.</p>`}`;
+  p.querySelectorAll("tr[data-id]").forEach(tr=>{const id=tr.dataset.id;
+    tr.querySelector("[data-open]").onclick=async()=>{
+      let st=null;
+      if(qsFrom==="account"){try{const r=await api("surveys",{action:"open",id});if(r.ok) st=(await r.json()).survey.state;}catch{}}
+      else st=qsLocal().find(e=>e.id===id)?.state;
+      if(!st){tr.querySelector(".src").textContent="Couldn't open it. Try again.";return;}
+      qs=st;if(qs.radH===undefined) qs.radH=+qs.maxH||600;qsLastSaved=JSON.stringify(qs);qsSave();renderSurvey();$("#qs-body").scrollIntoView({behavior:"smooth"});};
+    tr.querySelector("[data-del]").onclick=async()=>{
+      if(qsFrom==="account") await api("surveys",{action:"delete",id}).catch(()=>{});
+      else store.set(QS_LOCAL,JSON.stringify(qsLocal().filter(e=>e.id!==id)));
+      tr.remove();};});
 }
 function renderRooms(){
   $("#qs-rooms").innerHTML=qs.rooms.length?qs.rooms.map((m,i)=>`<div class="qs-room" data-i="${i}">
@@ -1372,7 +1418,9 @@ function calcSurvey(){
       <div class="qs-doc" id="qs-sum"></div></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
-  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
+  /* New survey: the one on screen is saved first if it has anything in it (and isn't saved already). */
+  $("#qs-new").onclick=async()=>{if(w||rooms.some(m=>m.loss)||lines.length) await qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "));
+    qs={area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
   $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}${+m.h&&+m.h!==+qs.radH?` (radiator ${m.h} mm high)`:""}`).join("; ")}. Which Warmhaus radiators, ${qsH()} mm high?`:""));};
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
 }
@@ -1408,11 +1456,12 @@ function qsDocHtml(d){
     +`</section>`).join("");
 }
 function quoteRequest(w,pick,rooms,list,cyl,lines){
-  const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
+  const me=qsMe;
   const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir||"location?"}`;
   /* The quote request as headed sections and tables: shown as tables in the app (and in the email once Resend sends it),
      and as tidy plain text for mailto and Copy, which can't carry tables. */
   const doc=qsDoc(w,pick,rooms,cyl,lines,me),body=qsDocText(doc);
+  qsSaveRequest(doc,qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "));
   $("#qs-sum").innerHTML=qsDocHtml(doc);
   const csv=qsCsv(lines),fname=`HMG-quote-${(qs.eir||"site").replace(/[^\w-]+/g,"").slice(0,20)||"site"}-${new Date().toISOString().slice(0,10)}.csv`;
   const csvFile=()=>new File([csv],fname,{type:"text/csv"});

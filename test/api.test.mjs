@@ -649,3 +649,39 @@ test("my questions: each installer's questions and answers are kept on their acc
   assert.equal(shared.status, 409); assert.equal((await shared.json()).error, "no_account");
   assert.equal((await hist({ action: "list" })).status, 401);
 });
+
+test("my surveys: each quote request is saved on the installer's account, and HMG sees them all on the admin page", async () => {
+  await stop(app);
+  app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "shared-code", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "0", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
+  const admin = body => fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) });
+  const add = async name => (await (await admin({ action: "add", name })).json()).installer;
+  const a = await add("Seán Murphy"), b = await add("Aoife Byrne");
+  const sv = (body, code) => fetch(BASE + "/api/surveys", { method: "POST", headers: { "Content-Type": "application/json", ...(code ? { "X-Access-Code": code } : {}) }, body: JSON.stringify(body) });
+  const doc = { title: "Quote request – HMG quick survey", blocks: [{ h: "Quote list", cols: [{ h: "Product" }, { h: "Qty" }, { h: "Code" }], rows: [["Motorised valve", 2, "U37935"]] }] };
+
+  const s1 = await (await sv({ action: "save", state: { hli: "2.2", rooms: [] }, doc, title: "Baxi HP55 8 kW", site: "Oranmore, H91" }, a.code)).json();
+  assert.equal(s1.account, true);
+  await sv({ action: "save", state: { hli: "1.6", rooms: [] }, doc, title: "J-series 7 kW", site: "D01" }, a.code);
+  await sv({ action: "save", state: { hli: "3" }, doc, title: "K-series 9 kW", site: "Cork" }, b.code);
+  const shared = await (await sv({ action: "save", state: { hli: "1" }, doc, title: "L-series 5 kW", site: "Sligo" }, "shared-code")).json();
+  assert.equal(shared.account, false, "shared code: HMG's copy only");
+
+  // the installer sees only their own, newest first, and can reopen one
+  const mine = (await (await sv({ action: "list" }, a.code)).json()).items;
+  assert.deepEqual(mine.map(e => e.site), ["D01", "Oranmore, H91"]);
+  assert.equal(mine[0].state, undefined, "the list is light");
+  const open = (await (await sv({ action: "open", id: s1.saved.id }, a.code)).json()).survey;
+  assert.equal(open.state.hli, "2.2");
+  assert.equal((await sv({ action: "open", id: s1.saved.id }, b.code)).status, 404, "not someone else's");
+  assert.equal((await sv({ action: "list" }, "shared-code")).status, 409);
+  assert.equal((await sv({ action: "list" })).status, 401);
+  assert.equal((await sv({ action: "save", state: { x: "y".repeat(70000) }, doc }, a.code)).status, 400, "too big");
+
+  // deleting from My surveys keeps HMG's copy
+  assert.equal((await (await sv({ action: "delete", id: s1.saved.id }, a.code)).json()).ok, true);
+  assert.deepEqual((await (await sv({ action: "list" }, a.code)).json()).items.map(e => e.site), ["D01"]);
+  const all = (await (await admin({ action: "surveys" })).json()).surveys;
+  assert.deepEqual(all.map(s => s.site), ["Sligo", "Cork", "D01", "Oranmore, H91"]);
+  assert.deepEqual(all.map(s => s.installer), ["Shared access code", "Aoife Byrne", "Seán Murphy", "Seán Murphy"]);
+  assert.equal(all[0].doc.blocks[0].rows[0][2], "U37935");
+});

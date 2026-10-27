@@ -11,6 +11,7 @@
 //       { action: "answer_edit", id, text }    reword a stored answer (it then stays, even if an installer says it didn't help) → { answer }
 //       { action: "answer_delete", id }        → { ok }
 //       { action: "answers_clear", unit? }     clear all stored answers, or one unit's → { cleared }
+//       { action: "surveys" }                  saved quick surveys (lib/surveys.js), newest 300 → { surveys: [{id, at, installer, title, site, doc}] }
 // "list" also returns the access requests waiting for approval, as requests: [...].
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
@@ -19,6 +20,7 @@ import { emailEnabled } from "../lib/email.js";
 import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
+import { allSurveys } from "../lib/surveys.js";
 import { storedOn, listAnswers, editAnswer, deleteAnswer, clearAnswers } from "../lib/answers.js";
 import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
 
@@ -87,6 +89,8 @@ export default async function handler(req, res) {
         return send(res, 200, { ok: true });
       case "answers_clear":
         return send(res, 200, { cleared: await clearAnswers(b.unit) });
+      case "surveys":
+        return send(res, 200, { surveys: (await allSurveys()).slice(0, 300) });
       case "decline":
         await deleteRequest(String(b.id || ""));
         return send(res, 200, { ok: true });

@@ -74,6 +74,11 @@ input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline
 .tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;font-weight:600;color:var(--muted);cursor:pointer}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--hmg-cyan)}
 select{font:inherit;color:inherit;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;max-width:100%}
+table.sv{border-collapse:collapse;width:100%;font-size:14px;margin:4px 0 10px}
+table.sv th,table.sv td{text-align:left;padding:5px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.sv thead th{border-bottom:2px solid var(--hmg-cyan);font-size:12.5px;color:var(--muted)}
+table.sv.kv th{width:35%;color:var(--muted);font-weight:600}
+.sv-wrap{overflow-x:auto}
 .summary p{margin:0 0 6px}.summary ul{margin:0 0 10px;padding-left:20px}.summary li{margin:2px 0}
 .rows{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
 .rows li{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--sunk);padding:4px 0}
@@ -97,7 +102,12 @@ details.inst summary::-webkit-details-marker{display:none}
   </form>
 
   <div id="app" hidden>
-    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button></div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button><button role="tab" aria-selected="false" data-tab="surveys">Surveys</button></div>
+    <div id="t-surveys" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
+      <div class="btnrow" style="justify-content:space-between"><h2>Surveys</h2><input id="sv-q" type="search" placeholder="Search site, installer, heat pump" aria-label="Search surveys"></div>
+      <p class="src">Every quick survey an installer requests a quote for (or clears with New survey), newest first, with the quote list as sent. Installers see their own under My surveys in the app.</p>
+      <div id="sv-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
     <div id="t-answers" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
       <div class="btnrow" style="justify-content:space-between"><h2>Stored answers</h2><select id="sa-unit" aria-label="Unit"><option value="">All units</option><option value="J">J-series</option><option value="T">J-series T-Cap</option><option value="L">L-series R290</option><option value="K">K-series</option><option value="B">Baxi HP55</option></select></div>
       <p class="src">The first time a question is asked, Claude's answer is kept here. When an installer asks the same question again for the same unit, they get this answer straight away, free, and it doesn't use one of their questions for the day. Installers can tap "Didn't help" to get a fresh answer from Claude, which then replaces the stored one. Answers are cleared for a unit when its manuals or field notes change. Edit an answer to fix its wording: an edited answer stays even if an installer says it didn't help.</p>
@@ -350,9 +360,24 @@ $("#sa-clear").onclick=async()=>{
   try{await admin({action:"answers_clear",unit:u||undefined});await loadAnswers();}catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
 };
 
+/* Surveys: the quote requests as sent (lib/surveys.js), shown with the same sections and tables. */
+let SV=null;
+const svDoc=d=>(d?.blocks||[]).map(b=>!b.h?`<p class="src">${esc(b.note||"")}</p>`:`<h3 style="margin:10px 0 4px">${esc(b.h)}</h3>${b.note?`<p class="src" style="margin:0 0 4px">${esc(b.note)}</p>`:""}`
+  +(b.kv?`<table class="sv kv"><tbody>${b.kv.map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>`
+    :`<div class="sv-wrap"><table class="sv"><thead><tr>${(b.cols||[]).map(c=>`<th>${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${(b.rows||[]).map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`)).join("");
+function renderSurveys(){
+  const q=$("#sv-q").value.trim().toLowerCase();
+  const list=SV.filter(s=>!q||[s.site,s.installer,s.title].join(" ").toLowerCase().includes(q));
+  $("#sv-list").innerHTML=list.length?list.map(s=>`<details class="inst"><summary><span class="name">${esc(s.site||"No site given")}</span><span class="src">${esc(new Date(s.at).toLocaleString("en-IE",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}</span>
+    <span class="src" style="flex-basis:100%">${esc(s.installer)}${s.title?` · ${esc(s.title)}`:""}</span></summary>${svDoc(s.doc)}</details>`).join("")
+    :`<p class="src">${SV.length?"No surveys match.":"No surveys yet. They're saved when an installer taps Request HMG quote."}</p>`;
+}
+async function loadSurveys(){SV=(await admin({action:"surveys"})).surveys;renderSurveys();}
+$("#sv-q").oninput=()=>SV&&renderSurveys();
 document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=async()=>{
   document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
-  const tab=t.dataset.tab, tr=tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tab!=="accounts";$("#t-answers").hidden=tab!=="answers";
+  const tab=t.dataset.tab, tr=tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tab!=="accounts";$("#t-answers").hidden=tab!=="answers";$("#t-surveys").hidden=tab!=="surveys";
+  if(tab==="surveys"){$("#sv-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadSurveys();}catch(err){if(err.code) $("#sv-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tab==="answers"){$("#sa-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadAnswers();}catch(err){if(err.code) $("#sa-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tr&&!TR){$("#tr-summary").innerHTML=`<p class="src">Loading…</p>`;try{await loadTrends();}catch(err){if(err.code) $("#tr-summary").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
 });
