@@ -59,4 +59,4 @@ HMG cylinders (Donal Reilly, 27/10/2026), sized by bedrooms:
 
 ## 5. Request an HMG quote
 
-Design › Quick survey has **Request HMG quote**: it emails the unit, cylinder and radiator list, with the survey figures and the installer's details, to HMG (donal.reilly@heatmerchants.ie), the same way as Escalate.
+Design › Quick survey has **Request HMG Design**, then **Send Email & Quick Design**: it sends HMG Technical Design (donal.reilly@heatmerchants.ie) a written request for a full SR 50 design, with the quotation PDF (survey, quote list, prices and product data sheets) and the quote list CSV attached, and the installer's details. **Download PDF** gives the installer the quotation on its own.
