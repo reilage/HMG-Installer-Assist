@@ -884,7 +884,7 @@ let clSize="small";
 /* Design topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
 function installTopic(s){
   document.querySelectorAll("#install-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.s===s));
-  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#qs-body").hidden=s!=="qs";$("#cp-body").hidden=s!=="cp";
+  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#qs-body").hidden=s!=="qs";if(s==="qs") qsLoadPrices(); /* fresh prices and discounts each time it opens */$("#cp-body").hidden=s!=="cp";
 }
 document.querySelectorAll("#install-seg button").forEach(b=>b.onclick=()=>installTopic(b.dataset.s));
 function clFig(c,m){

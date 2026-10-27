@@ -717,7 +717,7 @@ test("prices: placeholder RRPs until HMG loads a list, standard discount per pro
   const l = await admin({ action: "list" });
   assert.equal(l.groups.length, 14); assert.equal(l.standard.rad_33, 60);
   const shared = await (await prices("shared-code")).json();
-  assert.deepEqual(shared.discounts, {}); assert.equal(shared.placeholder, true);
+  assert.equal(shared.discounts.K, 28, "the shared code gets the standard discounts"); assert.equal(shared.discounts.J, 32); assert.equal(shared.placeholder, true);
   await admin({ action: "update", id: a.id, discounts: { J: "", kit_mv: "10" } });
   assert.deepEqual((await admin({ action: "update", id: a.id, name: "Seán Murphy" })).installer.discounts, { kit_mv: 10 }, "other edits keep the discounts");
 
