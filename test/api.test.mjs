@@ -689,7 +689,7 @@ test("my surveys: each quote request is saved on the installer's account, and HM
   assert.equal(all[2].name, "Kelly extension", "HMG sees the survey name too");
 });
 
-test("prices: placeholder RRPs until HMG loads a list, each installer's discount per product group, pasted from Excel", async () => {
+test("prices: placeholder RRPs until HMG loads a list, standard discount per product group and an installer's own, pasted from Excel", async () => {
   await stop(app);
   app = await startApp({ ANTHROPIC_API_KEY: "test-key", APP_ACCESS_CODE: "shared-code", ADMIN_CODE: "admin-secret", DAILY_QUESTION_LIMIT: "0", KV_REST_API_URL: "", UPSTASH_REDIS_REST_URL: "" });
   const admin = async body => (await fetch(BASE + "/api/admin", { method: "POST", headers: { "Content-Type": "application/json", "X-Admin-Code": "admin-secret" }, body: JSON.stringify(body) })).json();
@@ -703,19 +703,23 @@ test("prices: placeholder RRPs until HMG loads a list, each installer's discount
   for (const c of ["UE0208", "U88454", "UE0035", "UB7317", "U37935"]) assert.ok(catalogue.some(x => x.code === c), c);
   assert.ok(catalogue.every(c => p0.items[c.code] > 0));
 
-  // the discount is per installer and per product group; the shared code gets RRP only
-  const { installer: a } = await admin({ action: "add", name: "Seán Murphy", discounts: { hp: "22.5", rad: "35", cyl: "" } });
-  assert.deepEqual(a.discounts, { hp: 22.5, indoor: 0, cyl: 0, kit: 0, rad: 35 });
+  // HMG's standard discount per product group, an installer's own % for a group on top; the shared code gets RRP only
+  const { installer: a } = await admin({ action: "add", name: "Seán Murphy", discounts: { J: "35", rad_22: "", K: " " } });
+  assert.deepEqual(a.discounts, { J: 35 }, "blank = standard");
+  const std = (await admin({ action: "discounts_set", discounts: { J: "32", K: "28", rad_11: "48", rad_22: "55", rad_33: "60", kit_mv: "34", B: "150" } })).discounts;
+  assert.equal(std.J, 32); assert.equal(std.B, 100); assert.equal(std.T, 0);
   const pa = await (await prices(a.code)).json();
-  assert.deepEqual(pa.discounts, a.discounts);
-  assert.equal(pa.groups.UE0208, "hp"); assert.equal(pa.groups.U88454, "indoor"); assert.equal(pa.groups.UB7317, "cyl");
-  assert.equal(pa.groups.U37935, "kit"); assert.equal(pa.groups.U28159, "rad");
-  assert.deepEqual((await admin({ action: "list" })).groups.map(g => g.id), ["hp", "indoor", "cyl", "kit", "rad"]);
+  assert.equal(pa.discounts.J, 35, "own"); assert.equal(pa.discounts.K, 28, "standard"); assert.equal(pa.discounts.rad_22, 55);
+  for (const [code, g] of [["UE0208", "J"], ["U39412", "T"], ["U88448", "K"], ["U88451", "K"], ["U88454", "L"], ["UM0074", "B"], ["UE0035", "B"],
+    ["UB7317", "cyl_pre"], ["U95447", "cyl_non"], ["U37935", "kit_mv"], ["U07346", "kit_bp"], ["UB7176", "kit_3w"], ["U94515", "kit_uv"], ["U28159", "rad_11"], ["U28195", "rad_22"]])
+    assert.equal(pa.groups[code], g, code);
+  assert.ok(catalogue.every(c => c.group), "every code has a group");
+  const l = await admin({ action: "list" });
+  assert.equal(l.groups.length, 14); assert.equal(l.standard.rad_33, 60);
   const shared = await (await prices("shared-code")).json();
   assert.deepEqual(shared.discounts, {}); assert.equal(shared.placeholder, true);
-  assert.equal((await admin({ action: "update", id: a.id, discounts: { hp: "150" } })).installer.discounts.hp, 100);
-  await admin({ action: "update", id: a.id, discounts: { hp: "15", kit: "10" } });
-  assert.equal((await admin({ action: "update", id: a.id, name: "Seán Murphy" })).installer.discounts.hp, 15, "other edits keep the discounts");
+  await admin({ action: "update", id: a.id, discounts: { J: "", kit_mv: "10" } });
+  assert.deepEqual((await admin({ action: "update", id: a.id, name: "Seán Murphy" })).installer.discounts, { kit_mv: 10 }, "other edits keep the discounts");
 
   // pasted from Excel (tab-separated, € and thousands commas), headings and unpriced rows skipped
   assert.equal((await admin({ action: "prices_set", text: "Category\tProduct\tHMG code\tRRP (€)\n" })).error, "no_prices");
@@ -724,7 +728,7 @@ test("prices: placeholder RRPs until HMG loads a list, each installer's discount
   assert.deepEqual(set.unknown, ["U99999"]);
   assert.ok(set.missing.includes("UB7317"));
   const mine = await (await prices(a.code)).json();
-  assert.equal(mine.placeholder, false); assert.equal(mine.vat, 13.5); assert.equal(mine.exVat, true); assert.deepEqual(mine.discounts, { hp: 15, indoor: 0, cyl: 0, kit: 10, rad: 0 });
+  assert.equal(mine.placeholder, false); assert.equal(mine.vat, 13.5); assert.equal(mine.exVat, true); assert.equal(mine.discounts.kit_mv, 10); assert.equal(mine.discounts.J, 32);
   assert.equal(mine.items.UB7317, undefined, "no price: the branch prices it");
 
   assert.equal((await admin({ action: "prices_vat", exVat: false, vat: "23" })).prices.vat, null, "inc VAT prices add no VAT");
