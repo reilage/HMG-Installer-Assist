@@ -124,20 +124,21 @@ test("the HMG heating curve is in the rules, with the Baxi gradient and base wor
   assert.match(b, /CP000 max flow = 45 °C \(rads\) or 35 °C \(UFH\)/);
 });
 
-test("the HMG volume, bypass and volumiser rule is in the rules, with each unit's own minimum", async () => {
+test("the HMG volume, bypass and volumiser rule is in the rules, with each unit's own total volume", async () => {
   mock.seen.length = 0;
   for (const unit of ["J", "T", "B", "K", "L"]) await events(await ask({ unit, text: "Do I need a buffer on this job?" }));
   const [j, t, b, k, l] = mock.seen.map(s => s.body.system[0].text);
   for (const x of [j, t, b, k, l]) {
     assert.match(x, /HMG DESIGN GUIDANCE \(system volume, bypass, volumiser\)/);
-    assert.match(x, /bypass valve is always mandatory/);
+    assert.match(x, /minimum TOTAL volume available to the heat pump/);
     assert.match(x, /HMG prefer to avoid a hydraulic break/);
+    assert.match(x, /With a 4-port buffer, no bypass is needed between the heat pump and the buffer, but one is required on the secondary side/);
   }
-  assert.match(j, /Mini Monobloc \(5, 7 and 9 kW\) HMG's minimum is 30 L in each zone/);
-  assert.match(t, /T-Cap \(9 and 12 kW\) HMG's minimum is 50 L in each zone/);
-  assert.match(b, /Baxi HP55 HMG's minimum is 30 L in each zone[^\n]*work to the higher/);
-  assert.match(k, /HMG has NO volume figure for the K-series/);
-  assert.match(l, /HMG has NO volume figure for the L-series/);
+  assert.match(j, /Mini Monobloc \(5, 7 and 9 kW\) it is 30 L/);
+  assert.match(t, /T-Cap \(9 and 12 kW\) it is 50 L/);
+  assert.match(b, /30 L on the 4 and 6 kW and 50 L on the 8, 11 and 13 kW/);
+  assert.match(k, /K-series 5, 7 and 9 kW it is 30 L. HMG has no figure for the 3 kW/);
+  assert.match(l, /L-series 5, 7 and 9 kW it is 30 L/);
 });
 
 test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi gets none", async () => {
