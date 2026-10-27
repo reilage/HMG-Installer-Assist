@@ -174,8 +174,9 @@ test("the HMG quick survey (BER HLI sizing, HMG bands, disclaimer) is in the rul
     assert.match(x, /A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance/);
     assert.match(x, /Source: HMG quick survey guidance/);
     assert.match(x, /up to 3 bedrooms 200 L; 4 to 7 bedrooms 300 L; over 7 bedrooms: talk to HMG/);
-    assert.match(x, /Pre-plumbed: 200 L UB7317 .*; 300 L UB7318/);
+    assert.match(x, /Pre-plumbed \(Xylinder\): 200 L UB7317 200 L Xylinder Pre-Plumbed Cylinder.*; 300 L UB7318/);
     assert.match(x, /200 L U95447 .*300 L U95448 .*ALWAYS add its kit: 2 × U37935 Motorised valve, 1 × U07346 Bypass valve, 1 × U94515 Unvented kit, 1 × UB7176 3-way valve/);
+    assert.match(x, /Only the J-series Mini Monobloc, J-series T-Cap and Baxi get a cylinder/);
     assert.match(x, /NO separate cylinder: Panasonic L-series R290 180 L, Panasonic K-series split 180 L/);
   }
 });

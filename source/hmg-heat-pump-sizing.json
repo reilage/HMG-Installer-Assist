@@ -42,9 +42,9 @@
     "bands": [ { "maxBeds": 3, "litres": 200 }, { "maxBeds": 7, "litres": 300 } ],
     "builtIn": { "L": 180, "K": 180 },
     "types": [
-      { "id": "pre", "name": "Pre-plumbed", "list": [
-        { "litres": 200, "code": "UB7317", "item": "200 L Pre-Plumbed Cylinder" },
-        { "litres": 300, "code": "UB7318", "item": "300 L Pre-Plumbed Cylinder" } ] },
+      { "id": "pre", "name": "Pre-plumbed (Xylinder)", "list": [
+        { "litres": 200, "code": "UB7317", "item": "200 L Xylinder Pre-Plumbed Cylinder" },
+        { "litres": 300, "code": "UB7318", "item": "300 L Xylinder Pre-Plumbed Cylinder" } ] },
       { "id": "non", "name": "Not pre-plumbed", "list": [
         { "litres": 200, "code": "U95447", "item": "200 L Panasonic Aquarea Non Pre-Plumbed Cylinder" },
         { "litres": 300, "code": "U95448", "item": "300 L Panasonic Aquarea Cylinder" } ],

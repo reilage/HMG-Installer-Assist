@@ -53,9 +53,9 @@ Pick the smallest unit in the range whose band covers the heat loss. The band is
 HMG cylinders (Donal Reilly, 27/10/2026), sized by bedrooms:
 
 - **Up to 3 bedrooms: 200 L.** 4 to 7 bedrooms: **300 L.** Over 7 bedrooms: talk to HMG.
-- **Pre-plumbed:** 200 L UB7317, 300 L UB7318.
+- **Pre-plumbed (Xylinder):** 200 L UB7317, 300 L UB7318.
 - **Not pre-plumbed (Panasonic Aquarea):** 200 L U95447, 300 L U95448. Always supplied with its kit: 2 × motorised valve U37935, bypass valve U07346, unvented kit U94515, 3-way valve UB7176.
-- **L-series and K-series** hold their hot water in the 180 L all-in-one indoor unit, so no separate cylinder. If the bedrooms call for 300 L, talk to HMG.
+- **Only the J-series, T-Cap and Baxi get a cylinder.** The **L-series and K-series** hold their hot water in the 180 L all-in-one indoor unit, so no separate cylinder. If the bedrooms call for 300 L, talk to HMG.
 
 ## 5. Request an HMG quote
 
