@@ -1488,14 +1488,14 @@ function calcSurvey(){
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
   $("#qs-pdf").onclick=()=>qsPdf(w,pick,rooms,cyl,lines);
 }
-/* Quote list as CSV (Product, Qty, Code, Room, then RRP, Discount %, Net as plain numbers so they paste into Excel or
+/* Quote list as CSV (Product, Qty, Code, Room, then RRP and Net as plain numbers so they paste into Excel or
    the ERP as numbers), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. One row per line, no totals. */
 const qsCsv=lines=>{const p=qsPriced(lines),t=p.tot;
-  return "\ufeff"+[["Product","Qty","Code","Room",...(t?["RRP","Discount %","Net"]:[])],...p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",...(t?(h.rrp==null?["","",""]:[h.rrp.toFixed(2),h.d,h.net.toFixed(2)]):[])])]
+  return "\ufeff"+[["Product","Qty","Code","Room",...(t?["RRP","Net"]:[])],...p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",...(t?(h.rrp==null?["",""]:[h.rrp.toFixed(2),h.net.toFixed(2)]):[])])]
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";};
 /* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
    The server renders the same shape as an HTML email (lib/quote-email.js). */
-/* pdf: the installer's own copy (Download PDF): titled a quotation, no CSV note and no discount % column. */
+/* pdf: the installer's own copy (Download PDF): titled a quotation, no CSV note. */
 function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
   const mixed=qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH);
   const hot=cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L, `
@@ -1510,14 +1510,11 @@ function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
       rows:rooms.map(m=>[m.name,`${fmt(m.area,1)} m²`,`${Math.round(m.loss)} W${m.t!==21?` (${m.t} °C)`:""}`,m.rad?`${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}`:"Needs a design",m.rad?m.rad.r.code:"",m.rad?`${m.rad.w} W`:""])}]:[]),
     ...(()=>{const p=qsPriced(lines),t=p.tot;
       if(!t) return [{h:"Quote list",note:pdf?"":"Also attached as a CSV file (Product, Qty, Code, Room).",cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"}],rows:lines.map(h=>[h.item,h.qty,h.code,h.room||""])}];
-      if(pdf) return [{h:"Quote list",note:`RRP each ${t.exVat?"ex":"inc"} VAT; net after your account discount.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
-        cols:[{h:"Product"},{h:"Qty"},{h:"Code"},{h:"Room"},{h:"RRP"},{h:"Net"}],
+      /* RRP and net only, no discount % (Donal 27/10/2026), on the PDF and the HMG quote request alike. */
+      return [{h:"Quote list",note:`${pdf?"":"Also attached as a CSV file (Product, Qty, Code, Room, RRP, Net). "}RRP each ${t.exVat?"ex":"inc"} VAT; net after ${pdf?"your":"the installer's"} account discount.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
+        cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"},{h:"RRP",t:"RRP "},{h:"Net",t:"net "}],
         rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null?"":eur(h.net)])},
-        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: your branch will price ${t.missing===1?"it":"them"}`]]:[])]}];
-      return [{h:"Quote list",note:`Also attached as a CSV file (Product, Qty, Code, Room, RRP, Discount %, Net). RRP each ${t.exVat?"ex":"inc"} VAT${t.d?", less the installer's account discount for each product group":""}.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
-        cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"},{h:"RRP",t:"RRP "},{h:"Disc.",t:"less "},{h:"Net",t:"net "}],
-        rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null||!h.d?"":`${h.d}%`,h.rrp==null?"":eur(h.net)])},
-        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
+        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: ${pdf?`your branch will price ${t.missing===1?"it":"them"}`:"please price"}`]]:[])]}];})(),
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
 }
 /* Download PDF (Donal 27/10/2026): the quotation as a branded A4 PDF file, with the disclaimer, made on the phone and
