@@ -48,6 +48,15 @@ Pick the smallest unit in the range whose band covers the heat loss. The band is
 - Rooms not listed (e.g. a landing with no radiator) still count in the heat pump size, which uses the whole floor area at 21 °C.
 - Radiator per room from the HMG radiator list (Warmhaus) at 45 °C flow, 5 °C drop, at that room's temperature: the closest Type 22 above the room heat loss, within the maximum height (600 mm unless the installer says otherwise) and any maximum length. If no single Type 22 fits, two Type 22s that add up to it, otherwise a Type 33.
 
-## 4. Request an HMG quote
+## 4. Hot water cylinder
 
-Design › Quick survey has **Request HMG quote**: it emails the unit and radiator list, with the survey figures and the installer's details, to HMG (donal.reilly@heatmerchants.ie), the same way as Escalate.
+HMG cylinders (Donal Reilly, 27/10/2026), sized by bedrooms:
+
+- **Up to 3 bedrooms: 200 L.** 4 to 7 bedrooms: **300 L.** Over 7 bedrooms: talk to HMG.
+- **Pre-plumbed:** 200 L UB7317, 300 L UB7318.
+- **Not pre-plumbed (Panasonic Aquarea):** 200 L U95447, 300 L U95448. Always supplied with its kit: 2 × motorised valve U37935, bypass valve U07346, unvented kit U94515, 3-way valve UB7176.
+- **L-series and K-series** hold their hot water in the 180 L all-in-one indoor unit, so no separate cylinder. If the bedrooms call for 300 L, talk to HMG.
+
+## 5. Request an HMG quote
+
+Design › Quick survey has **Request HMG quote**: it emails the unit, cylinder and radiator list, with the survey figures and the installer's details, to HMG (donal.reilly@heatmerchants.ie), the same way as Escalate.
