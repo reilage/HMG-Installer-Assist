@@ -167,6 +167,8 @@ test("the HMG quick survey (BER HLI sizing, HMG bands, disclaimer) is in the rul
     assert.match(x, /Baxi Assure HP55 R290: 4 kW .* covers up to 4\.9 kW; 6 kW .* covers up to 6\.1 kW; 8 kW .* covers up to 7\.8 kW; 11 kW .* covers up to 12\.1 kW; 13 kW .* covers up to 13\.7 kW/);
     assert.match(x, /Panasonic K-series split: 5 kW .* covers up to 5 kW; 7 kW .* covers up to 7 kW; 9 kW .* covers up to 8 kW/);
     assert.match(x, /21 °C for every room/);
+    assert.match(x, /7 kW \(HMG code U88456 Panasonic L-series R290 7 kW outdoor unit \+ U88454 L-series R290 180 L all-in-one indoor unit\)/);
+    assert.match(x, /9 kW \(HMG code U88452 Panasonic K-series split 9 kW outdoor unit \+ U88448 K-series split 180 L all-in-one indoor unit\)/);
     assert.match(x, /4 kW \(HMG code UM0074 Baxi Assure HP55 4 kW outdoor unit \+ UE0035 Baxi indoor controller/);
     assert.match(x, /no total floor area, add up the room areas/);
     assert.match(x, /A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance/);
