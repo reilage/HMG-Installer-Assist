@@ -1213,8 +1213,10 @@ function calcRad(){
    Rooms: HLI × room area × (room °C − outside), then the closest Type 22 above at 45 °C flow (pair of 22s, then a 33). */
 const QS_KEY="hmg-survey";
 const QS_DISC="Quick estimate only, from the BER HLI. A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance.";
-/* Prices (Donal Reilly 27/10/2026): the guide price must be checked by the branch, and needs the full SR 50 design. */
-const QS_PRICE_DISC="Quick estimate only, from the BER HLI. The prices are a guide to work from: this quotation must be verified by your local HMG branch, along with a full SR 50 heat loss calculation by HMG Technical Design for designer sign-off and professional indemnity insurance.";
+/* Prices (Donal Reilly 27/10/2026): the quotation is non-binding, every price must be verified by the branch or BDM, and it
+   needs the full SR 50 design. On every priced quote: app, quote request, email and saved survey. */
+const QS_NONBINDING="Non-binding quotation: each price must be verified by your local HMG branch or BDM.";
+const QS_PRICE_DISC="Quick estimate only, from the BER HLI. This quotation is non-binding: each price must be verified by your local HMG branch or BDM, along with a full SR 50 heat loss calculation by HMG Technical Design for designer sign-off and professional indemnity insurance.";
 /* The price list (api/prices, lib/prices.js): RRP per HMG code, each code's product group and this installer's discount %
    for each group (it differs by group, Donal 27/10/2026). Null until loaded. */
 let QP=null;
@@ -1453,6 +1455,7 @@ function calcSurvey(){
     :`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th><th>Room</th></tr></thead><tbody>
       ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td><td>${esc(h.room||"")}</td></tr>`).join("")}
     </tbody></table>`)+`${pr.tot?`<table class="cu qs-tot"><tbody>${qsTotRows(pr.tot).map(([k,v],i,a)=>`<tr${i===a.length-1||k.startsWith("Net")?` class="net"`:""}><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>
+      <p class="src" style="margin:0"><b>${QS_NONBINDING}</b></p>
       ${pr.tot.missing?`<p class="src" style="margin:0">${pr.tot.missing} line${pr.tot.missing===1?" has":"s have"} no price yet and ${pr.tot.missing===1?"isn't":"aren't"} in the total: your branch will price ${pr.tot.missing===1?"it":"them"}.</p>`:""}`:""}${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${pr.tot?QS_PRICE_DISC:QS_DISC}</div>
@@ -1493,7 +1496,7 @@ function qsDoc(w,pick,rooms,cyl,lines,me){
       return [{h:"Quote list",note:`Also attached as a CSV file (Product, Qty, Code, Room, RRP, Discount %, Net). RRP each ${t.exVat?"ex":"inc"} VAT${t.d?", less the installer's account discount for each product group":""}.${t.placeholder?" PLACEHOLDER PRICES, not HMG prices.":""}`,
         cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"},{h:"RRP",t:"RRP "},{h:"Disc.",t:"less "},{h:"Net",t:"net "}],
         rows:p.lines.map(h=>[h.item,h.qty,h.code,h.room||"",h.rrp==null?"Price from branch":eur(h.rrp),h.rrp==null||!h.d?"":`${h.d}%`,h.rrp==null?"":eur(h.net)])},
-        {h:"Price",kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
+        {h:"Price",note:QS_NONBINDING,kv:[...qsTotRows(t),...(t.missing?[["Not priced",`${t.missing} line${t.missing===1?"":"s"}: please price`]]:[])]}];})(),
     {note:QP?QS_PRICE_DISC:QS_DISC}]};
 }
 function qsDocText(d){
