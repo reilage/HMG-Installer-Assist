@@ -330,8 +330,9 @@ table.qs-hp tr[data-p]{cursor:pointer}
 .qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
 #qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
-table.qs-hp td:first-child,table.qs-list td:first-child{font-family:var(--f-body)}
-table.qs-list td:last-child{white-space:nowrap}
+table.qs-hp td:first-child,table.qs-list td:first-child,table.qs-list td:nth-child(4){font-family:var(--f-body)}
+table.qs-list td:nth-child(3){white-space:nowrap}
+table.qs-list td:nth-child(4){font-size:13px;color:var(--muted)}
 .btn:disabled{opacity:.5}
 
 /* Escalate */
@@ -1331,14 +1332,15 @@ function calcSurvey(){
     el.innerHTML=!m.loss?(qsNum(qs.hli)>0?"Enter length and width.":"Enter the HLI above.")
       :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`);});
   const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
-  const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
+  /* Radiators grouped by code (one ERP line each), with the rooms they're for (Donal 27/10/2026). */
+  const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0,rooms:[]};list[k].n+=m.rad.qty;list[k].rooms.push(m.rad.qty>1?`${m.name} (${m.rad.qty})`:m.name);});
   /* The quote list (Product, Qty, Code): shown here, and sent to HMG as a CSV for their ERP (Donal 27/10/2026). */
   const lines=[...(pick?qsHmg(pick).map(h=>({item:h.item,qty:1,code:h.code,pick:1})):[]),...(cyl?.lines||[]).map(h=>({...h,pick:1})),
-    ...Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>({item:`Warmhaus Type ${r.type} ${r.h}×${r.l}`,qty:n,code:r.code}))];
+    ...Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n,rooms})=>({item:`Warmhaus Type ${r.type} ${r.h}×${r.l}`,qty:n,code:r.code,room:rooms.join(", ")}))];
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
-    ${lines.length?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th></tr></thead><tbody>
-      ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td></tr>`).join("")}
+    ${lines.length?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th><th>Room</th></tr></thead><tbody>
+      ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td><td>${esc(h.room||"")}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
@@ -1354,7 +1356,7 @@ function calcSurvey(){
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
 }
 /* Quote list as CSV (Product, Qty, Code), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. */
-const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code"],...lines.map(h=>[h.item,h.qty,h.code])]
+const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code","Room"],...lines.map(h=>[h.item,h.qty,h.code,h.room||""])]
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";
 function quoteRequest(w,pick,rooms,list,cyl,lines){
   const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
@@ -1382,7 +1384,7 @@ Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH}
 ${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
 
 Radiator totals
-${Object.values(list).map(({r,n})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code}`).join("\n")||"—"}
+${Object.values(list).map(({r,n,rooms})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code} · ${rooms.join(", ")}`).join("\n")||"—"}
 
 ${QS_DISC}`;
   $("#qs-sum").textContent=body;
