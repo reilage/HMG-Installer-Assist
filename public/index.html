@@ -321,6 +321,7 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 .qs-rh{display:flex;gap:8px;align-items:center}
 .qs-name{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font:600 15px var(--f-body);color:var(--fg)}
 .qs-rh .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
+.qs-hsel{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 6px;font:500 13px var(--f-body);color:var(--fg)}
 .qs-4{grid-template-columns:repeat(4,1fr)}
 .qs-4 label{font-size:12px}
 .qs-pick{font-size:14px;line-height:1.45}
@@ -330,8 +331,9 @@ table.qs-hp tr[data-p]{cursor:pointer}
 .qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
 #qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
-table.qs-hp td:first-child,table.qs-list td:first-child{font-family:var(--f-body)}
-table.qs-list td:last-child{white-space:nowrap}
+table.qs-hp td:first-child,table.qs-list td:first-child,table.qs-list td:nth-child(4){font-family:var(--f-body)}
+table.qs-list td:nth-child(3){white-space:nowrap}
+table.qs-list td:nth-child(4){font-size:13px;color:var(--muted)}
 .btn:disabled{opacity:.5}
 
 /* Escalate */
@@ -1186,8 +1188,13 @@ function calcRad(){
    Rooms: HLI × room area × (room °C − outside), then the closest Type 22 above at 45 °C flow (pair of 22s, then a 33). */
 const QS_KEY="hmg-survey";
 const QS_DISC="Quick estimate only, from the BER HLI. A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance.";
-let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};
+let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};
 const qsSave=()=>store.set(QS_KEY,JSON.stringify(qs));
+/* Radiator height: one height for the whole house (default 600 mm), a room can have its own (Donal 27/10/2026).
+   Surveys saved before this had a maximum height instead. */
+if(qs.radH===undefined){qs.radH=+qs.maxH||600;delete qs.maxH;}
+const QS_HEIGHTS=[300,500,600,700,900];
+const qsH=m=>+(m?.h)||+qs.radH||600;
 const qsNum=v=>parseFloat(String(v).replace(",","."));
 const qsTemp=t=>(KB?.survey?.rooms||[]).find(r=>r.type===t)?.temp??21;
 /* Floor area: typed in, or the total of the rooms listed (Donal 27/10/2026). */
@@ -1198,15 +1205,15 @@ const qsLoss=()=>{const a=qsArea(),h=qsNum(qs.hli),dt=qs.tin-qs.tout;return a>0&
 const qsUnit=(r,w)=>r.sizes.find(z=>z.covers*1000>=w);
 /* HMG product codes for the quote (Donal 27/10/2026): one line per code, e.g. Baxi = outdoor unit + indoor controller. */
 const qsHmg=o=>o.z.hmg.map(h=>({item:h.item||`${o.r.name} ${o.z.kw} kW`,code:h.code}));
-function qsRad(need,room,maxL){
-  const R=KB?.radiators||[],dt=RAD_FLOW-RAD_DROP/2-room,out=r=>Math.round(radOut(r,dt)),maxH=+qs.maxH||1e9,L=maxL||1e9;
-  const of=t=>R.filter(r=>r.type===t&&r.h<=maxH&&r.l<=L).sort((a,b)=>out(a)-out(b)||b.h-a.h);
+function qsRad(need,room,maxL,H){
+  const R=KB?.radiators||[],dt=RAD_FLOW-RAD_DROP/2-room,out=r=>Math.round(radOut(r,dt)),L=maxL||1e9;
+  const of=t=>R.filter(r=>r.type===t&&r.h===H&&r.l<=L).sort((a,b)=>out(a)-out(b));
   const t22=of("22"),one=t22.find(r=>out(r)>=need);
   if(one) return {r:one,qty:1,w:out(one)};
   const pair=t22.find(r=>out(r)>=need/2);
   if(pair) return {r:pair,qty:2,w:2*out(pair),note:"No single Type 22 fits"};
   const t33=of("33").find(r=>out(r)>=need);
-  if(t33) return {r:t33,qty:1,w:out(t33),note:"No Type 22 pair fits"};
+  if(t33) return {r:t33,qty:1,w:out(t33),note:of("22").length?"No Type 22 pair fits":`No Type 22 at ${H} mm`};
   return null;
 }
 /* Hot water cylinder (HMG, Donal Reilly 27/10/2026): 200 L up to 3 bedrooms, 300 L for 4 to 7, pre-plumbed or not.
@@ -1237,7 +1244,7 @@ function qsRooms(){
   const h=qsNum(qs.hli);
   return qs.rooms.map(m=>{
     const area=qsNum(m.l)*qsNum(m.w),dt=m.t-qs.tout,loss=h>0&&area>0&&dt>0?h*area*dt:0;
-    return {...m,area,loss,rad:loss>0?qsRad(loss,m.t,qsNum(m.maxL)):null};
+    return {...m,area,loss,rad:loss>0?qsRad(loss,m.t,qsNum(m.maxL),qsH(m)):null};
   });
 }
 function renderSurvey(){
@@ -1267,7 +1274,8 @@ function renderSurvey(){
     <div class="panel">
       <div class="box-h" style="margin:0">Rooms</div>
       <p class="src" style="margin:0">Length and width in metres. Every room is 21 °C unless you change it.</p>
-      <div class="sz-in"><label>Max radiator height mm<select id="qs-maxh">${[["",`Any`],[500],[600],[700],[900]].map(([v,t])=>`<option value="${v}" ${String(qs.maxH)===String(v)?"selected":""}>${t||v}</option>`).join("")}</select></label></div>
+      <div class="sz-in"><label>Radiator height mm<select id="qs-radh">${QS_HEIGHTS.map(v=>`<option value="${v}" ${+qs.radH===v?"selected":""}>${v}</option>`).join("")}</select></label></div>
+      <p class="src" style="margin:0">Every radiator is this height. To change one room (e.g. under a window), set its height on the room.</p>
       <div id="qs-rooms" class="qs-rooms"></div>
       <div class="btnrow"><select id="qs-add-t" class="qs-sel">${types.map(t=>`<option>${esc(t)}</option>`).join("")}</select><button class="btn sec" id="qs-add">Add room</button></div>
     </div>
@@ -1277,7 +1285,7 @@ function renderSurvey(){
   $("#qs-ctype").querySelectorAll("button").forEach(b=>b.onclick=()=>{qs.cylType=b.dataset.c;qs.cyl="";qsSave();
     $("#qs-ctype").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));calcSurvey();});
   $("#qs-src").querySelectorAll("button").forEach(b=>b.onclick=()=>{qs.fromRooms=b.dataset.r==="1";qsSave();renderSurvey();});bind("#qs-hli","hli");bind("#qs-tin","tin",1);bind("#qs-tout","tout",1);
-  $("#qs-maxh").onchange=e=>{qs.maxH=e.target.value;qsSave();calcSurvey();};
+  $("#qs-radh").onchange=e=>{qs.radH=+e.target.value;qsSave();renderRooms();calcSurvey();};
   $("#qs-add").onclick=()=>{const t=$("#qs-add-t").value,n=qs.rooms.filter(r=>r.type===t).length;
     qs.rooms.push({type:t,name:n?`${t} ${n+1}`:t,l:"",w:"",t:qsTemp(t),maxL:""});qsSave();renderRooms();calcSurvey();
     $("#qs-rooms").lastElementChild?.querySelector("[data-k=l]")?.focus();};
@@ -1285,7 +1293,7 @@ function renderSurvey(){
 }
 function renderRooms(){
   $("#qs-rooms").innerHTML=qs.rooms.length?qs.rooms.map((m,i)=>`<div class="qs-room" data-i="${i}">
-      <div class="qs-rh"><input data-k="name" class="qs-name" value="${esc(m.name)}" aria-label="Room name"><button class="cp-x" data-x="${i}" aria-label="Remove room">Remove</button></div>
+      <div class="qs-rh"><input data-k="name" class="qs-name" value="${esc(m.name)}" aria-label="Room name"><select data-k="h" class="qs-hsel" aria-label="Radiator height"><option value="">${+qs.radH||600} mm</option>${QS_HEIGHTS.filter(v=>v!==+qs.radH).map(v=>`<option value="${v}" ${+m.h===v?"selected":""}>${v} mm</option>`).join("")}</select><button class="cp-x" data-x="${i}" aria-label="Remove room">Remove</button></div>
       <div class="sz-in qs-4">
         <label>Length m<input data-k="l" inputmode="decimal" value="${esc(String(m.l))}"></label>
         <label>Width m<input data-k="w" inputmode="decimal" value="${esc(String(m.w))}"></label>
@@ -1294,6 +1302,7 @@ function renderRooms(){
       </div>
       <div class="src qs-pick" id="qs-p${i}"></div></div>`).join("")
     :`<p class="src" style="margin:0">No rooms yet. Pick a room type and tap <b>Add room</b>.</p>`;
+  $("#qs-rooms").querySelectorAll("select[data-k=h]").forEach(sel=>sel.onchange=()=>{qs.rooms[+sel.closest(".qs-room").dataset.i].h=sel.value;qsSave();calcSurvey();});
   $("#qs-rooms").querySelectorAll("input[data-k]").forEach(inp=>inp.oninput=()=>{
     const m=qs.rooms[+inp.closest(".qs-room").dataset.i],k=inp.dataset.k;
     m[k]=k==="t"?qsNum(inp.value):inp.value.trim();qsSave();calcSurvey();});
@@ -1331,14 +1340,15 @@ function calcSurvey(){
     el.innerHTML=!m.loss?(qsNum(qs.hli)>0?"Enter length and width.":"Enter the HLI above.")
       :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`);});
   const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
-  const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
+  /* Radiators grouped by code (one ERP line each), with the rooms they're for (Donal 27/10/2026). */
+  const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0,rooms:[]};list[k].n+=m.rad.qty;list[k].rooms.push(m.rad.qty>1?`${m.name} (${m.rad.qty})`:m.name);});
   /* The quote list (Product, Qty, Code): shown here, and sent to HMG as a CSV for their ERP (Donal 27/10/2026). */
   const lines=[...(pick?qsHmg(pick).map(h=>({item:h.item,qty:1,code:h.code,pick:1})):[]),...(cyl?.lines||[]).map(h=>({...h,pick:1})),
-    ...Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>({item:`Warmhaus Type ${r.type} ${r.h}×${r.l}`,qty:n,code:r.code}))];
+    ...Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n,rooms})=>({item:`Warmhaus Type ${r.type} ${r.h}×${r.l}`,qty:n,code:r.code,room:rooms.join(", ")}))];
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
-    ${lines.length?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th></tr></thead><tbody>
-      ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td></tr>`).join("")}
+    ${lines.length?`<table class="cu qs-list"><thead><tr><th>Product</th><th>Qty</th><th>Code</th><th>Room</th></tr></thead><tbody>
+      ${lines.map(h=>`<tr${h.pick?` class="pick"`:""}><td>${esc(h.item)}</td><td>${h.qty}</td><td>${esc(h.code)}</td><td>${esc(h.room||"")}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
@@ -1349,12 +1359,12 @@ function calcSurvey(){
       <pre class="summary" id="qs-sum"></pre></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
-  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
-  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
+  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
+  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}${+m.h&&+m.h!==+qs.radH?` (radiator ${m.h} mm high)`:""}`).join("; ")}. Which Warmhaus radiators, ${qsH()} mm high?`:""));};
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
 }
 /* Quote list as CSV (Product, Qty, Code), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. */
-const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code"],...lines.map(h=>[h.item,h.qty,h.code])]
+const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code","Room"],...lines.map(h=>[h.item,h.qty,h.code,h.room||""])]
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";
 function quoteRequest(w,pick,rooms,list,cyl,lines){
   const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
@@ -1378,11 +1388,11 @@ ${cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"�
 `+(cyl.built?`Built into the indoor unit (${cyl.built} L), no separate cylinder${cyl.need>cyl.built?". NEEDS MORE THAN THE BUILT-IN TANK: please advise":""}`
   :cyl.lines.map(h=>`${h.item} · Qty ${h.qty} · HMG ${h.code}`).join("\n"))}
 
-Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH} mm high`:""})
+Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop, ${qsH()} mm high${qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH)?" unless the room says otherwise":""})
 ${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
 
 Radiator totals
-${Object.values(list).map(({r,n})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code}`).join("\n")||"—"}
+${Object.values(list).map(({r,n,rooms})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code} · ${rooms.join(", ")}`).join("\n")||"—"}
 
 ${QS_DISC}`;
   $("#qs-sum").textContent=body;
