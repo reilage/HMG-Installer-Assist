@@ -17,7 +17,7 @@
 //       { action: "prices_vat", exVat, vat }   change only ex/inc VAT and the VAT rate → { prices }
 //       { action: "prices_clear" }             back to placeholder prices → { ok }
 // "list" also returns the access requests waiting for approval, as requests: [...].
-// discount: % off RRP on this installer's quick survey quote (0 to 100).
+// discounts: % off RRP on this installer's quick survey quote per product group, {hp, indoor, cyl, kit, rad} (0 to 100).
 // limit: questions per day for this installer; null uses DAILY_QUESTION_LIMIT, 0 means no limit.
 import { send, readJson, onlyPost, sameSecret } from "../lib/http.js";
 import { accountsOn, listInstallers, addInstaller, updateInstaller, deleteInstaller, listRequests, approveRequest, deleteRequest, publicRequest } from "../lib/accounts.js";
@@ -26,7 +26,7 @@ import { sendCode } from "../lib/signup.js";
 import { run, storeKind } from "../lib/store.js";
 import { dailyLimit, dayKey, monthKey } from "../lib/quota.js";
 import { allSurveys } from "../lib/surveys.js";
-import { getPrices, setPrices, setVat, clearPrices, catalogue } from "../lib/prices.js";
+import { getPrices, setPrices, setVat, clearPrices, catalogue, GROUPS, discountsOf } from "../lib/prices.js";
 import { storedOn, listAnswers, editAnswer, deleteAnswer, clearAnswers } from "../lib/answers.js";
 import { weekOf, lastWeek, prevWeek, weekLabel, validWeek, weekQuestions, weekStats, getSummary, writeSummary } from "../lib/trends.js";
 
@@ -51,8 +51,9 @@ export default async function handler(req, res) {
         const [list, requests] = await Promise.all([listInstallers(), listRequests()]);
         const counts = list.length ? (await run(["MGET", ...list.flatMap(i => [dayKey("i:" + i.id), monthKey("i:" + i.id)])]))[0] : [];
         return send(res, 200, {
+          groups: GROUPS.map(({ id, name }) => ({ id, name })),
           store: storeKind(), defaultLimit: dailyLimit(), email: emailEnabled(), requests: requests.map(publicRequest),
-          installers: list.map((i, n) => ({ ...i, today: +(counts[2 * n] || 0), month: +(counts[2 * n + 1] || 0) })),
+          installers: list.map((i, n) => ({ ...i, discounts: discountsOf(i), today: +(counts[2 * n] || 0), month: +(counts[2 * n + 1] || 0) })),
         });
       }
       case "add": {
