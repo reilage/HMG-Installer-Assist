@@ -342,6 +342,19 @@ form label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weig
 form .full{grid-column:1/-1}
 form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px;font-weight:400;color:var(--fg);min-width:0}
 form textarea{min-height:76px;resize:vertical}
+/* Quote request preview (tables). */
+.qs-doc{display:flex;flex-direction:column;gap:14px;border:1px solid var(--card-line);border-radius:12px;padding:14px;background:var(--surface)}
+.qs-doc-t{font:20px/1.2 var(--f-display);color:var(--fg);border-bottom:3px solid var(--hmg-cyan);padding-bottom:8px}
+.qs-doc section{display:flex;flex-direction:column;gap:6px}
+.qs-doc .src{margin:0}
+.qs-doc table{font-family:var(--f-body)}
+.qs-doc table.cu td,.qs-doc table.cu th{font-family:var(--f-body);font-size:13.5px;padding:6px}
+.qs-doc .qs-scroll table.cu td{white-space:nowrap}
+.qs-doc .qs-scroll table.cu td:first-child{white-space:normal;min-width:84px}
+.qs-doc .qs-scroll table.cu td:nth-child(4):last-child{white-space:normal;min-width:90px}
+table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
+.qs-scroll{overflow-x:auto}
+.qs-doc-n{font-size:13px}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
 @media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
@@ -1356,7 +1369,7 @@ function calcSurvey(){
     <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
       <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-csv">Download quote list (CSV)</button><button class="btn sec" id="qs-share" hidden>Share email + CSV</button><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
-      <pre class="summary" id="qs-sum"></pre></div>`;
+      <div class="qs-doc" id="qs-sum"></div></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
   $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
@@ -1366,36 +1379,41 @@ function calcSurvey(){
 /* Quote list as CSV (Product, Qty, Code), opening straight into Excel: UTF-8 BOM, CRLF, quoted where needed. */
 const qsCsv=lines=>"\ufeff"+[["Product","Qty","Code","Room"],...lines.map(h=>[h.item,h.qty,h.code,h.room||""])]
   .map(r=>r.map(v=>/[",\r\n]/.test(String(v))?`"${String(v).replace(/"/g,'""')}"`:v).join(",")).join("\r\n")+"\r\n";
+/* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
+   The server renders the same shape as an HTML email (lib/quote-email.js). */
+function qsDoc(w,pick,rooms,cyl,lines,me){
+  const mixed=qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH);
+  const hot=cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L, `
+    +(cyl.built?`built into the indoor unit (${cyl.built} L)${cyl.need>cyl.built?". Needs more than the built-in tank: please advise":""}`:cyl.cyl?cyl.type.name.toLowerCase():"please advise");
+  return {title:"Quote request – HMG quick survey",blocks:[
+    {h:"Site and installer",kv:[["Site",[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"],["Installer",[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"]]},
+    {h:"Survey (from the BER)",kv:[["Floor area",`${fmt(qsArea(),1)} m²${qs.fromRooms?` (total of the ${qs.rooms.length} rooms)`:""}`],["HLI",`${qs.hli} W/K·m²`],
+      ["Design temperatures",`${qs.tin} °C inside, ${qs.tout} °C outside`],["Design heat loss",`${fmt(w/1000)} kW (${Math.round(w)} W)`],
+      ...(pick?[["Heat pump",`${pick.r.name} ${pick.z.kw} kW, covers up to ${pick.z.covers} kW`]]:[]),...(hot?[["Hot water",hot]]:[])]},
+    ...(rooms.length?[{h:"Rooms and radiators",note:`Warmhaus, sized at 45 °C flow, 5 °C drop, ${qsH()} mm high${mixed?" unless the room says otherwise":""}.`,
+      cols:[{h:"Room"},{h:"Area"},{h:"Heat loss"},{h:"Radiator"},{h:"Code",t:"HMG "},{h:"Output"}],
+      rows:rooms.map(m=>[m.name,`${fmt(m.area,1)} m²`,`${Math.round(m.loss)} W${m.t!==21?` (${m.t} °C)`:""}`,m.rad?`${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}`:"Needs a design",m.rad?m.rad.r.code:"",m.rad?`${m.rad.w} W`:""])}]:[]),
+    {h:"Quote list",note:"Also attached as a CSV file (Product, Qty, Code, Room).",cols:[{h:"Product"},{h:"Qty",t:"Qty "},{h:"Code",t:"HMG "},{h:"Room"}],rows:lines.map(h=>[h.item,h.qty,h.code,h.room||""])},
+    {note:QS_DISC}]};
+}
+function qsDocText(d){
+  return [d.title,...d.blocks.map(b=>[b.h,b.note&&b.h?b.note:"",...(b.kv||[]).map(([k,v])=>`${k}: ${v}`),
+    ...(b.rows||[]).map(r=>r.map((c,i)=>c===""?"":(b.cols[i].t||"")+c).filter(Boolean).join(" · ")),!b.h?b.note:""].filter(Boolean).join("\n"))].join("\n\n");
+}
+function qsDocHtml(d){
+  return `<div class="qs-doc-t">${esc(d.title)}</div>`+d.blocks.map(b=>!b.h?`<p class="src qs-doc-n">${esc(b.note)}</p>`
+    :`<section><div class="box-h">${esc(b.h)}</div>${b.note?`<p class="src">${esc(b.note)}</p>`:""}`
+    +(b.kv?`<table class="cu qs-kv"><tbody>${b.kv.map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>`
+      :`<div class="qs-scroll"><table class="cu"><thead><tr>${b.cols.map(c=>`<th>${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(String(c))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`)
+    +`</section>`).join("");
+}
 function quoteRequest(w,pick,rooms,list,cyl,lines){
   const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
   const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir||"location?"}`;
-  const body=`Quote request – HMG quick survey
-
-Site: ${[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"}
-Installer: ${[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"}
-
-Survey (from the BER)
-Floor area: ${fmt(qsArea(),1)} m²${qs.fromRooms?` (total of the ${qs.rooms.length} rooms)`:""}
-HLI: ${qs.hli} W/K·m²
-Design temperatures: ${qs.tin} °C inside, ${qs.tout} °C outside
-Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
-
-Heat pump
-${pick?qsHmg(pick).map(h=>`${h.item} · Qty 1 · HMG ${h.code}`).join("\n")+`\nCovers a heat loss up to ${pick.z.covers} kW`:"—"}
-
-Hot water
-${cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"—":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L
-`+(cyl.built?`Built into the indoor unit (${cyl.built} L), no separate cylinder${cyl.need>cyl.built?". NEEDS MORE THAN THE BUILT-IN TANK: please advise":""}`
-  :cyl.lines.map(h=>`${h.item} · Qty ${h.qty} · HMG ${h.code}`).join("\n"))}
-
-Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop, ${qsH()} mm high${qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH)?" unless the room says otherwise":""})
-${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
-
-Radiator totals
-${Object.values(list).map(({r,n,rooms})=>`Warmhaus Type ${r.type} ${r.h}×${r.l} · Qty ${n} · HMG ${r.code} · ${rooms.join(", ")}`).join("\n")||"—"}
-
-${QS_DISC}`;
-  $("#qs-sum").textContent=body;
+  /* The quote request as headed sections and tables: shown as tables in the app (and in the email once Resend sends it),
+     and as tidy plain text for mailto and Copy, which can't carry tables. */
+  const doc=qsDoc(w,pick,rooms,cyl,lines,me),body=qsDocText(doc);
+  $("#qs-sum").innerHTML=qsDocHtml(doc);
   const csv=qsCsv(lines),fname=`HMG-quote-${(qs.eir||"site").replace(/[^\w-]+/g,"").slice(0,20)||"site"}-${new Date().toISOString().slice(0,10)}.csv`;
   const csvFile=()=>new File([csv],fname,{type:"text/csv"});
   $("#qs-csv").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=fname;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);};
@@ -1409,7 +1427,7 @@ ${QS_DISC}`;
     :`Send it to <span class="addr">${esc(ESC_TO)}</span> with the quote list attached: ${canShare?`tap <b>Share email + CSV</b> and pick your mail app, or `:""}tap <b>Download quote list (CSV)</b>, then <b>Open email</b> and attach the file.`)
     +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");
   $("#qs-send").onclick=async()=>{const btn=$("#qs-send"),note=$("#qs-note");btn.disabled=true;note.textContent="Sending…";
-    try{const r=await api("escalate",{subject,body,replyTo:me("email"),attachment:{filename:fname,csv}});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
+    try{const r=await api("escalate",{subject,body,doc,replyTo:me("email"),attachment:{filename:fname,csv}});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
     catch{note.textContent="Couldn't send it. Use Open email instead.";btn.disabled=false;}};
   $("#qs-copy").onclick=async()=>{try{await navigator.clipboard.writeText(`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`);$("#qs-copy").textContent="Copied";}catch{$("#qs-copy").textContent="Select the text below";}setTimeout(()=>$("#qs-copy").textContent="Copy text",2000);};
   $("#qs-sent").hidden=false;$("#qs-sent").scrollIntoView({behavior:"smooth"});

@@ -496,12 +496,18 @@ test("with email on, the approver gets a link that approves the request and emai
 
   // a quick survey quote request carries the quote list as a CSV attachment
   const csv = "\ufeffProduct,Qty,Code\r\nMotorised valve,2,U37935\r\n";
-  const q = await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "Quote request", body: "list", attachment: { filename: "HMG-quote-D01.csv", csv } }) });
+  const doc = { title: "Quote request – HMG quick survey", blocks: [{ h: "Survey", kv: [["HLI", "2.2 W/K·m²"]] },
+    { h: "Quote list", cols: [{ h: "Product" }, { h: "Qty" }, { h: "Code" }], rows: [["Motorised valve <script>", 2, "U37935"]] }] };
+  const q = await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "Quote request", body: "list", doc, attachment: { filename: "HMG-quote-D01.csv", csv } }) });
   assert.equal(q.status, 200);
   const qa = mock.seen.at(-1).body.attachments;
+  const html = mock.seen.at(-1).body.html;
+  assert.match(html, /<th[^>]*>Product<\/th>/); assert.match(html, /Motorised valve &lt;script&gt;<\/td><td[^>]*>2<\/td><td[^>]*>U37935/);
+  assert.match(html, /HLI<\/th><td[^>]*>2\.2 W\/K·m²/);
   assert.equal(qa[0].filename, "HMG-quote-D01.csv"); assert.equal(Buffer.from(qa[0].content, "base64").toString("utf8"), csv);
   await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "x", body: "y", attachment: { filename: "../evil.exe", csv: "z" } }) });
   assert.equal(mock.seen.at(-1).body.attachments, undefined, "only a .csv name is attached");
+  assert.equal(mock.seen.at(-1).body.html, undefined, "no doc, no HTML version");
 });
 
 test("fault trends: each question is saved, counted per unit and installer, and Claude writes the weekly summary", async () => {
