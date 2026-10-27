@@ -1,28 +1,28 @@
 {
-  "_note": "HMG heat pump selection bands (Donal Reilly, 27/10/2026): the largest design heat loss in kW each unit covers. Used by Design › Quick survey and Ask. K-series bands given 27/10/2026 (5, 7 and 9 kW; no band for the 3 kW). Room temperatures: 21 °C for every room by default (Donal 27/10/2026), editable per room.",
+  "_note": "HMG heat pump selection bands (Donal Reilly, 27/10/2026): the largest design heat loss in kW each unit covers. Used by Design › Quick survey and Ask. K-series bands given 27/10/2026 (5, 7 and 9 kW; no band for the 3 kW). Room temperatures: 21 °C for every room by default (Donal 27/10/2026), editable per room. hmg = HMG product codes (Donal 27/10/2026), shown only in the quick survey quote list, quote email and quick survey answers; manufacturer model codes everywhere else.",
   "design": { "inside": 21, "outside": -3 },
   "ranges": [
     { "unit": "J", "name": "Panasonic J-series Mini Monobloc R32", "sizes": [
-      { "kw": 5, "covers": 5, "model": "WH-MDC05J3E5" },
-      { "kw": 7, "covers": 7, "model": "WH-MDC07J3E5" },
-      { "kw": 9, "covers": 8, "model": "WH-MDC09J3E5" } ] },
+      { "kw": 5, "covers": 5, "model": "WH-MDC05J3E5", "hmg": [{ "code": "UE0208" }] },
+      { "kw": 7, "covers": 7, "model": "WH-MDC07J3E5", "hmg": [{ "code": "UE0209" }] },
+      { "kw": 9, "covers": 8, "model": "WH-MDC09J3E5", "hmg": [{ "code": "UE0210" }] } ] },
     { "unit": "T", "name": "Panasonic J-series T-Cap R32", "sizes": [
-      { "kw": 9, "covers": 9, "model": "WH-MXC09J3E5" },
-      { "kw": 12, "covers": 12, "model": "WH-MXC12J6E5" } ] },
+      { "kw": 9, "covers": 9, "model": "WH-MXC09J3E5", "hmg": [{ "code": "U39412" }] },
+      { "kw": 12, "covers": 12, "model": "WH-MXC12J6E5", "hmg": [{ "code": "U39413" }] } ] },
     { "unit": "L", "name": "Panasonic L-series R290", "sizes": [
-      { "kw": 5, "covers": 5, "model": "WH-WDG05LE5 + WH-ADC0509L3E51 tank unit" },
-      { "kw": 7, "covers": 7, "model": "WH-WDG07LE5 + WH-ADC0509L3E51 tank unit" },
-      { "kw": 9, "covers": 8, "model": "WH-WDG09LE5 + WH-ADC0509L3E51 tank unit" } ] },
+      { "kw": 5, "covers": 5, "model": "WH-WDG05LE5 + WH-ADC0509L3E51 tank unit", "hmg": [{ "code": "U88455", "item": "Panasonic L-series R290 5 kW outdoor unit" }, { "code": "U88454", "item": "L-series R290 180 L all-in-one indoor unit" }] },
+      { "kw": 7, "covers": 7, "model": "WH-WDG07LE5 + WH-ADC0509L3E51 tank unit", "hmg": [{ "code": "U88456", "item": "Panasonic L-series R290 7 kW outdoor unit" }, { "code": "U88454", "item": "L-series R290 180 L all-in-one indoor unit" }] },
+      { "kw": 9, "covers": 8, "model": "WH-WDG09LE5 + WH-ADC0509L3E51 tank unit", "hmg": [{ "code": "U88457", "item": "Panasonic L-series R290 9 kW outdoor unit" }, { "code": "U88454", "item": "L-series R290 180 L all-in-one indoor unit" }] } ] },
     { "unit": "K", "name": "Panasonic K-series split", "sizes": [
-      { "kw": 5, "covers": 5, "model": "WH-UDZ05KE5 + WH-ADC0309K3E5/K6E5 tank unit" },
-      { "kw": 7, "covers": 7, "model": "WH-UDZ07KE5 + WH-ADC0309K3E5/K6E5 tank unit" },
-      { "kw": 9, "covers": 8, "model": "WH-UDZ09KE5 + WH-ADC0309K3E5/K6E5 tank unit" } ] },
+      { "kw": 5, "covers": 5, "model": "WH-UDZ05KE5 + WH-ADC0309K3E5/K6E5 tank unit", "hmg": [{ "code": "U88450", "item": "Panasonic K-series split 5 kW outdoor unit" }, { "code": "U88448", "item": "K-series split 180 L all-in-one indoor unit" }] },
+      { "kw": 7, "covers": 7, "model": "WH-UDZ07KE5 + WH-ADC0309K3E5/K6E5 tank unit", "hmg": [{ "code": "U88451", "item": "Panasonic K-series split 7 kW outdoor unit" }, { "code": "U88448", "item": "K-series split 180 L all-in-one indoor unit" }] },
+      { "kw": 9, "covers": 8, "model": "WH-UDZ09KE5 + WH-ADC0309K3E5/K6E5 tank unit", "hmg": [{ "code": "U88452", "item": "Panasonic K-series split 9 kW outdoor unit" }, { "code": "U88448", "item": "K-series split 180 L all-in-one indoor unit" }] } ] },
     { "unit": "B", "name": "Baxi Assure HP55 R290", "sizes": [
-      { "kw": 4, "covers": 4.9, "model": "HP55-4-1-PHMB" },
-      { "kw": 6, "covers": 6.1, "model": "HP55-6-1-PHMB" },
-      { "kw": 8, "covers": 7.8, "model": "HP55-8-1-PHMB" },
-      { "kw": 11, "covers": 12.1, "model": "HP55-11-1-PHMB (or HP55-11-3-PHMB 3-phase)" },
-      { "kw": 13, "covers": 13.7, "model": "HP55-13-1-PHMB (or HP55-13-3-PHMB 3-phase)" } ] }
+      { "kw": 4, "covers": 4.9, "model": "HP55-4-1-PHMB", "hmg": [{ "code": "UM0074", "item": "Baxi Assure HP55 4 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
+      { "kw": 6, "covers": 6.1, "model": "HP55-6-1-PHMB", "hmg": [{ "code": "UM0075", "item": "Baxi Assure HP55 6 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
+      { "kw": 8, "covers": 7.8, "model": "HP55-8-1-PHMB", "hmg": [{ "code": "UM0076", "item": "Baxi Assure HP55 8 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
+      { "kw": 11, "covers": 12.1, "model": "HP55-11-1-PHMB (or HP55-11-3-PHMB 3-phase)", "hmg": [{ "code": "UM0077", "item": "Baxi Assure HP55 11 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
+      { "kw": 13, "covers": 13.7, "model": "HP55-13-1-PHMB (or HP55-13-3-PHMB 3-phase)", "hmg": [{ "code": "UM0078", "item": "Baxi Assure HP55 13 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] } ] }
   ],
   "rooms": [
     { "type": "Living room", "temp": 21 },

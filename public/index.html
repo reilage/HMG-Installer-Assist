@@ -1194,6 +1194,8 @@ const qsArea=()=>qs.fromRooms?qsRoomArea():qsNum(qs.area);
 const qsLoss=()=>{const a=qsArea(),h=qsNum(qs.hli),dt=qs.tin-qs.tout;return a>0&&h>0&&dt>0?h*a*dt:0;};
 /* Smallest unit in a range whose band covers the heat loss (W). */
 const qsUnit=(r,w)=>r.sizes.find(z=>z.covers*1000>=w);
+/* HMG product codes for the quote (Donal 27/10/2026): one line per code, e.g. Baxi = outdoor unit + indoor controller. */
+const qsHmg=o=>o.z.hmg.map(h=>({item:h.item||`${o.r.name} ${o.z.kw} kW`,code:h.code}));
 function qsRad(need,room,maxL){
   const R=KB?.radiators||[],dt=RAD_FLOW-RAD_DROP/2-room,out=r=>Math.round(radOut(r,dt)),maxH=+qs.maxH||1e9,L=maxL||1e9;
   const of=t=>R.filter(r=>r.type===t&&r.h<=maxH&&r.l<=L).sort((a,b)=>out(a)-out(b)||b.h-a.h);
@@ -1281,7 +1283,7 @@ function calcSurvey(){
       <table class="cu qs-hp"><thead><tr><th>Range</th><th>Unit</th><th>Covers</th></tr></thead><tbody>
       ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${o===pick?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
         :`<tr class="small"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td colspan="2">Nothing big enough (largest covers ${o.r.sizes.at(-1).covers} kW)</td></tr>`).join("")}</tbody></table>
-      ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> (${esc(pick.z.model)}).</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
+      ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> HMG code ${pick.z.hmg.map(h=>esc(h.code)).join(" + ")}.</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
     :`<p class="src" style="margin:0">${qs.fromRooms?"Enter the HLI and add rooms":"Enter the floor area and HLI"} to size the heat pump.</p>`;
   hp.querySelectorAll("tr[data-p]").forEach(tr=>tr.onclick=()=>{qs.pick=tr.dataset.p;qsSave();calcSurvey();});
   /* Per room: heat loss and radiator. */
@@ -1292,7 +1294,7 @@ function calcSurvey(){
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${pick||rads.length?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
-      ${pick?`<tr class="pick"><td>1</td><td>${esc(pick.r.name)} ${pick.z.kw} kW</td><td>${esc(pick.z.model.split(" ")[0])}</td></tr>`:""}
+      ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>1</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join(""):""}
       ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>${n}</td><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${r.code}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
@@ -1322,7 +1324,7 @@ Design temperatures: ${qs.tin} °C inside, ${qs.tout} °C outside
 Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
 
 Heat pump
-${pick?`1 × ${pick.r.name} ${pick.z.kw} kW (${pick.z.model}), covers up to ${pick.z.covers} kW`:"—"}
+${pick?qsHmg(pick).map(h=>`1 × ${h.item} (HMG ${h.code})`).join("\n")+`\nCovers a heat loss up to ${pick.z.covers} kW`:"—"}
 
 Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH} mm high`:""})
 ${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
