@@ -165,7 +165,8 @@ test("the HMG quick survey (BER HLI sizing, HMG bands, disclaimer) is in the rul
     assert.match(x, /Panasonic J-series Mini Monobloc R32: 5 kW \(WH-MDC05J3E5\) covers up to 5 kW; 7 kW \(WH-MDC07J3E5\) covers up to 7 kW; 9 kW \(WH-MDC09J3E5\) covers up to 8 kW/);
     assert.match(x, /Panasonic J-series T-Cap R32: 9 kW \(WH-MXC09J3E5\) covers up to 9 kW; 12 kW \(WH-MXC12J6E5\) covers up to 12 kW/);
     assert.match(x, /Baxi Assure HP55 R290: 4 kW .* covers up to 4\.9 kW; 6 kW .* covers up to 6\.1 kW; 8 kW .* covers up to 7\.8 kW; 11 kW .* covers up to 12\.1 kW; 13 kW .* covers up to 13\.7 kW/);
-    assert.match(x, /K-series: no HMG bands yet/);
+    assert.match(x, /Panasonic K-series split: 5 kW .* covers up to 5 kW; 7 kW .* covers up to 7 kW; 9 kW .* covers up to 8 kW/);
+    assert.match(x, /21 °C for every room/);
     assert.match(x, /A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance/);
     assert.match(x, /Source: HMG quick survey guidance/);
   }

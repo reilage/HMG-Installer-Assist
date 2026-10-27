@@ -139,7 +139,7 @@ const parts = {
   L: { models: lparts.models, views: lparts.views.map(v => ({ ...v, key: "L", unit: "L" })), parts: lparts.parts },
 };
 
-// Component identifier (Install › Components): labelled drawings from the manuals and what each numbered part is.
+// Component identifier (Design › Components): labelled drawings from the manuals and what each numbered part is.
 // Drawings get unit so the app can show them like the wiring diagrams.
 const { _about, ...compSrc } = JSON.parse(read("components.json"));
 const components = Object.fromEntries(Object.entries(compSrc).map(([u, c]) => [u, { ...c, drawings: c.drawings.map(d => ({ ...d, unit: u })) }]));

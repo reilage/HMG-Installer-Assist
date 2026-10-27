@@ -1,6 +1,6 @@
 # HMG R290 Exclusion Zone Guidance
 
-Cite as **"HMG R290 exclusion zone guidance"**, plus the manufacturer's page. HMG uses each manufacturer's own figures as they are (Donal Reilly, 26/10/2026). Shown in the app under Install › Exclusion zones, for the R290 units only: the Panasonic L-series and the Baxi Assure HP55.
+Cite as **"HMG R290 exclusion zone guidance"**, plus the manufacturer's page. HMG uses each manufacturer's own figures as they are (Donal Reilly, 26/10/2026). Shown in the app under Design › Exclusion zones, for the R290 units only: the Panasonic L-series and the Baxi Assure HP55.
 
 R290 (propane) is extremely flammable (safety group A3) and heavier than air: a leak collects at ground level and in low points. The manufacturer defines a zone around the outdoor unit that has to stay clear. It is separate from the clearances, and both apply. Keep the units separate: never use one manufacturer's zone figures for the other.
 
