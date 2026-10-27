@@ -114,6 +114,7 @@ const radiators = JSON.parse(read("warmhaus-radiators.json")).radiators;
 const surveyText = read("hmg-quick-survey.md");
 const survey = JSON.parse(read("hmg-heat-pump-sizing.json"));
 delete survey._note;
+delete survey.cylinders?._note;
 const zones = read("hmg-r290-exclusion-zones.md");
 const wiring = JSON.parse(read("wiring-index.json"));
 const commFile = read("hmg-commissioning-panasonic.md");

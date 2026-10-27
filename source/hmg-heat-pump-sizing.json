@@ -36,5 +36,23 @@
     { "type": "Study", "temp": 21 },
     { "type": "Utility", "temp": 21 },
     { "type": "WC", "temp": 21 }
-  ]
+  ],
+  "cylinders": {
+    "_note": "HMG hot water cylinders for the quick survey (Donal Reilly 27/10/2026). Size by bedrooms: 200 L up to 3 bedrooms, 300 L for 4 to 7 bedrooms (over 7: talk to HMG). Pre-plumbed or not pre-plumbed; a not pre-plumbed cylinder always comes with the kit list. builtIn = ranges whose indoor unit already holds the hot water (litres), so they get no separate cylinder.",
+    "bands": [ { "maxBeds": 3, "litres": 200 }, { "maxBeds": 7, "litres": 300 } ],
+    "builtIn": { "L": 180, "K": 180 },
+    "types": [
+      { "id": "pre", "name": "Pre-plumbed (Xylinder)", "list": [
+        { "litres": 200, "code": "UB7317", "item": "200 L Xylinder Pre-Plumbed Cylinder" },
+        { "litres": 300, "code": "UB7318", "item": "300 L Xylinder Pre-Plumbed Cylinder" } ] },
+      { "id": "non", "name": "Not pre-plumbed", "list": [
+        { "litres": 200, "code": "U95447", "item": "200 L Panasonic Aquarea Non Pre-Plumbed Cylinder" },
+        { "litres": 300, "code": "U95448", "item": "300 L Panasonic Aquarea Cylinder" } ],
+        "kit": [
+          { "qty": 2, "code": "U37935", "item": "Motorised valve" },
+          { "qty": 1, "code": "U07346", "item": "Bypass valve" },
+          { "qty": 1, "code": "U94515", "item": "Unvented kit" },
+          { "qty": 1, "code": "UB7176", "item": "3-way valve" } ] }
+    ]
+  }
 }

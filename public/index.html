@@ -1186,7 +1186,7 @@ function calcRad(){
    Rooms: HLI × room area × (room °C − outside), then the closest Type 22 above at 45 °C flow (pair of 22s, then a 33). */
 const QS_KEY="hmg-survey";
 const QS_DISC="Quick estimate only, from the BER HLI. A full heat loss design is required for designer sign-off and for HMG professional indemnity insurance.";
-let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};
+let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};
 const qsSave=()=>store.set(QS_KEY,JSON.stringify(qs));
 const qsNum=v=>parseFloat(String(v).replace(",","."));
 const qsTemp=t=>(KB?.survey?.rooms||[]).find(r=>r.type===t)?.temp??21;
@@ -1208,6 +1208,30 @@ function qsRad(need,room,maxL){
   const t33=of("33").find(r=>out(r)>=need);
   if(t33) return {r:t33,qty:1,w:out(t33),note:"No Type 22 pair fits"};
   return null;
+}
+/* Hot water cylinder (HMG, Donal Reilly 27/10/2026): 200 L up to 3 bedrooms, 300 L for 4 to 7, pre-plumbed or not.
+   A not pre-plumbed cylinder always comes with its kit (valves, unvented kit). L-series and K-series hold the hot
+   water in their 180 L indoor unit, so they get no separate cylinder. */
+function qsCyl(pick){
+  const C=KB?.survey?.cylinders;if(!C) return null;
+  const beds=qsNum(qs.beds),band=beds>0?C.bands.find(x=>beds<=x.maxBeds):null;
+  const need=band?band.litres:0,over=beds>0&&!band;
+  const built=pick?C.builtIn?.[pick.r.unit]||0:0;
+  const type=C.types.find(t=>t.id===qs.cylType)||C.types[0];
+  const cyl=built||!need?null:type.list.find(c=>c.code===qs.cyl)||type.list.find(c=>c.litres>=need)||null;
+  /* Quote lines: the cylinder, then its kit. */
+  const lines=cyl?[{qty:1,item:cyl.item,code:cyl.code},...(type.kit||[])]:[];
+  return {beds,need,over,built,type,cyl,lines,max:C.bands.at(-1).maxBeds};
+}
+function qsCylHtml(c,pick){
+  if(!c) return "";
+  if(c.over) return `<p class="notice" style="margin:0">Over ${c.max} bedrooms: talk to HMG about the hot water.</p>`;
+  if(!c.need) return `<p class="src" style="margin:0">Enter the number of bedrooms to pick the cylinder.</p>`;
+  const need=`${fmt(c.beds,0)} bedroom${c.beds===1?"":"s"}: <b>${c.need} L</b>`;
+  if(c.built) return `<p class="src" style="margin:0">${need}. The ${esc(pick.r.name.replace(/^Panasonic /,""))} indoor unit has <b>${c.built} L</b> built in, so no separate cylinder.</p>`
+    +(c.need>c.built?`<p class="notice" style="margin:0">That's more than the ${c.built} L built in. Talk to HMG about the hot water before quoting.</p>`:"");
+  return `<p class="src" style="margin:0">${need}. For the quote: <b>${esc(c.cyl.item)}</b> HMG code ${esc(c.cyl.code)}${c.type.kit?`, with its kit (${c.type.kit.map(k=>`${k.qty>1?`${k.qty} × `:""}${esc(k.item.toLowerCase())}`).join(", ")})`:""}.</p>`
+    +`<label class="qs-chg">Cylinder on the quote<select id="qs-cyl-sel">${c.type.list.map(x=>`<option value="${esc(x.code)}" ${x===c.cyl?"selected":""}>${esc(x.item)}${x.litres===c.need?" (recommended)":""}</option>`).join("")}</select></label>`;
 }
 function qsRooms(){
   const h=qsNum(qs.hli);
@@ -1235,6 +1259,12 @@ function renderSurvey(){
     </div>
     <div class="panel" id="qs-hp"></div>
     <div class="panel">
+      <div class="box-h" style="margin:0">Hot water cylinder</div>
+      <div class="kw" id="qs-ctype">${(S.cylinders?.types||[]).map(t=>`<button data-c="${t.id}" aria-pressed="${t.id===(qs.cylType||"pre")}">${esc(t.name)}</button>`).join("")}</div>
+      <div class="sz-in"><label>Bedrooms<input id="qs-beds" inputmode="numeric" placeholder="e.g. 3" value="${esc(String(qs.beds||""))}"></label></div>
+      <div id="qs-cyl"></div>
+    </div>
+    <div class="panel">
       <div class="box-h" style="margin:0">Rooms</div>
       <p class="src" style="margin:0">Length and width in metres. Every room is 21 °C unless you change it.</p>
       <div class="sz-in"><label>Max radiator height mm<select id="qs-maxh">${[["",`Any`],[500],[600],[700],[900]].map(([v,t])=>`<option value="${v}" ${String(qs.maxH)===String(v)?"selected":""}>${t||v}</option>`).join("")}</select></label></div>
@@ -1243,7 +1273,9 @@ function renderSurvey(){
     </div>
     <div class="panel" id="qs-out"></div>`;
   const bind=(id,k,n)=>$(id).oninput=e=>{qs[k]=n?qsNum(e.target.value):e.target.value.trim();qsSave();calcSurvey();};
-  bind("#qs-area","area");
+  bind("#qs-area","area");bind("#qs-beds","beds");
+  $("#qs-ctype").querySelectorAll("button").forEach(b=>b.onclick=()=>{qs.cylType=b.dataset.c;qs.cyl="";qsSave();
+    $("#qs-ctype").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));calcSurvey();});
   $("#qs-src").querySelectorAll("button").forEach(b=>b.onclick=()=>{qs.fromRooms=b.dataset.r==="1";qsSave();renderSurvey();});bind("#qs-hli","hli");bind("#qs-tin","tin",1);bind("#qs-tout","tout",1);
   $("#qs-maxh").onchange=e=>{qs.maxH=e.target.value;qsSave();calcSurvey();};
   $("#qs-add").onclick=()=>{const t=$("#qs-add-t").value,n=qs.rooms.filter(r=>r.type===t).length;
@@ -1291,6 +1323,9 @@ function calcSurvey(){
       ${pick?`<p class="src" style="margin:0">For the quote: <b>${esc(pick.r.name)} ${pick.z.kw} kW</b> HMG code ${pick.z.hmg.map(h=>esc(h.code)).join(" + ")}.</p>`:`<p class="notice" style="margin:0">Over ${S.ranges.reduce((m,r)=>Math.max(m,r.sizes.at(-1).covers),0)} kW no single HMG unit covers it. This needs a full design: contact HMG.</p>`}`
     :`<p class="src" style="margin:0">${qs.fromRooms?"Enter the HLI and add rooms":"Enter the floor area and HLI"} to size the heat pump.</p>`;
   hp.querySelectorAll("tr[data-p]").forEach(tr=>tr.onclick=()=>{qs.pick=tr.dataset.p;qsSave();calcSurvey();});
+  const cyl=qsCyl(pick);
+  $("#qs-cyl").innerHTML=qsCylHtml(cyl,pick);
+  if($("#qs-cyl-sel")) $("#qs-cyl-sel").onchange=e=>{qs.cyl=e.target.value;qsSave();calcSurvey();};
   /* Per room: heat loss and radiator. */
   rooms.forEach((m,i)=>{const el=$("#qs-p"+i);if(!el) return;
     el.innerHTML=!m.loss?(qsNum(qs.hli)>0?"Enter length and width.":"Enter the HLI above.")
@@ -1299,26 +1334,27 @@ function calcSurvey(){
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0};list[k].n+=m.rad.qty;});
   out.innerHTML=`<div class="box-h" style="margin:0">Quote list</div>
     ${all.length>1?`<label class="qs-chg">Heat pump on the quote<select id="qs-hp-sel">${S.ranges.filter(r=>all.some(o=>o.r===r)).map(r=>`<optgroup label="${esc(r.name.replace(/^Panasonic /,""))}">${all.filter(o=>o.r===r).map(o=>`<option value="${key(o)}" ${o===pick?"selected":""}>${esc(r.name.replace(/^Panasonic /,""))} ${o.z.kw} kW${o.rec?" (recommended)":""}</option>`).join("")}</optgroup>`).join("")}</select></label>`:""}
-    ${pick||rads.length?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
+    ${pick||rads.length||cyl?.cyl?`<table class="cu qs-list"><thead><tr><th>Qty</th><th>Product</th><th>Code</th></tr></thead><tbody>
       ${pick?qsHmg(pick).map(h=>`<tr class="pick"><td>1</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join(""):""}
+      ${(cyl?.lines||[]).map(h=>`<tr class="pick"><td>${h.qty}</td><td>${esc(h.item)}</td><td>${esc(h.code)}</td></tr>`).join("")}
       ${Object.values(list).sort((a,b)=>a.r.h-b.r.h||a.r.l-b.r.l).map(({r,n})=>`<tr><td>${n}</td><td>Warmhaus Type ${r.type} ${r.h}×${r.l}</td><td>${r.code}</td></tr>`).join("")}
     </tbody></table>${rooms.length&&w?`<p class="src" style="margin:0">Listed rooms ${Math.round(roomW)} W of the ${Math.round(w)} W house heat loss (rooms at their own temperature; unlisted areas still count in the heat pump size).</p>`:""}`
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${QS_DISC}</div>
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
-    <div class="btnrow"><button class="btn" id="qs-quote" ${pick||rads.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${pick||rads.length||cyl?.cyl?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
       <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
       <pre class="summary" id="qs-sum"></pre></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
-  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:""};qsSave();renderSurvey();};
-  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
-  $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list);
+  $("#qs-new").onclick=()=>{qs={area:"",hli:"",tin:21,tout:-3,maxH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:""};qsSave();renderSurvey();};
+  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, HLI ${qs.hli}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}`).join("; ")}. Which Warmhaus radiators${qs.maxH?`, max ${qs.maxH} mm high`:""}?`:""));};
+  $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl);
 }
-function quoteRequest(w,pick,rooms,list){
+function quoteRequest(w,pick,rooms,list,cyl){
   const me=k=>store.get("hmg-me-"+k)||($("#e-"+k)?.value||"").trim();
-  const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:"radiators"} – ${qs.eir||"location?"}`;
+  const subject=`Quote request – quick survey – ${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir||"location?"}`;
   const body=`Quote request – HMG quick survey
 
 Site: ${[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"}
@@ -1332,6 +1368,11 @@ Design heat loss: ${fmt(w/1000)} kW (${Math.round(w)} W)
 
 Heat pump
 ${pick?qsHmg(pick).map(h=>`1 × ${h.item} (HMG ${h.code})`).join("\n")+`\nCovers a heat loss up to ${pick.z.covers} kW`:"—"}
+
+Hot water
+${cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"—":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L
+`+(cyl.built?`Built into the indoor unit (${cyl.built} L), no separate cylinder${cyl.need>cyl.built?". NEEDS MORE THAN THE BUILT-IN TANK: please advise":""}`
+  :cyl.lines.map(h=>`${h.qty} × ${h.item} (HMG ${h.code})`).join("\n"))}
 
 Radiators (Warmhaus, sized at 45 °C flow, 5 °C drop${qs.maxH?`, max ${qs.maxH} mm high`:""})
 ${rooms.map(m=>`${m.name}: ${fmt(m.area,1)} m² at ${m.t} °C, ${Math.round(m.loss)} W → ${m.rad?`${m.rad.qty} × Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l} (${m.rad.r.code}), ${m.rad.w} W`:"needs a design"}`).join("\n")||"—"}
