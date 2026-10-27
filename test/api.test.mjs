@@ -124,6 +124,22 @@ test("the HMG heating curve is in the rules, with the Baxi gradient and base wor
   assert.match(b, /CP000 max flow = 45 °C \(rads\) or 35 °C \(UFH\)/);
 });
 
+test("the HMG volume, bypass and volumiser rule is in the rules, with each unit's own minimum", async () => {
+  mock.seen.length = 0;
+  for (const unit of ["J", "T", "B", "K", "L"]) await events(await ask({ unit, text: "Do I need a buffer on this job?" }));
+  const [j, t, b, k, l] = mock.seen.map(s => s.body.system[0].text);
+  for (const x of [j, t, b, k, l]) {
+    assert.match(x, /HMG DESIGN GUIDANCE \(system volume, bypass, volumiser\)/);
+    assert.match(x, /bypass valve is always mandatory/);
+    assert.match(x, /HMG prefer to avoid a hydraulic break/);
+  }
+  assert.match(j, /Mini Monobloc \(5, 7 and 9 kW\) HMG's minimum is 30 L in each zone/);
+  assert.match(t, /T-Cap \(9 and 12 kW\) HMG's minimum is 50 L in each zone/);
+  assert.match(b, /Baxi HP55 HMG's minimum is 30 L in each zone[^\n]*work to the higher/);
+  assert.match(k, /HMG has NO volume figure for the K-series/);
+  assert.match(l, /HMG has NO volume figure for the L-series/);
+});
+
 test("each Panasonic unit gets only its own HMG commissioning procedure, Baxi gets none", async () => {
   mock.seen.length = 0;
   for (const unit of ["J", "K", "B", "T", "L"]) await events(await ask({ unit, text: "Talk me through commissioning" }));
