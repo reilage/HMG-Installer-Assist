@@ -2,7 +2,7 @@
 
 Cite as **"HMG radiator list (Warmhaus)"** (Donal Reilly, 27/10/2026). HMG design guidance, not fault-finding.
 
-The radiator range HMG supplies is the Warmhaus Standard steel panel range: Type 11 (single panel, single convector, 50 mm deep), Type 22 (double panel, double convector, 105 mm deep) and Type 33 (triple panel, triple convector, 160 mm deep). Heights 300, 500, 600, 700 and 900 mm, lengths 400 to 2000 mm. 142 sizes; the full list with product codes is in `warmhaus-radiators.json`.
+The radiator range HMG supplies is the Warmhaus Standard steel panel range: Type 11 (single panel, single convector, 50 mm deep), Type 22 (double panel, double convector, 105 mm deep) and Type 33 (triple panel, triple convector, 160 mm deep). HMG stocks 79 sizes (Donal Reilly 27/10/2026), lengths 400 to 2000 mm: Type 11 at 500 and 600 mm high; Type 22 at 300, 500, 600 and 900 mm high (900 mm only 400 to 1000 long); Type 33 at 600 mm high, plus one 500×600. No 700 mm radiators, and no 1300 or 1500 mm lengths at 600 mm high. Only pick a size that is in the list; the full list with product codes is in `warmhaus-radiators.json`.
 
 ---
 

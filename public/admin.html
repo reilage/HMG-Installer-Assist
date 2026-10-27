@@ -102,7 +102,23 @@ details.inst summary::-webkit-details-marker{display:none}
   </form>
 
   <div id="app" hidden>
-    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button><button role="tab" aria-selected="false" data-tab="surveys">Surveys</button></div>
+    <div class="tabs" role="tablist"><button role="tab" aria-selected="true" data-tab="accounts">Installers</button><button role="tab" aria-selected="false" data-tab="trends">Fault trends</button><button role="tab" aria-selected="false" data-tab="answers">Stored answers</button><button role="tab" aria-selected="false" data-tab="surveys">Surveys</button><button role="tab" aria-selected="false" data-tab="prices">Prices</button></div>
+    <div id="t-prices" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
+      <h2>Prices</h2>
+      <p class="src">The RRP for each HMG code on the quick survey quote list. Each installer's discount is set on their account (Installers tab), and their quote shows the RRP, their discount and the net price. The price list is kept in the app's own store (Upstash), not in the app's code.</p>
+      <div class="notice" id="pr-status"></div>
+      <form class="panel" id="pr-form" style="display:flex;flex-direction:column;gap:10px">
+        <h2>Load a price list</h2>
+        <p class="src" style="margin:0">In Excel, select the rows (with the HMG code and RRP columns, e.g. the whole price list template) and paste them here. Each row needs an HMG code and a price; headings and blank rows are skipped. Loading a list replaces the one before, so include every code.</p>
+        <textarea id="pr-text" rows="8" placeholder="Paste from Excel: Category, Product, HMG code, RRP" style="font:13px/1.4 var(--f-mono);width:100%;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface);color:inherit"></textarea>
+        <div class="grid">
+          <label>Prices are<select id="pr-ex"><option value="ex">Ex VAT</option><option value="inc">Including VAT</option></select></label>
+          <label>VAT % to add (ex VAT only)<input id="pr-vat" inputmode="decimal" placeholder="Blank = don't show VAT"></label>
+        </div>
+        <div class="btnrow"><button class="btn" type="submit">Load price list</button><button class="btn sec sm" type="button" id="pr-vat-save">Save VAT only</button><button class="btn bad sm" type="button" id="pr-clear">Back to placeholder prices</button><span class="src" id="pr-note"></span></div>
+      </form>
+      <div class="panel"><div class="btnrow" style="justify-content:space-between"><h2>Price list</h2><input id="pr-q" type="search" placeholder="Search product or code" aria-label="Search prices" style="max-width:220px"></div><div id="pr-list" class="sv-wrap"></div></div>
+    </div>
     <div id="t-surveys" style="display:flex;flex-direction:column;gap:16px;margin-top:16px" hidden>
       <div class="btnrow" style="justify-content:space-between"><h2>Surveys</h2><input id="sv-q" type="search" placeholder="Search name, site, installer, heat pump" aria-label="Search surveys"></div>
       <p class="src">Every quick survey an installer requests a quote for (or clears with New survey), newest first, with the quote list as sent. Installers see their own under My surveys in the app.</p>
@@ -137,6 +153,7 @@ details.inst summary::-webkit-details-marker{display:none}
         <label>Mobile<input id="a-mobile" inputmode="tel" autocomplete="off"></label>
         <label>Email<input id="a-email" type="email" inputmode="email" autocomplete="off"></label>
         <label>Questions per day<input id="a-limit" inputmode="numeric" placeholder="Blank = standard"></label>
+        <label>Discount % off RRP<input id="a-discount" inputmode="decimal" placeholder="0"></label>
         <div class="full btnrow"><button class="btn" type="submit">Add and create code</button><span class="src" id="add-note"></span></div>
         <div class="full share" id="new-share" hidden></div>
       </form>
@@ -161,7 +178,7 @@ async function admin(body){
   if(!r.ok) throw Object.assign(new Error("api"),{code:d.error});
   return d;
 }
-const MSG={not_configured:"Claude isn't switched on (no ANTHROPIC_API_KEY), so the summary can't be written.",accounts_off:"Installer accounts aren't switched on. Add the ADMIN_CODE setting in Vercel and redeploy.",unavailable:"The account store isn't responding. Try again in a minute.",name_required:"Enter the installer's name."};
+const MSG={not_configured:"Claude isn't switched on (no ANTHROPIC_API_KEY), so the summary can't be written.",accounts_off:"Installer accounts aren't switched on. Add the ADMIN_CODE setting in Vercel and redeploy.",unavailable:"The account store isn't responding. Try again in a minute.",name_required:"Enter the installer's name.",no_prices:"No prices found. Each row needs an HMG code and a price."};
 function showLogin(note){$("#login").hidden=false;$("#app").hidden=true;$("#login-note").textContent=note||"";$("#admin-code").focus();}
 
 $("#login").onsubmit=async e=>{
@@ -202,11 +219,12 @@ function render(){
       <label>Name<input name="name" value="${esc(i.name)}" required></label><label>Company<input name="company" value="${esc(i.company)}"></label>
       <label>Mobile<input name="mobile" value="${esc(i.mobile)}" inputmode="tel"></label><label>Email<input name="email" value="${esc(i.email)}" type="email"></label>
       <label>Questions per day<input name="limit" value="${i.limit??""}" inputmode="numeric" placeholder="Blank = standard (${DATA.defaultLimit||"no limit"})"></label>
+      <label>Discount % off RRP<input name="discount" value="${i.discount||""}" inputmode="decimal" placeholder="0"></label>
       <div class="btnrow" style="grid-column:1/-1"><button class="btn sm" type="submit">Save</button><button class="btn sec sm" type="button" data-act="cancel">Cancel</button></div></form>`;
     return `<div class="inst${i.active?"":" off"}" data-id="${i.id}">
       <div class="top"><span class="name">${esc(i.name)}</span>${i.active?(full?`<span class="chip full">Used today's questions</span>`:""):`<span class="chip off">Switched off</span>`}</div>
       <div class="src">${[i.company,i.mobile,i.email].filter(Boolean).map(esc).join(" · ")||"No contact details"}</div>
-      <div class="src"><span class="code" style="font-size:15px;color:var(--fg)">${esc(i.code)}</span> · Today ${i.today}${lim?` of ${lim}`:""} · This month ${i.month}${i.limit!==null&&i.limit!==undefined?` · Own limit: ${i.limit||"none"}`:""}</div>
+      <div class="src"><span class="code" style="font-size:15px;color:var(--fg)">${esc(i.code)}</span> · Today ${i.today}${lim?` of ${lim}`:""} · This month ${i.month}${i.limit!==null&&i.limit!==undefined?` · Own limit: ${i.limit||"none"}`:""} · Discount ${i.discount||0}%</div>
       <div class="share" data-share hidden>${shareBox(i)}</div>
       <div class="btnrow">
         <button class="btn sec sm" data-act="share">Send code</button>
@@ -265,15 +283,15 @@ document.addEventListener("submit",async e=>{
   const f=e.target.closest("[data-edit]"); if(!f) return;
   e.preventDefault();
   const v=n=>f.elements[n].value;
-  try{await admin({action:"update",id:f.dataset.edit,name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit").trim()===""?null:v("limit")});editing=null;await load();}
+  try{await admin({action:"update",id:f.dataset.edit,name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit").trim()===""?null:v("limit"),discount:v("discount")});editing=null;await load();}
   catch(err){if(err.code) alert(MSG[err.code]||"Something went wrong. Try again.");}
 });
 $("#add").onsubmit=async e=>{
   e.preventDefault();
   const v=id=>$("#a-"+id).value.trim();
   try{
-    const {installer:i}=await admin({action:"add",name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit")===""?null:v("limit")});
-    for(const k of ["name","company","mobile","email","limit"]) $("#a-"+k).value="";
+    const {installer:i}=await admin({action:"add",name:v("name"),company:v("company"),mobile:v("mobile"),email:v("email"),limit:v("limit")===""?null:v("limit"),discount:v("discount")});
+    for(const k of ["name","company","mobile","email","limit","discount"]) $("#a-"+k).value="";
     $("#add-note").textContent=`${i.name} added. Send them their code:`;
     $("#new-share").innerHTML=shareBox(i);$("#new-share").hidden=false;
     await load();
@@ -376,11 +394,41 @@ async function loadSurveys(){SV=(await admin({action:"surveys"})).surveys;render
 $("#sv-q").oninput=()=>SV&&renderSurveys();
 document.querySelectorAll("[data-tab]").forEach(t=>t.onclick=async()=>{
   document.querySelectorAll("[data-tab]").forEach(x=>x.setAttribute("aria-selected",String(x===t)));
-  const tab=t.dataset.tab, tr=tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tab!=="accounts";$("#t-answers").hidden=tab!=="answers";$("#t-surveys").hidden=tab!=="surveys";
+  const tab=t.dataset.tab, tr=tab==="trends";$("#t-trends").hidden=!tr;$("#t-accounts").hidden=tab!=="accounts";$("#t-answers").hidden=tab!=="answers";$("#t-surveys").hidden=tab!=="surveys";$("#t-prices").hidden=tab!=="prices";
+  if(tab==="prices"){$("#pr-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadPrices();}catch(err){if(err.code) $("#pr-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tab==="surveys"){$("#sv-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadSurveys();}catch(err){if(err.code) $("#sv-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tab==="answers"){$("#sa-list").innerHTML=`<p class="src">Loading…</p>`;try{await loadAnswers();}catch(err){if(err.code) $("#sa-list").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
   if(tr&&!TR){$("#tr-summary").innerHTML=`<p class="src">Loading…</p>`;try{await loadTrends();}catch(err){if(err.code) $("#tr-summary").innerHTML=`<p class="src">${esc(MSG[err.code]||"Something went wrong. Try again.")}</p>`;}}
 });
+
+/* ---------- Prices (lib/prices.js) ---------- */
+let PR=null;
+const eur=n=>"€"+(+n).toLocaleString("en-IE",{minimumFractionDigits:2,maximumFractionDigits:2});
+async function loadPrices(){PR=await admin({action:"prices"});renderPrices();}
+function renderPrices(extra){
+  const p=PR.prices,q=$("#pr-q").value.trim().toLowerCase();
+  $("#pr-ex").value=p.exVat===false?"inc":"ex";$("#pr-vat").value=p.vat??"";
+  const missing=PR.catalogue.filter(c=>!(c.code in p.items));
+  $("#pr-status").innerHTML=p.placeholder?`<b>Placeholder prices.</b> These are stand-in figures so the quote can be tried, not HMG prices. Installers see "placeholder prices" on their quote until you load the real list below.`
+    :`<b>Price list loaded</b> ${esc(new Date(p.at).toLocaleString("en-IE",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}))}: ${Object.keys(p.items).length} prices, ${p.exVat===false?"including VAT":`ex VAT${p.vat!=null?`, ${p.vat}% VAT added on the quote`:", no VAT shown"}`}.${missing.length?` <b>${missing.length} code${missing.length===1?" has":"s have"} no price</b> and show as "price from branch" on the quote.`:""}`
+    +(extra||"");
+  const rows=PR.catalogue.filter(c=>!q||[c.cat,c.item,c.code].join(" ").toLowerCase().includes(q));
+  $("#pr-list").innerHTML=`<table class="sv"><thead><tr><th>Category</th><th>Product</th><th>HMG code</th><th>RRP</th></tr></thead><tbody>${rows.map(c=>`<tr><td>${esc(c.cat)}</td><td>${esc(c.item)}</td><td class="mono">${esc(c.code)}</td><td>${c.code in p.items?eur(p.items[c.code]):`<span class="chip full">No price</span>`}</td></tr>`).join("")}</tbody></table>`;
+}
+$("#pr-q").oninput=()=>PR&&renderPrices();
+const prVat=()=>({exVat:$("#pr-ex").value!=="inc",vat:$("#pr-ex").value==="inc"?null:$("#pr-vat").value.trim()});
+$("#pr-form").onsubmit=async e=>{
+  e.preventDefault();const note=$("#pr-note");note.textContent="Loading…";
+  try{const d=await admin({action:"prices_set",text:$("#pr-text").value,...prVat()});
+    PR.prices=d.prices;$("#pr-text").value="";note.textContent=`Loaded ${Object.keys(d.prices.items).length} prices.`;
+    renderPrices(d.unknown.length?`<br>${d.unknown.length} code${d.unknown.length===1?" isn't":"s aren't"} used in the app yet (kept anyway): ${d.unknown.slice(0,12).map(esc).join(", ")}${d.unknown.length>12?"…":""}`:"");}
+  catch(err){note.textContent=MSG[err.code]||"Something went wrong. Try again.";}
+};
+$("#pr-vat-save").onclick=async()=>{const note=$("#pr-note");
+  try{PR.prices=(await admin({action:"prices_vat",...prVat()})).prices;note.textContent="VAT saved.";renderPrices();}
+  catch(err){note.textContent=err.code==="no_prices"?"Load a price list first.":MSG[err.code]||"Something went wrong. Try again.";}};
+$("#pr-clear").onclick=async()=>{if(!confirm("Remove the price list and go back to placeholder prices?")) return;
+  try{await admin({action:"prices_clear"});await loadPrices();$("#pr-note").textContent="Back to placeholder prices.";}catch(err){$("#pr-note").textContent=MSG[err.code]||"Something went wrong. Try again.";}};
 
 if(ss.get("hmg-admin")) load().catch(()=>{}); else showLogin("");
 </script>
