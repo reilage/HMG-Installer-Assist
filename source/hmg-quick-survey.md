@@ -46,7 +46,7 @@ Pick the smallest unit in the range whose band covers the heat loss. The band is
 - Room heat loss (W) = HLI × room floor area × (room temperature − outside temperature).
 - Room temperature: **21 °C for every room** by default (HMG, Donal Reilly 27/10/2026). The installer can change any room.
 - Rooms not listed (e.g. a landing with no radiator) still count in the heat pump size, which uses the whole floor area at 21 °C.
-- Radiator per room from the HMG radiator list (Warmhaus) at 45 °C flow, 5 °C drop, at that room's temperature: the closest Type 22 above the room heat loss, within the maximum height (600 mm unless the installer says otherwise) and any maximum length. If no single Type 22 fits, two Type 22s that add up to it, otherwise a Type 33.
+- Radiator per room from the HMG radiator list (Warmhaus) at 45 °C flow, 5 °C drop, at that room's temperature: the closest Type 22 above the room heat loss, at the radiator height and within any maximum length. **One radiator height for the whole house** (600 mm unless the installer picks another), not a mix of heights; a room can have its own height when it needs one, e.g. under a window (HMG, Donal Reilly 27/10/2026). If no single Type 22 fits, two Type 22s that add up to it, otherwise a Type 33.
 
 ## 4. Hot water cylinder
 
