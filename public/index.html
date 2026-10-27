@@ -1241,9 +1241,12 @@ function qsTotRows(t){
 let qs=(()=>{try{return JSON.parse(store.get(QS_KEY))||null;}catch{return null;}})()||{area:"",hli:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:"",name:""};
 const qsSave=()=>store.set(QS_KEY,JSON.stringify(qs));
 /* Radiator height: one height for the whole house (default 600 mm), a room can have its own (Donal 27/10/2026).
-   Surveys saved before this had a maximum height instead. */
-if(qs.radH===undefined){qs.radH=+qs.maxH||600;delete qs.maxH;}
-const QS_HEIGHTS=[300,500,600,700,900];
+   Surveys saved before this had a maximum height instead. Only the heights HMG stocks (Donal Reilly 27/10/2026: no 700 mm);
+   a survey saved with a height no longer stocked goes back to 600. */
+const QS_HEIGHTS=[300,500,600,900];
+const qsFixH=q=>{if(q.radH===undefined){q.radH=+q.maxH||600;delete q.maxH;}if(!QS_HEIGHTS.includes(+q.radH)) q.radH=600;
+  (q.rooms||[]).forEach(m=>{if(m.h&&!QS_HEIGHTS.includes(+m.h)) m.h="";});};
+qsFixH(qs);
 const qsH=m=>+(m?.h)||+qs.radH||600;
 const qsNum=v=>parseFloat(String(v).replace(",","."));
 const qsTemp=t=>(KB?.survey?.rooms||[]).find(r=>r.type===t)?.temp??21;
@@ -1379,7 +1382,7 @@ async function renderSaved(){
       if(qsFrom==="account"){try{const r=await api("surveys",{action:"open",id});if(r.ok) st=(await r.json()).survey.state;}catch{}}
       else st=qsLocal().find(e=>e.id===id)?.state;
       if(!st){tr.querySelector(".src").textContent="Couldn't open it. Try again.";return;}
-      qs=st;if(qs.radH===undefined) qs.radH=+qs.maxH||600;qsLastSaved=JSON.stringify(qs);qsSave();renderSurvey();$("#qs-body").scrollIntoView({behavior:"smooth"});};
+      qs=st;qsFixH(qs);qsLastSaved=JSON.stringify(qs);qsSave();renderSurvey();$("#qs-body").scrollIntoView({behavior:"smooth"});};
     tr.querySelector("[data-del]").onclick=async()=>{
       if(qsFrom==="account") await api("surveys",{action:"delete",id}).catch(()=>{});
       else store.set(QS_LOCAL,JSON.stringify(qsLocal().filter(e=>e.id!==id)));
