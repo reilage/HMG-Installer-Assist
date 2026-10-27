@@ -508,6 +508,20 @@ test("with email on, the approver gets a link that approves the request and emai
   await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code }, body: JSON.stringify({ subject: "x", body: "y", attachment: { filename: "../evil.exe", csv: "z" } }) });
   assert.equal(mock.seen.at(-1).body.attachments, undefined, "only a .csv name is attached");
   assert.equal(mock.seen.at(-1).body.html, undefined, "no doc, no HTML version");
+
+  // the design request: the written request above the tables, the quotation PDF, and only known data sheets by URL
+  const pdf = Buffer.from("%PDF-1.4 test").toString("base64");
+  await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code },
+    body: JSON.stringify({ subject: "Design request", body: "please design", doc: { ...doc, intro: "Dear HMG Technical Design,\n\nPlease <b>design</b>\nthis." },
+      attachment: { filename: "HMG-quote-list-D01.csv", csv }, pdf: { filename: "HMG-quotation-D01.pdf", data: pdf }, sheets: ["panasonic-j-series", "../secret", "warmhaus-radiators"] }) });
+  const d = mock.seen.at(-1).body;
+  assert.match(d.html, /Dear HMG Technical Design,<\/p><p[^>]*>Please &lt;b&gt;design&lt;\/b&gt;<br>this\.<\/p>/);
+  assert.deepEqual(d.attachments.map(x => x.filename), ["HMG-quote-list-D01.csv", "HMG-quotation-D01.pdf", "panasonic-j-series.pdf", "warmhaus-radiators.pdf"]);
+  assert.equal(d.attachments[1].content, pdf);
+  assert.match(d.attachments[2].path, /^http:\/\/.+\/datasheets\/panasonic-j-series\.pdf$/);
+  await fetch(BASE + "/api/escalate", { method: "POST", headers: { "Content-Type": "application/json", "x-access-code": a.installer.code },
+    body: JSON.stringify({ subject: "x", body: "y", pdf: { filename: "a.pdf", data: "not base64!" } }) });
+  assert.equal(mock.seen.at(-1).body.attachments, undefined, "a PDF that isn't base64 isn't attached");
 });
 
 test("fault trends: each question is saved, counted per unit and installer, and Claude writes the weekly summary", async () => {

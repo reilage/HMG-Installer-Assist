@@ -382,6 +382,7 @@ form textarea{min-height:76px;resize:vertical}
 table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
 .qs-scroll{overflow-x:auto}
 .qs-doc-n{font-size:13px}
+.qs-intro{margin:10px 0 0;font-size:14px}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
 @media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
@@ -1393,7 +1394,7 @@ async function renderSaved(){
     <p class="src" style="margin:0">Every survey you request a quote for is saved here${qsFrom==="account"?" on your account":" on this phone"}. Open one to change it or send it again.</p>
     ${items.length?`<table class="cu qs-saved"><tbody>${items.map(e=>`<tr data-id="${esc(e.id)}"><td><b>${esc(e.name||e.site||"No site given")}</b>${e.name&&e.site?`<div class="src">${esc(e.site)}</div>`:""}<div class="src">${esc(e.title||"")}</div><div class="src">${when(e.at)}</div></td>
       <td class="qs-sv-b"><button class="btn sec" data-open>Open</button><button class="cp-x" data-del aria-label="Delete survey">Delete</button></td></tr>`).join("")}</tbody></table>`
-      :`<p class="src" style="margin:0">None yet. They're saved when you tap <b>Request HMG quote</b>.</p>`}`;
+      :`<p class="src" style="margin:0">None yet. They're saved when you tap <b>Request HMG Design</b> or <b>Download PDF</b>.</p>`}`;
   p.querySelectorAll("tr[data-id]").forEach(tr=>{const id=tr.dataset.id;
     tr.querySelector("[data-open]").onclick=async()=>{
       let st=null;
@@ -1475,9 +1476,9 @@ function calcSurvey(){
     :`<p class="src" style="margin:0">The heat pump and radiators show here once the figures are in.</p>`}
     <div class="notice"><b>Disclaimer.</b> ${pr.tot?QS_PRICE_DISC:QS_DISC}</div>
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
-    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG quote</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Download PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
+    <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG Design</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Download PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
-      <div class="btnrow"><button class="btn" id="qs-send" hidden>Send to Heat Merchants</button><a class="btn" id="qs-mail" href="#" target="_blank" rel="noopener" style="text-decoration:none">Open email</a><button class="btn sec" id="qs-csv">Download quote list (CSV)</button><button class="btn sec" id="qs-share" hidden>Share email + CSV</button><button class="btn sec" id="qs-copy">Copy text</button><span class="src" id="qs-note"></span></div>
+      <div class="btnrow"><button class="btn" id="qs-send">Send Email &amp; Quick Design</button><span class="src" id="qs-note"></span></div>
       <div class="qs-doc" id="qs-sum"></div></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
   $("#qs-eir").oninput=e=>{qs.eir=e.target.value;qsSave();};$("#qs-addr").oninput=e=>{qs.addr=e.target.value;qsSave();};
@@ -1496,12 +1497,15 @@ const qsCsv=lines=>{const p=qsPriced(lines),t=p.tot;
 /* Quote request document: blocks of {h, kv:[[label, value]]} or {h, note, cols:[{h, t?: text prefix}], rows:[[cells]]}.
    The server renders the same shape as an HTML email (lib/quote-email.js). */
 /* pdf: the installer's own copy (Download PDF): titled a quotation, no CSV note. */
+/* The Eircode and address as typed, even if the phone filled them in without an input event. */
+function qsSync(){const e=$("#qs-eir"),a=$("#qs-addr");if(e) qs.eir=e.value;if(a) qs.addr=a.value;qsSave();}
 function qsDoc(w,pick,rooms,cyl,lines,me,pdf){
   const mixed=qs.rooms.some(m=>+m.h&&+m.h!==+qs.radH);
   const hot=cyl?.over?`${qs.beds} bedrooms: over ${cyl.max}, please advise`:!cyl?.need?"":`${qs.beds} bedroom${cyl.beds===1?"":"s"}: ${cyl.need} L, `
     +(cyl.built?`built into the indoor unit (${cyl.built} L)${cyl.need>cyl.built?". Needs more than the built-in tank: please advise":""}`:cyl.cyl?cyl.type.name.toLowerCase():"please advise");
-  return {title:`${pdf?"Quotation":"Quote request"} – ${qs.name?.trim()||"HMG quick survey"}`,blocks:[
-    {h:"Site and installer",kv:[...(qs.name?.trim()?[["Survey name",qs.name.trim()]]:[]),["Site",[qs.addr,qs.eir].filter(Boolean).join(", ")||"—"],["Installer",[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"]]},
+  qsSync();
+  return {title:`${pdf?"Quotation":"Design request"} – ${qs.name?.trim()||"HMG quick survey"}`,blocks:[
+    {h:"Site and installer",kv:[...(qs.name?.trim()?[["Survey name",qs.name.trim()]]:[]),["Site address",qs.addr?.trim()||"—"],["Eircode",qs.eir?.trim()||"—"],["Installer",[me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join(", ")||"—"]]},
     {h:"Survey (from the BER)",kv:[["Floor area",`${fmt(qsArea(),1)} m²${qs.fromRooms?` (total of the ${qs.rooms.length} rooms)`:""}`],["HLI",`${qs.hli} W/K·m²`],
       ["Design temperatures",`${qs.tin} °C inside, ${qs.tout} °C outside`],["Design heat loss",`${fmt(w/1000)} kW (${Math.round(w)} W)`],
       ...(pick?[["Heat pump",`${pick.r.name} ${pick.z.kw} kW, covers up to ${pick.z.covers} kW`]]:[]),...(hot?[["Hot water",hot]]:[])]},
@@ -1581,22 +1585,29 @@ async function qsPdfFile(d,day){
     pdf.text(qsPdfT(QP?QS_NONBINDING:"Quick estimate only: a full heat loss design is required."),M,H-8);pdf.text(`Page ${i} of ${n}`,M+W,H-8,{align:"right"});}
   return pdf.output("arraybuffer");
 }
+const qsFileName=(pre,day)=>`${pre}-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
+/* The quotation PDF: {bytes, name, sheets, doc, day}. withSheets puts the data sheets after it (Download PDF, mail app);
+   without, they go to HMG as their own attachments (Send from the app). */
+async function qsPdfBuild(w,pick,rooms,cyl,lines,withSheets){
+  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date(),sheets=qsSheets(pick,cyl,rooms);
+  if(sheets.length) doc.blocks.splice(-1,0,{h:"Data sheets",note:`${withSheets?"Attached after this quotation":"Attached"}: ${sheets.map(x=>x[1]).join("; ")}.`});
+  let bytes=await qsPdfFile(doc,day);
+  if(withSheets&&sheets.length) bytes=await qsJoin(bytes,sheets).catch(()=>bytes);
+  return {bytes,name:qsFileName("HMG-quotation",day)+".pdf",sheets,doc,day};
+}
+const qsDownload=(data,name,type)=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([data],{type}));a.download=name;
+  document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);};
 async function qsPdf(w,pick,rooms,cyl,lines){
   qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
-  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date(),b=$("#qs-pdf"),sheets=qsSheets(pick,cyl,rooms);
-  if(sheets.length) doc.blocks.splice(-1,0,{h:"Data sheets",note:`Attached after this quotation: ${sheets.map(x=>x[1]).join("; ")}.`});
-  const name=`HMG-quotation-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${day.toISOString().slice(0,10)}`;
-  b.disabled=true;b.textContent="Making PDF…";
-  try{let bytes=await qsPdfFile(doc,day);
-    if(sheets.length) bytes=await qsJoin(bytes,sheets).catch(()=>bytes);
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));a.download=name+".pdf";
-    document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),10000);
+  const b=$("#qs-pdf");b.disabled=true;b.textContent="Making PDF…";
+  try{const f=await qsPdfBuild(w,pick,rooms,cyl,lines,true);qsDownload(f.bytes,f.name,"application/pdf");
     b.textContent="PDF downloaded";setTimeout(()=>{b.textContent="Download PDF";b.disabled=false;},2500);return;}
   catch{b.textContent="Download PDF";b.disabled=false;}
   /* No PDF maker (first use with no signal): the print sheet, where the phone can save it as a PDF. */
+  const doc=qsDoc(w,pick,rooms,cyl,lines,qsMe,true),day=new Date();
   $("#qs-print").innerHTML=`<div class="qp-head"><img src="brand/hmg-logo.png" alt="Heat Merchants Group" width="110" height="65"><div><b>Heat Merchants Group</b><span>${day.toLocaleDateString("en-IE",{day:"numeric",month:"long",year:"numeric"})}</span></div></div>`
     +`<div class="qs-doc">${qsDocHtml(doc)}</div>`;
-  const title=document.title;document.title=name;
+  const title=document.title;document.title=qsFileName("HMG-quotation",day);
   document.body.classList.add("qs-printing");
   const done=()=>{document.body.classList.remove("qs-printing");document.title=title;window.removeEventListener("afterprint",done);};
   window.addEventListener("afterprint",done);
@@ -1607,36 +1618,72 @@ function qsDocText(d){
     ...(b.rows||[]).map(r=>r.map((c,i)=>c===""?"":(b.cols[i].t||"")+c).filter(Boolean).join(" · ")),!b.h?b.note:""].filter(Boolean).join("\n"))].join("\n\n");
 }
 function qsDocHtml(d){
-  return `<div class="qs-doc-t">${esc(d.title)}</div>`+d.blocks.map(b=>!b.h?`<p class="src qs-doc-n">${esc(b.note)}</p>`
+  return `<div class="qs-doc-t">${esc(d.title)}</div>`+(d.intro?d.intro.split("\n\n").map(p=>`<p class="qs-intro">${esc(p).replace(/\n/g,"<br>")}</p>`).join(""):"")+d.blocks.map(b=>!b.h?`<p class="src qs-doc-n">${esc(b.note)}</p>`
     :`<section><div class="box-h">${esc(b.h)}</div>${b.note?`<p class="src">${esc(b.note)}</p>`:""}`
     +(b.kv?`<table class="cu qs-kv"><tbody>${b.kv.map(([k,v])=>`<tr><th>${esc(k)}</th><td>${esc(v)}</td></tr>`).join("")}</tbody></table>`
       :`<div class="qs-scroll"><table class="cu"><thead><tr>${b.cols.map(c=>`<th>${esc(c.h)}</th>`).join("")}</tr></thead><tbody>${b.rows.map(r=>`<tr>${r.map(c=>`<td>${esc(String(c))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`)
     +`</section>`).join("");
 }
+/* Request HMG Design (Donal 27/10/2026): one step, Send Email & Quick Design. It sends HMG Technical Design a written
+   request for a full design, with the quotation PDF (data sheets included) and the quote list CSV attached:
+   - from the app when email is set up (Resend), with a copy to the installer;
+   - else on phones through the share sheet into the mail app, files attached;
+   - else (computers) the two files download and the email opens written, to attach them. */
+function qsLetter(w,pick,cyl,rooms,sheets,me){
+  const hot=cyl?.built?`built into the indoor unit (${cyl.built} L)`:cyl?.cyl?cyl.cyl.item:"";
+  return [`Dear HMG Technical Design,`,
+    `Please could you carry out a full SR 50 heat loss calculation and system design for the project below, for designer sign-off and professional indemnity insurance, and confirm the quotation with our local HMG branch.`,
+    [qs.name?.trim()&&`Project: ${qs.name.trim()}`,`Site: ${qs.addr?.trim()||"—"}`,`Eircode: ${qs.eir?.trim()||"—"}`,
+      `Quick survey heat loss (from the BER): ${fmt(w/1000)} kW`,pick&&`Proposed heat pump: ${pick.r.name} ${pick.z.kw} kW`,hot&&`Hot water: ${hot}`,
+      rooms.length&&`Rooms surveyed: ${rooms.length}`].filter(Boolean).join("\n"),
+    `Attached:\n• Quotation (PDF): quick survey, quote list and prices${sheets.length?", with the product data sheets":""}\n• Quote list (CSV) for the ERP`,
+    `The quick survey details are below. Please contact me if you need anything else.`,
+    [`Kind regards,`,me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join("\n")].join("\n\n");
+}
 function quoteRequest(w,pick,rooms,list,cyl,lines){
-  const me=qsMe;
-  const subject=`Quote request – ${qs.name?.trim()?qs.name.trim()+" – ":"quick survey – "}${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir||"location?"}`;
-  /* The quote request as headed sections and tables: shown as tables in the app (and in the email once Resend sends it),
-     and as tidy plain text for mailto and Copy, which can't carry tables. */
-  const doc=qsDoc(w,pick,rooms,cyl,lines,me),body=qsDocText(doc);
+  qsSync();
+  const me=qsMe,sheets=qsSheets(pick,cyl,rooms);
+  const subject=`Design request – ${qs.name?.trim()?qs.name.trim()+" – ":""}${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir?.trim()||"Eircode?"}`;
+  const doc=qsDoc(w,pick,rooms,cyl,lines,me);
   qsSaveRequest(doc,qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
+  doc.intro=qsLetter(w,pick,cyl,rooms,sheets,me);
+  const body=`${doc.intro}\n\n————————\n\n${qsDocText(doc)}`;
   $("#qs-sum").innerHTML=qsDocHtml(doc);
-  const csv=qsCsv(lines),fname=`HMG-quote-${[qs.name,qs.eir].map(v=>(v||"").replace(/[^\w-]+/g,"").slice(0,20)).filter(Boolean).join("-")||"site"}-${new Date().toISOString().slice(0,10)}.csv`;
-  const csvFile=()=>new File([csv],fname,{type:"text/csv"});
-  $("#qs-csv").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));a.download=fname;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);};
-  /* Phones: share the email text with the CSV attached, straight into the mail app. */
-  const canShare=(()=>{try{return !!navigator.canShare?.({files:[csvFile()]});}catch{return false;}})();
-  $("#qs-share").hidden=!canShare;
-  $("#qs-share").onclick=async()=>{try{await navigator.share({title:subject,text:`To: ${ESC_TO}\n\n${body}`,files:[csvFile()]});}catch{}};
-  $("#qs-mail").href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;
-  $("#qs-send").hidden=!CFG.email;$("#qs-send").disabled=false;$("#qs-note").textContent="";
-  $("#qs-how").innerHTML=(CFG.email?`Tap <b>Send to Heat Merchants</b>: the quote list goes with it as a CSV file. Or send it from your own mail app.`
-    :`Send it to <span class="addr">${esc(ESC_TO)}</span> with the quote list attached: ${canShare?`tap <b>Share email + CSV</b> and pick your mail app, or `:""}tap <b>Download quote list (CSV)</b>, then <b>Open email</b> and attach the file.`)
-    +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");
-  $("#qs-send").onclick=async()=>{const btn=$("#qs-send"),note=$("#qs-note");btn.disabled=true;note.textContent="Sending…";
-    try{const r=await api("escalate",{subject,body,doc,replyTo:me("email"),attachment:{filename:fname,csv}});if(!r.ok) throw 0;note.textContent="Sent to Heat Merchants.";}
-    catch{note.textContent="Couldn't send it. Use Open email instead.";btn.disabled=false;}};
-  $("#qs-copy").onclick=async()=>{try{await navigator.clipboard.writeText(`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`);$("#qs-copy").textContent="Copied";}catch{$("#qs-copy").textContent="Select the text below";}setTimeout(()=>$("#qs-copy").textContent="Copy text",2000);};
+  const csv=qsCsv(lines),csvName=qsFileName("HMG-quote-list",new Date())+".csv";
+  const shareOk=(()=>{try{return !!navigator.canShare?.({files:[new File(["x"],"x.pdf",{type:"application/pdf"})]});}catch{return false;}})();
+  let how=CFG.email?"app":shareOk?"share":"mail";
+  const btn=$("#qs-send"),note=$("#qs-note"),label="Send Email & Quick Design";
+  const tell=()=>{$("#qs-how").innerHTML=(how==="app"?`Sends this design request to HMG Technical Design (<span class="addr">${esc(ESC_TO)}</span>) with the quotation PDF${sheets.length?", data sheets":""} and quote list CSV attached, and a copy to you.`
+    :how==="share"?`Opens your mail app with this design request written and the quotation PDF and quote list CSV attached. Send it to <span class="addr">${esc(ESC_TO)}</span>.`
+    :`Opens your email with this design request written to <span class="addr">${esc(ESC_TO)}</span>, and downloads the quotation PDF and quote list CSV: attach both before sending.`)
+    +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");};
+  tell();
+  /* The PDF is made now, so the tap on Send can open the share sheet at once (phones only allow that straight after a tap). */
+  btn.disabled=true;btn.textContent="Preparing PDF…";note.textContent="";
+  const full=qsPdfBuild(w,pick,rooms,cyl,lines,true).catch(()=>null),slim=CFG.email?qsPdfBuild(w,pick,rooms,cyl,lines,false).catch(()=>null):null;
+  Promise.all([full,slim]).then(()=>{btn.disabled=false;btn.textContent=label;});
+  const b64=bytes=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(",")[1]);f.readAsDataURL(new Blob([bytes]));});
+  btn.onclick=async()=>{
+    if(how==="app"){
+      btn.disabled=true;note.textContent="Sending…";
+      try{const p=await slim;
+        const r=await api("escalate",{subject,body,doc,replyTo:me("email"),attachment:{filename:csvName,csv},
+          ...(p?{pdf:{filename:p.name,data:await b64(p.bytes)},sheets:p.sheets.map(x=>x[0])}:{})});
+        if(!r.ok) throw 0;note.textContent="Sent to HMG Technical Design. A copy has gone to you.";btn.textContent="Sent";return;}
+      catch{how=shareOk?"share":"mail";tell();btn.disabled=false;note.textContent="Couldn't send it from the app. Tap again to send it from your own email.";return;}
+    }
+    const p=await full;
+    if(how==="share"){
+      try{await navigator.share({title:subject,text:`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`,
+        files:[...(p?[new File([p.bytes],p.name,{type:"application/pdf"})]:[]),new File([csv],csvName,{type:"text/csv"})]});}
+      catch(e){if(e?.name!=="AbortError"){how="mail";tell();note.textContent="Your phone couldn't share the files. Tap again to use email instead.";}}
+      return;
+    }
+    if(p) qsDownload(p.bytes,p.name,"application/pdf");
+    setTimeout(()=>qsDownload(csv,csvName,"text/csv"),400);
+    setTimeout(()=>{location.href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;},900);
+    note.textContent="The PDF and CSV have downloaded: attach them to the email.";
+  };
   $("#qs-sent").hidden=false;$("#qs-sent").scrollIntoView({behavior:"smooth"});
 }
 
