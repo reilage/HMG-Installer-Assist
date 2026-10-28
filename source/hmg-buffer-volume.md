@@ -63,7 +63,7 @@ Nominal flow rates (ΔT 5):
 - Baxi HP55 (A7/W35, ΔT 5 K, Baxi HP55 IM p.9): 4 kW **12.6**, 6 kW **17.9**, 8 kW **24.4**, 11 kW **33**, 13 kW **38.7 l/min**.
   - The Baxi minimum flow is 6.67 l/min (4, 6, 8 kW) or 11.67 l/min (11, 13 kW). Below it the unit trips on E0 / E8 (Baxi HP55 IM p.42).
 
-Panasonic flow read-out: [Menu] › System check › System information › Pump flowrate (J-series SM p.24). The minimum is 15 l/min with the main pump running (J-series SM p.63, T-Cap SM p.62).
+Panasonic flow read-out: [Menu] › System check › System information › Pump flowrate (J-series SM p.24). With the main pump running it should reach the unit's nominal flow above (15 l/min on a 3 or 5 kW, the manual minimum), never under 15 l/min (J-series SM p.63, T-Cap SM p.62).
 
 ## 6. Manual notes that go with this
 
