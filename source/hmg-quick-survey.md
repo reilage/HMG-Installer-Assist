@@ -14,6 +14,20 @@ Cite as **"HMG quick survey guidance"** (Donal Reilly, 27/10/2026). A quick esti
 - Design ΔT = inside 21 °C − outside −3 °C = **24 K**, unless the installer gives other temperatures.
 - Example: HLI 2.0 × 200 m² × 24 K = 9,600 W = 9.6 kW.
 
+### No BER: HLI from the year built (Donal Reilly, 28/10/2026)
+
+If the installer has no BER HLI, they can pick the year the house was built and the survey uses a typical HLI for that age (the middle of the range, for a home as built). **A BER HLI, when given, always overrides the year built.** Say the HLI is an estimate and that wall, attic or window upgrades lower it, so the BER or a heat loss calculation should confirm it.
+
+| Year built | Regulations at the time | Typical HLI range | HLI used | About W/m² at 24 K |
+|---|---|---|---|---|
+| Before 1919 | None: solid stone or brick walls | 3.5–5.0 | 4.2 | 100 |
+| 1919–1978 | No thermal regulations: solid or unfilled cavity walls | 3.0–4.5 | 3.7 | 89 |
+| 1979–1991 | First thermal regulations (walls U about 1.1) | 2.5–3.5 | 3.0 | 72 |
+| 1992–2004 | TGD L 1991/1997 (walls U 0.55–0.45) | 2.0–2.8 | 2.4 | 58 |
+| 2005–2010 | TGD L 2005/2008 (walls U 0.27) | 1.4–2.0 | 1.7 | 41 |
+| 2011–2018 | TGD L 2011 (around A3) | 1.0–1.5 | 1.3 | 31 |
+| 2019 on | TGD L 2019 NZEB (A2) | 0.7–1.2 | 1.0 | 24 |
+
 ## 2. Unit selection (HMG bands)
 
 Pick the smallest unit in the range whose band covers the heat loss. The band is the largest heat loss the unit covers (HMG, Donal Reilly 27/10/2026):

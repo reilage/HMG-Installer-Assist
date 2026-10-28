@@ -1,5 +1,5 @@
 {
-  "_note": "HMG heat pump selection bands (Donal Reilly, 27/10/2026): the largest design heat loss in kW each unit covers. Used by Design › Quick survey and Ask. K-series bands given 27/10/2026 (5, 7 and 9 kW; no band for the 3 kW). Room temperatures: 21 °C for every room by default (Donal 27/10/2026), editable per room. hmg = HMG product codes (Donal 27/10/2026), shown only in the quick survey quote list, quote email and quick survey answers; manufacturer model codes everywhere else.",
+  "_note": "HMG heat pump selection bands (Donal Reilly, 27/10/2026): the largest design heat loss in kW each unit covers. Used by Design › Quick survey and Ask. K-series bands given 27/10/2026 (5, 7 and 9 kW; no band for the 3 kW). Room temperatures: 21 °C for every room by default (Donal 27/10/2026), editable per room. hmg = HMG product codes (Donal 27/10/2026), shown only in the quick survey quote list, quote email and quick survey answers; manufacturer model codes everywhere else. ageBands = typical HLI by year built, used only when there is no BER HLI (Donal 28/10/2026): the middle of each range, for a home as built; a typed BER HLI always overrides it.",
   "design": { "inside": 21, "outside": -3 },
   "ranges": [
     { "unit": "J", "name": "Panasonic J-series Mini Monobloc R32", "sizes": [
@@ -23,6 +23,15 @@
       { "kw": 8, "covers": 7.8, "model": "HP55-8-1-PHMB", "hmg": [{ "code": "UM0076", "item": "Baxi Assure HP55 8 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
       { "kw": 11, "covers": 12.1, "model": "HP55-11-1-PHMB (or HP55-11-3-PHMB 3-phase)", "hmg": [{ "code": "UM0077", "item": "Baxi Assure HP55 11 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] },
       { "kw": 13, "covers": 13.7, "model": "HP55-13-1-PHMB (or HP55-13-3-PHMB 3-phase)", "hmg": [{ "code": "UM0078", "item": "Baxi Assure HP55 13 kW outdoor unit" }, { "code": "UE0035", "item": "Baxi indoor controller (ASHP Control)" }] } ] }
+  ],
+  "ageBands": [
+    { "id": "pre1919", "label": "Before 1919", "hli": 4.2, "range": "3.5–5.0", "basis": "No regulations: solid stone or brick walls" },
+    { "id": "1919", "label": "1919–1978", "hli": 3.7, "range": "3.0–4.5", "basis": "No thermal regulations: solid or unfilled cavity walls" },
+    { "id": "1979", "label": "1979–1991", "hli": 3.0, "range": "2.5–3.5", "basis": "First thermal regulations (walls U about 1.1)" },
+    { "id": "1992", "label": "1992–2004", "hli": 2.4, "range": "2.0–2.8", "basis": "TGD L 1991/1997 (walls U 0.55–0.45)" },
+    { "id": "2005", "label": "2005–2010", "hli": 1.7, "range": "1.4–2.0", "basis": "TGD L 2005/2008 (walls U 0.27)" },
+    { "id": "2011", "label": "2011–2018", "hli": 1.3, "range": "1.0–1.5", "basis": "TGD L 2011 (around A3)" },
+    { "id": "2019", "label": "2019 on", "hli": 1.0, "range": "0.7–1.2", "basis": "TGD L 2019 NZEB (A2)" }
   ],
   "rooms": [
     { "type": "Living room", "temp": 21 },
