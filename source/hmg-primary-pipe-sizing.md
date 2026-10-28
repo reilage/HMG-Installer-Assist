@@ -66,6 +66,7 @@ These are the kW ÷ (4.18 × 5°C ΔT) flows, so the table assumes a 5°C ΔT.
 K-series rated flows: K-series IM p.8. J-series flows are "based on nominal capacity, LWT 35°C and ΔT 5°C" (J-series SM p.12).
 
 Other manual points that matter for sizing:
+- **Commissioning flow check (HMG, Donal Reilly 28/10/2026):** at commissioning, confirm the flow with the main pump running reaches the **nominal flow for the unit's size**, not just 15 l/min: 7 kW 20.1, 9 kW 25.8, 12 kW 34.4, 16 kW 45.9 l/min (manual pages in the table above). 15 l/min is the figure for a 3 or 5 kW (their nominal 9.2 / 14.3 is under the manual minimum, so 15 applies).
 - **Minimum flow:** both manuals say confirm the maximum water flow with the main pump running is **not less than 15 l/min** (J-series SM p.63, K-series IM p.12). Low flow at low water temperature can trigger H75 during defrost. On a 5 kW (14.3 l/min nominal) size the pipe so the circuit can actually pass 15 l/min. At 1 m/s that is 17.8 mm internal (18.8 mm at 0.9 m/s), still 22 mm copper.
 - **Connections:** J-series monobloc water inlet/outlet are Rp 1¼" (J-series SM p.53, spec tables p.12). K-series tank unit space heating inlet/outlet are R1¼" (K-series IM p.5). The connection size is not the pipe size: size the pipe with the method above.
 - **Insulation:** J-series SM p.53 says insulate the water circuit piping with 20 mm or more of insulation (condensation in cooling, heat loss, and freezing of outdoor pipework).
@@ -125,6 +126,6 @@ The OD range is the usual MLCP size range; some makers use 25 mm instead of 26 m
 2. Take the nominal flow from the HMG table (or the manual's rated flow for the 3 kW K-series).
 3. Use ΔT 5°C and the 1 m/s maximum velocity unless the installer gives other values; say which values you used. Never recommend a tube running over 1 m/s.
 4. Give the minimum internal diameter, then the copper size and the MLCP (2 mm wall) size with the velocity in each, unless the installer names one material. Show the sum briefly.
-5. Remind them of the 15 l/min minimum flow check at commissioning and 20 mm+ insulation on outdoor runs.
+5. Remind them to confirm at commissioning that the flow with the main pump running reaches the nominal flow for that size (15 l/min on a 3 or 5 kW, 20.1 on a 7 kW, 25.8 on a 9 kW, 34.4 on a 12 kW, 45.9 on a 16 kW), never under the manual's 15 l/min minimum, and 20 mm+ insulation on outdoor runs.
 6. Cite: "Source: HMG sizing guidance (Pro Academy handbook pp.36-38; HMG Panasonic flow rate table)" plus the manual page for any manual figure.
 7. Out of scope (say so): pressure drop / pump head for long runs, glycol correction, emitter-side sizing, Baxi or other makes.

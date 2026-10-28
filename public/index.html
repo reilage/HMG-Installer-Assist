@@ -1727,6 +1727,14 @@ const RATED_K={3:9.2,5:14.3,7:20.1,9:25.8}, RATED_T={9:[25.8,12],12:[34.4,15]}, 
 const PIPES=[{name:"copper",list:[[15,0.7,13.6],[22,0.9,20.2],[28,0.9,26.2],[35,1.2,32.6],[42,1.2,39.6],[54,1.2,51.6]]},
              {name:"MLCP",list:[[16,2,12],[20,2,16],[26,2,22],[32,2,28],[40,2,36],[50,2,46]]}];
 let sz={kw:7,dt:5,v:1};
+/* Flow the commissioning check asks for: the size's nominal flow from the manual (HMG table where the manual has none), never under the 15 l/min manual minimum (HMG, Donal Reilly 28/10/2026). */
+const NOM_PAGE={J:{5:12,7:15,9:18}};
+function commFlow(P){
+  const r=unit==="T"?RATED_T[P]:unit==="L"?RATED_L[P]:unit==="K"&&RATED_K[P]?[RATED_K[P],8]:NOMINAL[P]&&[unit==="J"&&P===7?20.1:NOMINAL[P],NOM_PAGE.J[P]];
+  const cite=pg=>pg?`${({J:"J-series SM",T:"T-Cap SM",L:"L-series SM",K:"K-series IM"})[unit]} p.${pg}`:"HMG nominal flow table";
+  if(!r){const q=P/(4.2*sz.dt)*60;return q<15?{lpm:15,why:"manual minimum (this output only needs "+fmt(q)+" l/min)"}:{lpm:fmt(q),why:`flow for ${fmt(P,P%1?1:0)} kW at ΔT ${sz.dt}°C (not a standard size, so check the unit's nominal flow)`};}
+  return r[0]<15?{lpm:15,why:`manual minimum (the ${P} kW nominal flow is ${r[0]} l/min, ${cite(r[1])}, which is under it)`}:{lpm:r[0],why:`nominal flow for the ${P} kW (${cite(r[1])})`};
+}
 const fmt=(x,n=1)=>(+x).toFixed(n);
 function renderSizing(){
   const box=$("#size-body");
@@ -1747,7 +1755,7 @@ function renderSizing(){
     <div class="panel">
       <ul class="sz-notes">
         <li>HMG recommended maximum velocity is <b>1 m/s</b>, to avoid too much velocity. The handbook's worked example uses 0.9 m/s.</li>
-        <li>At commissioning, confirm max flow with the main pump running is <b>not less than 15 l/min</b> (${unit==="T"?"T-Cap SM p.62":unit==="L"?"L-series SM p.93":"J-series SM p.63, K-series IM p.12"}). Low flow can trigger H75 in defrost.</li>
+        <li id="sz-comm"></li>
         <li>Insulate the water pipework with <b>${unit==="L"?"30":"20"} mm or more</b> insulation, especially outdoor runs (${unit==="T"?"T-Cap SM p.51":unit==="L"?"L-series SM p.167":"J-series SM p.53"}).</li>
         <li>${unit==="L"?`Outdoor unit to tank unit, the L-series manual's own guide: ø20 mm inner on the 5 kW, ø25 mm on the 7 and 9 kW, 30 m maximum, 10 m maximum height difference (SM p.167). HMG sizes the primary with this method (Donal Reilly 26/10/2026).`:`Unit connections: `}${unit==="L"?"":unit==="T"?`T-Cap Rp 1¼" (SM p.51)`:`J-series Rp 1¼" (SM p.53), K-series tank unit R1¼" (IM p.5)`}${unit==="L"?"":". Size the pipe by the sum, not by the connection."}</li>
         <li>Not covered: pressure drop and pump head on long runs, glycol correction (glycol needs more flow), emitter-side pipework.</li>
@@ -1782,6 +1790,8 @@ function calcSizing(){
     ${t.list.map(c=>{const ok=c[2]>=need;return `<tr class="${c===picks[i]?"pick":ok?"":"small"}"><td>${c[0]} mm</td><td>${c[2]}</td><td>${fmt(vel(c),2)} m/s</td><td>${c===picks[i]?"Use":ok?"":"Too small"}</td></tr>`;}).join("")}
     </tbody></table>`).join("")}
     <div class="btnrow"><button class="btn sec" id="sz-ask">Ask about this</button></div>`;
+  const cf=commFlow(P);
+  $("#sz-comm").innerHTML=`At commissioning, confirm the flow with the main pump running reaches <b>${cf.lpm} l/min</b>, the ${cf.why}. Never under 15 l/min (${unit==="T"?"T-Cap SM p.62":unit==="L"?"L-series SM p.93":unit==="K"?"K-series IM p.12":"J-series SM p.63"}); low flow can trigger H75 in defrost. Read it at [Menu] › System check › System information › Pump flowrate.`;
   $("#sz-ask").onclick=()=>{show("ask");ask(`What size primary pipe for a ${P} kW ${UNITS[unit].short}, ΔT ${dt}°C, ${v} m/s?`);};
 }
 

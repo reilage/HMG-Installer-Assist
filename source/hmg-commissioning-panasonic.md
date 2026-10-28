@@ -58,7 +58,7 @@ How this file works (for editing on GitHub):
 ## 6. Service setup
 
 - **Air purge.** Service setup › Pump maximum speed › [►] to Operation › [▲]/[▼] to Air Purge › [OK]. Run it until the flow reading is steady. [Operate] stops the pump (J-series SM p.35, pp.151-152).
-- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (J-series SM p.63). Nominal flow: 5 kW 14.3, 7 kW 20, 9 kW 25.8 l/min (HMG sizing guidance; J-series SM p.12). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Flow rate checked.** Read Flow rate on the same screen. With the main pump running it must reach the nominal flow for the unit's size: 5 kW 15 l/min (nominal 14.3, but the manual minimum is 15), 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; J-series SM p.12, p.15, p.18). Never under 15 l/min on any size; low flow can cause H75 during defrost (J-series SM p.63). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
 - **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (J-series SM p.36). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit, set stages and temperatures (25-55 °C), then ON. Follow the screed maker's schedule (J-series SM p.36, pp.155-156).
 
@@ -67,7 +67,7 @@ How this file works (for editing on GitHub):
 - **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (J-series SM p.63).
 - **Pressure while running.** Gauge reads between 0.05 and 0.3 MPa (0.5 to 3 bar) (J-series SM p.63).
 - **No leaks.** Check every water connection for leaks during the test run (J-series SM p.53).
-- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (J-series SM p.24, p.63; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be close to the nominal flow for the unit's size from stage 6, and never under 15 l/min (J-series SM p.24, p.63; HMG commissioning check, Donal Reilly 25/10/2026).
 - **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new. Clear old install errors: [OK], [◄] to Yes, [OK] (J-series SM p.24, p.163).
 - **Water filter cleaned.** After the test run, clean the water filter and refit it (J-series SM p.63).
@@ -132,7 +132,7 @@ How this file works (for editing on GitHub):
 ## 6. Service setup
 
 - **Air purge.** Service setup › Pump maximum speed, [◄]/[►] to Operation, [▲]/[▼] to Air Purge, [OK]. Run it until the flow reading is steady (K-series IM p.33).
-- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (K-series IM p.12). Rated flow: 3 kW 9.2, 5 kW 14.3, 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; K-series IM p.8). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Flow rate checked.** Read Flow rate on the same screen. With the main pump running it must reach the nominal flow for the unit's size: 3 kW and 5 kW 15 l/min (rated 9.2 and 14.3, but the manual minimum is 15), 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; K-series IM p.8). Never under 15 l/min on any size; low flow can cause H75 during defrost (K-series IM p.12). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
 - **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (K-series IM p.33). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit (25-55 °C, 1-99 stages), then ON. Follow the screed maker's schedule (K-series IM p.33).
 
@@ -142,7 +142,7 @@ How this file works (for editing on GitHub):
 - **Pressure while running.** System check › System information › Water pressure reads 0.05-0.3 MPa (0.5-3 bar). If not, adjust the pump speed; if that doesn't fix it, escalate (K-series IM p.12, p.34).
 - **Heating normal, no leaks, no odd noise.** Heating works, no abnormal sound, no water leaks from the tank unit during the test run (K-series IM p.12 checklist).
 - **Safety relief valve.** The DHW safety relief valve knob has been turned to release air (K-series IM p.12 checklist).
-- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (K-series IM p.12, p.34; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be close to the nominal flow for the unit's size from stage 6, and never under 15 l/min (K-series IM p.12, p.34; HMG commissioning check, Donal Reilly 25/10/2026).
 - **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new (K-series IM p.34).
 - **Filters cleaned.** After the test run, clean the magnetic water filter and the water filter and refit them (K-series IM p.12).
@@ -201,7 +201,7 @@ How this file works (for editing on GitHub):
 ## 6. Service setup
 
 - **Air purge.** Service setup › Pump maximum speed › [►] to Operation › [▲]/[▼] to Air Purge › [OK]. Run it until the flow reading is steady. [Operate] stops the pump (T-Cap SM p.32, pp.150-151).
-- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (T-Cap SM p.62). Nominal flow: 9 kW 25.8, 12 kW 34.4 l/min (HMG sizing guidance; T-Cap SM p.12, p.15). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Flow rate checked.** Read Flow rate on the same screen. With the main pump running it must reach the nominal flow for the unit's size: 9 kW 25.8, 12 kW 34.4 l/min (HMG sizing guidance; T-Cap SM p.12, p.15). Never under 15 l/min; low flow can cause H75 during defrost (T-Cap SM p.62). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
 - **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (T-Cap SM p.33). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit, set stages and temperatures (25-55 °C), then ON. Follow the screed maker's schedule (T-Cap SM p.33, pp.154-155).
 
@@ -210,7 +210,7 @@ How this file works (for editing on GitHub):
 - **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (T-Cap SM p.61).
 - **Pressure while running.** Gauge reads between 0.05 and 0.3 MPa (0.5 to 3 bar) (T-Cap SM p.157).
 - **No leaks.** Check every water connection for leaks during the test run (T-Cap SM p.51).
-- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (T-Cap SM p.21, p.62; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be close to the nominal flow for the unit's size from stage 6, and never under 15 l/min (T-Cap SM p.21, p.62; HMG commissioning check, Donal Reilly 25/10/2026).
 - **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new. Clear old install errors: [OK], [◄] to Yes, [OK] (T-Cap SM p.21, p.163).
 - **Water filter cleaned.** After the test run, clean the magnetic water filter mesh: power off, close both filter valves, take out the mesh, wash it in warm water, refit, open the valves (T-Cap SM p.62).
@@ -277,7 +277,7 @@ HMG values are the same as the J-series and K-series checklists (Donal Reilly, 2
 ## 6. Service setup
 
 - **Air purge.** Service setup › Pump maximum speed, [►] to Operation, [▲]/[▼] to Air Purge, [OK]. Run it until the flow reading is steady. If there is no flow or H62 shows, stop the pump and release the air (L-series SM p.93, p.223).
-- **Flow rate checked.** Read Flow rate on the same screen. Must be at least 15 l/min with the main pump running; low flow can cause H75 during defrost (L-series SM p.93). Rated flow: 5 kW 14.3, 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; L-series SM p.13, p.17, p.21). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
+- **Flow rate checked.** Read Flow rate on the same screen. With the main pump running it must reach the nominal flow for the unit's size: 5 kW 15 l/min (nominal 14.3, but the manual minimum is 15), 7 kW 20.1, 9 kW 25.8 l/min (HMG sizing guidance; L-series SM p.13, p.17, p.21). Never under 15 l/min on any size; low flow can cause H75 during defrost (L-series SM p.93). HMG: leave pump Max. Duty at the factory setting, adjusting only if the site needs it (HMG, Donal Reilly 25/10/2026).
 - **Service contact.** Service setup › Service contact › Contact 1: HMG: **Heat Merchants Technical Support** (HMG, Donal Reilly 25/10/2026) (L-series SM p.122). No phone number needed.
 - **Screed drying.** Only on a new screed floor: Service setup › Dry concrete › Edit (25-55 °C, 1-99 stages), then ON. Follow the screed maker's schedule (L-series SM p.122, pp.226-227).
 
@@ -286,7 +286,7 @@ HMG values are the same as the J-series and K-series checklists (Donal Reilly, 2
 - **Start the unit.** Press [Operate] ⏻ to switch back on and run heating (L-series SM p.93).
 - **Pressure while running.** System check › System information › Water pressure reads 0.5-3 bar (0.05-0.3 MPa). If not, adjust the pump speed; if that doesn't fix it, escalate (L-series SM p.93, p.124).
 - **Heating normal, no leaks, no odd noise.** Heating works, no abnormal sound, no water leaks during the test run (L-series SM p.93).
-- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be at least 15 l/min and close to the unit's nominal flow from stage 6 (L-series SM p.93, p.124; HMG commissioning check, Donal Reilly 25/10/2026).
+- **Flow rate, all zones open.** With the heating running and every zone valve open, read the flow: [Menu] › System check › System information › Pump flowrate. It should be close to the nominal flow for the unit's size from stage 6, and never under 15 l/min (L-series SM p.93, p.124; HMG commissioning check, Donal Reilly 25/10/2026).
 - **Flow rate, all zones closed (bypass).** Close every zone so all the flow goes through the bypass valve. Read the flow again in the same way, and adjust the bypass valve until it reaches the unit's nominal flow rate from stage 6 (HMG: nominal flow across the bypass, Donal Reilly 25/10/2026).
 - **No errors.** [Menu] › System check › Error history: nothing new (L-series SM p.236).
 - **Filters cleaned.** After the test run, clean the magnetic water filter and the water filter and refit them (L-series SM p.93).
