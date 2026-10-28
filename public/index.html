@@ -383,6 +383,9 @@ table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
 .qs-scroll{overflow-x:auto}
 .qs-doc-n{font-size:13px}
 .qs-intro{margin:10px 0 0;font-size:14px}
+.qs-att{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.qs-att label{cursor:pointer}
+.qs-file{display:flex;gap:10px;align-items:center;font-size:13px}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
 @media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
@@ -1478,6 +1481,7 @@ function calcSurvey(){
     <div class="sz-in"><label>Eircode or town<input id="qs-eir" value="${esc(qs.eir||"")}"></label><label>Site address<input id="qs-addr" value="${esc(qs.addr||"")}"></label></div>
     <div class="btnrow"><button class="btn" id="qs-quote" ${lines.length?"":"disabled"}>Request HMG Design</button><button class="btn sec" id="qs-pdf" ${lines.length?"":"disabled"}>Download PDF</button><button class="btn sec" id="qs-ask" ${w?"":"disabled"}>Ask about this</button><button class="btn sec" id="qs-new">New survey</button></div>
     <div id="qs-sent" hidden><p class="src" id="qs-how" style="margin:0"></p>
+      <div class="qs-att"><label class="btn sec" for="qs-file">Attach floor plans or sketches</label><input type="file" id="qs-file" accept="image/*,application/pdf" multiple hidden><div id="qs-files"></div></div>
       <div class="btnrow"><button class="btn" id="qs-send">Send Email &amp; Quick Design</button><span class="src" id="qs-note"></span></div>
       <div class="qs-doc" id="qs-sum"></div></div>`;
   if($("#qs-hp-sel")) $("#qs-hp-sel").onchange=e=>{qs.pick=e.target.value;qsSave();calcSurvey();};
@@ -1629,16 +1633,28 @@ function qsDocHtml(d){
    - from the app when email is set up (Resend), with a copy to the installer;
    - else on phones through the share sheet into the mail app, files attached;
    - else (computers) the two files download and the email opens written, to attach them. */
-function qsLetter(w,pick,cyl,rooms,sheets,me){
+function qsLetter(w,pick,cyl,rooms,sheets,me,extra=[]){
   const hot=cyl?.built?`built into the indoor unit (${cyl.built} L)`:cyl?.cyl?cyl.cyl.item:"";
   return [`Dear HMG Technical Design,`,
     `Please could you carry out a full SR 50 heat loss calculation and system design for the project below, for designer sign-off and professional indemnity insurance, and confirm the quotation with our local HMG branch.`,
     [qs.name?.trim()&&`Project: ${qs.name.trim()}`,`Site: ${qs.addr?.trim()||"—"}`,`Eircode: ${qs.eir?.trim()||"—"}`,
       `Quick survey heat loss (from the BER): ${fmt(w/1000)} kW`,pick&&`Proposed heat pump: ${pick.r.name} ${pick.z.kw} kW`,hot&&`Hot water: ${hot}`,
       rooms.length&&`Rooms surveyed: ${rooms.length}`].filter(Boolean).join("\n"),
-    `Attached:\n• Quotation (PDF): quick survey, quote list and prices${sheets.length?", with the product data sheets":""}\n• Quote list (CSV) for the ERP`,
+    `Attached:\n• Quotation (PDF): quick survey, quote list and prices${sheets.length?", with the product data sheets":""}\n• Quote list (CSV) for the ERP${extra.length?`\n• Floor plans / sketches: ${extra.join(", ")}`:""}`,
     `The quick survey details are below. Please contact me if you need anything else.`,
     [`Kind regards,`,me("name"),me("co"),me("mob"),me("email")].filter(Boolean).join("\n")].join("\n\n");
+}
+/* Attachments the email can carry (the server's limit, api/escalate.js, less room for the quotation and base64). */
+const QS_ATT_MAX=2_400_000;
+/* A photo shrunk to 1800 px on its longest side as a JPEG; PDFs (and anything the phone can't draw) stay as they are. */
+async function qsShrink(f){
+  const clean=n=>n.replace(/[^\w .()-]+/g,"_").slice(-90);
+  if(!/^image\//.test(f.type)) return {name:clean(f.name),type:f.type||"application/pdf",blob:f};
+  try{const img=await createImageBitmap(f),k=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement("canvas");
+    c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    const blob=await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.82));
+    if(blob&&blob.size<f.size) return {name:clean(f.name.replace(/\.\w+$/,""))+".jpg",type:"image/jpeg",blob};}catch{}
+  return {name:clean(f.name),type:f.type,blob:f};
 }
 function quoteRequest(w,pick,rooms,list,cyl,lines){
   qsSync();
@@ -1646,43 +1662,54 @@ function quoteRequest(w,pick,rooms,list,cyl,lines){
   const subject=`Design request – ${qs.name?.trim()?qs.name.trim()+" – ":""}${pick?`${pick.r.name.replace(/^Panasonic /,"")} ${pick.z.kw} kW`:cyl?.cyl?"cylinder":"radiators"} – ${qs.eir?.trim()||"Eircode?"}`;
   const doc=qsDoc(w,pick,rooms,cyl,lines,me);
   qsSaveRequest(doc,qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
-  doc.intro=qsLetter(w,pick,cyl,rooms,sheets,me);
-  const body=`${doc.intro}\n\n————————\n\n${qsDocText(doc)}`;
-  $("#qs-sum").innerHTML=qsDocHtml(doc);
+  /* Floor plans or sketches the installer adds (Donal 28/10/2026): [{name, type, blob}]. Photos are shrunk on the phone. */
+  const extra=[];let body="";
+  const compose=()=>{doc.intro=qsLetter(w,pick,cyl,rooms,sheets,me,extra.map(f=>f.name));
+    body=`${doc.intro}\n\n————————\n\n${qsDocText(doc)}`;$("#qs-sum").innerHTML=qsDocHtml(doc);};
+  compose();
+  const kb=n=>n>=1e6?`${fmt(n/1e6,1)} MB`:`${Math.max(1,Math.round(n/1e3))} kB`;
+  const showFiles=()=>{const t=extra.reduce((a,f)=>a+f.blob.size,0);
+    $("#qs-files").innerHTML=extra.map((f,i)=>`<div class="qs-file"><span>${esc(f.name)} · ${kb(f.blob.size)}</span><button class="cp-x" data-i="${i}" aria-label="Remove ${esc(f.name)}">Remove</button></div>`).join("")
+      +(t>QS_ATT_MAX?`<p class="notice" style="margin:4px 0 0">These come to ${kb(t)}: the most that can go is ${kb(QS_ATT_MAX)}. Remove one or send a smaller PDF.</p>`:"");
+    $("#qs-files").querySelectorAll("[data-i]").forEach(b=>b.onclick=()=>{extra.splice(+b.dataset.i,1);showFiles();compose();});
+    if(btn.textContent===label) btn.disabled=t>QS_ATT_MAX;};
+  $("#qs-file").value="";
+  $("#qs-file").onchange=async e=>{for(const f of [...e.target.files].slice(0,6-extra.length)) extra.push(await qsShrink(f));e.target.value="";showFiles();compose();};
   const csv=qsCsv(lines),csvName=qsFileName("HMG-quote-list",new Date())+".csv";
   const shareOk=(()=>{try{return !!navigator.canShare?.({files:[new File(["x"],"x.pdf",{type:"application/pdf"})]});}catch{return false;}})();
   let how=CFG.email?"app":shareOk?"share":"mail";
   const btn=$("#qs-send"),note=$("#qs-note"),label="Send Email & Quick Design";
-  const tell=()=>{$("#qs-how").innerHTML=(how==="app"?`Sends this design request to HMG Technical Design (<span class="addr">${esc(ESC_TO)}</span>) with the quotation PDF${sheets.length?", data sheets":""} and quote list CSV attached${CFG.emailCopy?", and a copy to you":""}.`
-    :how==="share"?`Opens your mail app with this design request written and the quotation PDF and quote list CSV attached. Send it to <span class="addr">${esc(ESC_TO)}</span>.`
-    :`Opens your email with this design request written to <span class="addr">${esc(ESC_TO)}</span>, and downloads the quotation PDF and quote list CSV: attach both before sending.`)
+  const tell=()=>{$("#qs-how").innerHTML=(how==="app"?`Sends this design request to HMG Technical Design (<span class="addr">${esc(ESC_TO)}</span>) with the quotation PDF${sheets.length?", data sheets":""} quote list CSV and any plans you add attached${CFG.emailCopy?", and a copy to you":""}.`
+    :how==="share"?`Opens your mail app with this design request written and the quotation PDF, quote list CSV and any plans you add attached. Send it to <span class="addr">${esc(ESC_TO)}</span>.`
+    :`Opens your email with this design request written to <span class="addr">${esc(ESC_TO)}</span>, and downloads the quotation PDF and quote list CSV: attach both, and any plans, before sending.`)
     +(me("name")?"":" Add your name and mobile in Escalate once and they're filled in here too.");};
   tell();
   /* The PDF is made now, so the tap on Send can open the share sheet at once (phones only allow that straight after a tap). */
   btn.disabled=true;btn.textContent="Preparing PDF…";note.textContent="";
   const full=qsPdfBuild(w,pick,rooms,cyl,lines,true).catch(()=>null),slim=CFG.email?qsPdfBuild(w,pick,rooms,cyl,lines,false).catch(()=>null):null;
-  Promise.all([full,slim]).then(()=>{btn.disabled=false;btn.textContent=label;});
+  Promise.all([full,slim]).then(()=>{btn.textContent=label;showFiles();});
   const b64=bytes=>new Promise(ok=>{const f=new FileReader();f.onload=()=>ok(String(f.result).split(",")[1]);f.readAsDataURL(new Blob([bytes]));});
   btn.onclick=async()=>{
     if(how==="app"){
       btn.disabled=true;note.textContent="Sending…";
       try{const p=await slim;
         const r=await api("escalate",{subject,body,doc,replyTo:me("email"),attachment:{filename:csvName,csv},
-          ...(p?{pdf:{filename:p.name,data:await b64(p.bytes)},sheets:p.sheets.map(x=>x[0])}:{})});
+          ...(p?{pdf:{filename:p.name,data:await b64(p.bytes)},sheets:p.sheets.map(x=>x[0])}:{}),
+          files:await Promise.all(extra.map(async f=>({filename:f.name,data:await b64(f.blob)})))});
         if(!r.ok) throw 0;note.textContent=`Sent to HMG Technical Design.${CFG.emailCopy?" A copy has gone to you.":""}`;btn.textContent="Sent";return;}
       catch{how=shareOk?"share":"mail";tell();btn.disabled=false;note.textContent="Couldn't send it from the app. Tap again to send it from your own email.";return;}
     }
     const p=await full;
     if(how==="share"){
       try{await navigator.share({title:subject,text:`To: ${ESC_TO}\nSubject: ${subject}\n\n${body}`,
-        files:[...(p?[new File([p.bytes],p.name,{type:"application/pdf"})]:[]),new File([csv],csvName,{type:"text/csv"})]});}
+        files:[...(p?[new File([p.bytes],p.name,{type:"application/pdf"})]:[]),new File([csv],csvName,{type:"text/csv"}),...extra.map(f=>new File([f.blob],f.name,{type:f.type}))]});}
       catch(e){if(e?.name!=="AbortError"){how="mail";tell();note.textContent="Your phone couldn't share the files. Tap again to use email instead.";}}
       return;
     }
     if(p) qsDownload(p.bytes,p.name,"application/pdf");
     setTimeout(()=>qsDownload(csv,csvName,"text/csv"),400);
     setTimeout(()=>{location.href=`mailto:${ESC_TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\n/g,"\r\n"))}`;},900);
-    note.textContent="The PDF and CSV have downloaded: attach them to the email.";
+    note.textContent=`The PDF and CSV have downloaded: attach them${extra.length?", and your plans,":""} to the email.`;
   };
   $("#qs-sent").hidden=false;$("#qs-sent").scrollIntoView({behavior:"smooth"});
 }
