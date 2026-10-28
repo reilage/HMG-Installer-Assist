@@ -1165,6 +1165,7 @@ function renderRad(){
   const opts=["11","22","33"].map(t=>`<optgroup label="Type ${t}">${R.filter(r=>r.type===t).map(r=>`<option value="${r.code}" ${r.code===rd.spec?"selected":""}>${radName(r)} (${r.code})</option>`).join("")}</optgroup>`).join("");
   box.innerHTML=`<div class="panel">
       <div class="kw" id="rd-mode"><button data-m="size" aria-pressed="${rd.mode==="size"}">Size for a room</button><button data-m="swap" aria-pressed="${rd.mode==="swap"}">Replace a radiator</button></div>
+      <div class="src" style="margin:6px 2px 4px">${rd.mode==="size"?"Checking an existing radiator? Enter the room heat loss and room temperature, then see if it's equal to or above the suggested radiator.":"Specified radiator won't fit? Select it and enter the max height or length to find a suitable alternative."}</div>
       <div class="sz-in">
         ${rd.mode==="size"?`<label>Room heat loss W<input id="rd-w" inputmode="numeric" value="${rd.w}"></label>`
           :`<label style="grid-column:1/-1">Specified radiator<select id="rd-spec">${opts}<option value="other" ${rd.spec==="other"?"selected":""}>Other make (enter its ΔT 50 output)</option></select></label>
