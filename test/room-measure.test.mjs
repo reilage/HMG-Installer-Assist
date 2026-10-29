@@ -75,5 +75,5 @@ test("DXF floor plan in mm gives length and width (no height)", () => {
 
 test("USDZ and other files get a clear message", () => {
   assert.throws(() => RoomScan.read("Room.usdz", new Uint8Array([0x50, 0x4b, 3, 4])), /GLB or OBJ/);
-  assert.throws(() => RoomScan.read("photo.jpg", new Uint8Array(4)), /GLB, OBJ or DXF/);
+  assert.throws(() => RoomScan.read("photo.jpg", new Uint8Array(4)), /DXF floor plan/);
 });

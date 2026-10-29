@@ -1,6 +1,6 @@
 /* Room measuring for Design › Quick survey (Donal 29/10/2026). Loaded the first time an installer taps a measure button.
-   - RoomScan.read(name, bytes): room length, width and height from a scan exported by the free iPhone "3d Scanner App"
-     (LiDAR). Reads GLB/glTF and OBJ (the 3D model, gives the height too) and DXF (the floor plan, length and width only).
+   - RoomScan.read(name, bytes): room length, width and height from an iPhone LiDAR scan: the free OpenPlan3D
+     floor plan (DXF), or a 3D model from a scanner app. Reads GLB/glTF and OBJ (the 3D model, gives the height too) and DXF (the floor plan, length and width only).
      The scan's walls set the room's square: the wall direction is found from the model, the room is turned square to it,
      and the size is taken between the 1st and 99th percentile of the points, so a few stray points through a doorway or
      window don't stretch the room.
@@ -204,8 +204,8 @@
     else if (ext === "gltf") r = readGltf(JSON.parse(text()), null);
     else if (ext === "obj") r = readObj(text());
     else if (ext === "dxf") r = readDxf(text());
-    else if (ext === "usdz" || ext === "usd" || ext === "zip") throw new Error("USDZ files can't be read here. In 3d Scanner App, share the scan as GLB or OBJ (or the floor plan as DXF).");
-    else throw new Error("Pick a GLB, OBJ or DXF file exported from 3d Scanner App.");
+    else if (ext === "usdz" || ext === "usd" || ext === "zip") throw new Error("USDZ files can't be read here. In OpenPlan3D, export the floor plan as DXF (or from a scanner app, GLB or OBJ).");
+    else throw new Error("Pick a DXF floor plan from OpenPlan3D, or a GLB or OBJ scan.");
     if (!(r.length > 0.3 && r.width > 0.3) || r.length > 40) throw new Error("That scan doesn't look like one room. Scan one room at a time.");
     return r;
   }
