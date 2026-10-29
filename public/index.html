@@ -1457,6 +1457,7 @@ function renderRooms(){
     qsSave();calcSurvey();});
   $("#qs-rooms").querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{qs.rooms.splice(+b.dataset.x,1);qsSave();renderRooms();calcSurvey();});
   $("#qs-rooms").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>qsMeasure(+b.dataset.m));
+  if(QS_DEV==="android"&&qs.rooms.length) qsArReady();
 }
 /* Measuring a room (Donal 29/10/2026), by phone: an iPhone imports a scan from the free 3d Scanner App (LiDAR, Pro
    iPhones); an Android phone measures with the camera in Chrome (WebXR AR); a computer can import a scan sent to it.
@@ -1470,16 +1471,28 @@ let qsMeasureLib=null;
 const qsMeasureJs=()=>qsMeasureLib||=qsScript("room-measure.js").catch(e=>{qsMeasureLib=null;throw e;});
 const qsPickFile=()=>new Promise(ok=>{const f=document.createElement("input");f.type="file";f.accept=".glb,.gltf,.obj,.dxf";
   f.onchange=()=>ok(f.files[0]||null);f.click();});
+/* Android: the camera has to start straight from the tap (Chrome refuses it after a wait), so the tool loads and
+   checks for AR as soon as there's a room, not when the button is tapped. */
+let qsAr=null,qsArOk=null;
+const qsArReady=()=>qsAr||=qsMeasureJs().then(()=>RoomAR.supported()).then(v=>qsArOk=v).catch(()=>{qsAr=null;return false;});
+const QS_NO_AR="This phone can't measure with the camera here. Open the app in Chrome itself (not inside another app), and check Google Play Services for AR is installed (Play Store). Or type the sizes in.";
 async function qsMeasure(i){
   const note=()=>$("#qs-m"+i),say=t=>{const n=note();if(n) n.textContent=t;};
+  if(QS_DEV==="android"&&window.RoomAR&&qsArOk===true){
+    const run=RoomAR.measure(qs.rooms[i]?.name);
+    let r;try{r=await run;}catch(e){say(e.message);return;}
+    if(r) qsMeasured(i,{...r,scan:`Measured ${fmt(r.length,2)} × ${fmt(r.width,2)} m with the camera: a few cm less accurate than a laser.`});
+    return;
+  }
   /* The file picker opens straight from the tap (an iPhone won't open it after a wait); the tool loads meanwhile. */
   const file=QS_DEV==="android"?null:qsPickFile(),lib=qsMeasureJs();
   try{await lib;}catch{say("Couldn't load the measuring tool. Check the signal and try again.");return;}
   let r=null;
   if(QS_DEV==="android"){
-    if(!await RoomAR.supported()){say("This phone can't measure with the camera (needs Chrome with Google Play Services for AR). Type the sizes in instead.");return;}
+    say("Starting the camera…");
+    if(!await qsArReady()){say(QS_NO_AR);return;}
     try{r=await RoomAR.measure(qs.rooms[i]?.name);}catch(e){say(e.message);return;}
-    if(!r) return;
+    if(!r){say("");return;}
     r.scan=`Measured ${fmt(r.length,2)} × ${fmt(r.width,2)} m with the camera: a few cm less accurate than a laser.`;
   }else{
     const f=await file;if(!f) return;
@@ -1487,6 +1500,9 @@ async function qsMeasure(i){
     try{r=RoomScan.read(f.name,new Uint8Array(await f.arrayBuffer()));}catch(e){say(e.message||"Couldn't read that file.");return;}
     r.scan=`From the scan: ${fmt(r.length,2)} × ${fmt(r.width,2)} m${r.height?`, ${fmt(r.height,2)} m high`:""}. Check it looks right.`;
   }
+  qsMeasured(i,r);
+}
+function qsMeasured(i,r){
   const m=qs.rooms[i];if(!m) return;
   m.l=fmt(r.length,2);m.w=fmt(r.width,2);m.scan=r.scan;if(r.height) m.ht=r.height;
   qsSave();renderRooms();calcSurvey();

@@ -264,7 +264,10 @@
       ov.addEventListener("beforexrselect", e => e.preventDefault());
       try {
         session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test", "dom-overlay"], domOverlay: { root: ov } });
-      } catch (e) { ov.remove(); return reject(new Error("The camera couldn't start measuring. It needs Chrome on Android with Google Play Services for AR.")); }
+      } catch (e) {
+        ov.remove();
+        return reject(new Error(`The camera couldn't start measuring (${e && (e.name || e.message) || "error"}). Check Chrome has camera permission for this site, Google Play Services for AR is installed, and tap the button again.`));
+      }
       session.addEventListener("end", () => end(null));
       try {
         const c = document.createElement("canvas");
@@ -272,7 +275,10 @@
         session.updateRenderState({ baseLayer: new XRWebGLLayer(session, gl, { alpha: true }) });
         local = await session.requestReferenceSpace("local");
         hitSrc = await session.requestHitTestSource({ space: await session.requestReferenceSpace("viewer") });
-      } catch (e) { end(null); return; }
+      } catch (e) {
+        finished = true; session.end().catch(() => {}); ov.remove();
+        return reject(new Error(`The camera started but couldn't set up measuring (${e && (e.name || e.message) || "error"}). Tap the button again.`));
+      }
       say();
       const frame = (t, f) => {
         if (finished) return;
