@@ -231,7 +231,7 @@
       const ov = document.createElement("div");
       ov.className = "ar-ov";
       ov.innerHTML = `<canvas class="ar-cv"></canvas>
-        <div class="ar-top"><b class="ar-title"></b><div class="ar-msg">Move the phone slowly so it can find the floor.</div></div>
+        <div class="ar-top"><b class="ar-title"></b><div class="ar-msg">Starting the camera…</div></div>
         <div class="ar-read"></div>
         <div class="ar-bar"><button class="ar-b sec" data-a="cancel">Cancel</button><button class="ar-b sec" data-a="undo">Undo</button><button class="ar-b" data-a="add">Add point</button></div>`;
       document.body.append(ov);
@@ -262,12 +262,20 @@
         };
       });
       ov.addEventListener("beforexrselect", e => e.preventDefault());
+      /* Inside another app's browser (e.g. a link opened from a chat app) Chrome can ask for the camera and then never
+         start AR, so after a few seconds say how to get out of it. */
+      const slow = setTimeout(() => { if (!session && !finished) msg.innerHTML = "The camera hasn't started. If this page opened inside another app, tap <b>⋮</b> and <b>Open in Chrome</b>, then try again. Tap Cancel to go back."; }, 6000);
       try {
         session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test", "dom-overlay"], domOverlay: { root: ov } });
       } catch (e) {
-        ov.remove();
+        clearTimeout(slow);
+        if (finished) return;
+        finished = true; ov.remove();
         return reject(new Error(`The camera couldn't start measuring (${e && (e.name || e.message) || "error"}). Check Chrome has camera permission for this site, Google Play Services for AR is installed, and tap the button again.`));
       }
+      clearTimeout(slow);
+      if (finished) { session.end().catch(() => {}); return; }
+      msg.textContent = "Move the phone slowly so it can find the floor.";
       session.addEventListener("end", () => end(null));
       try {
         const c = document.createElement("canvas");
