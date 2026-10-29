@@ -1459,16 +1459,15 @@ function renderRooms(){
   $("#qs-rooms").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>qsMeasure(+b.dataset.m));
   if(QS_DEV==="android"&&qs.rooms.length) qsArReady();
 }
-/* Measuring a room (Donal 29/10/2026), by phone: an iPhone imports a floor plan from the free OpenPlan3D app (LiDAR, Pro
-   iPhones); an Android phone measures with the camera in Chrome (WebXR AR); a computer can import a scan sent to it.
+/* Measuring a room (Donal 29/10/2026), by phone: an iPhone gets a tip to use Apple's Measure app; an Android phone measures with the camera in Chrome (WebXR AR); a computer can import a scan sent to it.
    Typing the sizes always works. room-measure.js loads the first time it's used. */
 const QS_DEV=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)?"ios":/Android/i.test(navigator.userAgent)?"android":"other";
 const QS_MEASURE={
-  /* 3d Scanner App turned out paid with poor scans (Donal 29/10/2026); OpenPlan3D (same maker, Apple RoomPlan) is free
-     and exports the floor plan as DXF. One room per scan. */
-  ios:{btn:"Import 3D scan",help:"Pro iPhone? Scan one room at a time with the free <b>OpenPlan3D</b> app, export the floor plan as <b>DXF</b> and save it to Files, then tap <b>Import 3D scan</b> on the room. No Pro iPhone? Use Apple's <b>Measure</b> app and type the sizes in."},
+  /* iPhone browsers can't do camera AR, and the scanning apps tried (3d Scanner App, OpenPlan3D) were paid or poor
+     (Donal 29/10/2026), so iPhones get a tip to use Apple's free Measure app and type the sizes in. */
+  ios:{help:"On an iPhone, measure each room with Apple's free <b>Measure</b> app (already on the phone; most accurate on Pro models), then type the length and width in."},
   android:{btn:"Measure with camera",help:"<b>Measure with camera</b> uses Chrome's AR to measure the length and width across the floor. It's a few cm less accurate than a laser, so check anything tight with a tape."},
-  other:{btn:"Import 3D scan",help:"Got a room scan (an OpenPlan3D DXF floor plan, or a GLB or OBJ model)? Tap <b>Import 3D scan</b> on the room."}}[QS_DEV];
+  other:{btn:"Import 3D scan",help:"Got a room scan (a DXF floor plan, or a GLB or OBJ model)? Tap <b>Import 3D scan</b> on the room."}}[QS_DEV];
 let qsMeasureLib=null;
 const qsMeasureJs=()=>qsMeasureLib||=qsScript("room-measure.js").catch(e=>{qsMeasureLib=null;throw e;});
 const qsPickFile=()=>new Promise(ok=>{const f=document.createElement("input");f.type="file";f.accept=".glb,.gltf,.obj,.dxf";
