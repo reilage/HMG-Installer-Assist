@@ -1475,7 +1475,7 @@ const qsPickFile=()=>new Promise(ok=>{const f=document.createElement("input");f.
    checks for AR as soon as there's a room, not when the button is tapped. */
 let qsAr=null,qsArOk=null;
 const qsArReady=()=>qsAr||=qsMeasureJs().then(()=>RoomAR.supported()).then(v=>qsArOk=v).catch(()=>{qsAr=null;return false;});
-const QS_NO_AR="This phone can't measure with the camera here. Open the app in Chrome itself (not inside another app), and check Google Play Services for AR is installed (Play Store). Or type the sizes in.";
+const QS_NO_AR="This phone can't measure with the camera here. Open the app in Chrome itself (not inside another app or Samsung Internet), and check Google Play Services for AR is installed (Play Store). Or type the sizes in.";
 async function qsMeasure(i){
   const note=()=>$("#qs-m"+i),say=t=>{const n=note();if(n) n.textContent=t;};
   if(QS_DEV==="android"&&window.RoomAR&&qsArOk===true){

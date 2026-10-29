@@ -264,7 +264,7 @@
       ov.addEventListener("beforexrselect", e => e.preventDefault());
       /* Inside another app's browser (e.g. a link opened from a chat app) Chrome can ask for the camera and then never
          start AR, so after a few seconds say how to get out of it. */
-      const slow = setTimeout(() => { if (!session && !finished) msg.innerHTML = "The camera hasn't started. If this page opened inside another app, tap <b>⋮</b> and <b>Open in Chrome</b>, then try again. Tap Cancel to go back."; }, 6000);
+      const slow = setTimeout(() => { if (!session && !finished) msg.innerHTML = "The camera hasn't started. Camera measuring works in <b>Chrome</b>: if this page opened inside another app or in Samsung Internet, copy the link into Chrome (or use the app from your home screen, added from Chrome) and try again. Tap Cancel to go back."; }, 6000);
       try {
         session = await navigator.xr.requestSession("immersive-ar", { requiredFeatures: ["hit-test", "dom-overlay"], domOverlay: { root: ov } });
       } catch (e) {
