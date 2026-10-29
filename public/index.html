@@ -329,6 +329,18 @@ table.qs-saved td{font-family:var(--f-body);vertical-align:top}
 .qs-4{grid-template-columns:repeat(4,1fr)}
 .qs-4 label{font-size:12px}
 .qs-pick{font-size:14px;line-height:1.45}
+.qs-meas{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qs-meas .btn{padding:7px 12px;font-size:14px}
+.qs-mnote{font-size:13px;color:var(--muted)}
+/* Camera measuring screen (room-measure.js), shown over the camera picture. */
+.ar-ov{position:fixed;inset:0;z-index:100;color:#fff;font-family:var(--f-body)}
+.ar-cv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.ar-top{position:absolute;left:12px;right:12px;top:12px;background:rgba(0,0,0,.6);border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.4}
+.ar-read{position:absolute;left:12px;bottom:88px;background:rgba(0,0,0,.6);border-radius:10px;padding:8px 12px;font:700 18px var(--f-mono)}
+.ar-read:empty{display:none}
+.ar-bar{position:absolute;left:12px;right:12px;bottom:16px;display:flex;gap:8px}
+.ar-b{flex:1;border:0;border-radius:12px;padding:14px 10px;font:600 16px var(--f-body);background:var(--hmg-cyan,#00A9E0);color:#fff}
+.ar-b.sec{flex:0 0 auto;background:rgba(0,0,0,.6)}
 .qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
 table.qs-hp tr[data-p]{cursor:pointer}
 .qs-chg{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted)}
@@ -1365,6 +1377,7 @@ function renderSurvey(){
     <div class="panel">
       <div class="box-h" style="margin:0">Rooms</div>
       <p class="src" style="margin:0">Length and width in metres. Every room is 21 °C unless you change it.</p>
+      ${QS_MEASURE.help?`<p class="src" style="margin:0">${QS_MEASURE.help}</p>`:""}
       <div class="sz-in"><label>Radiator height mm<select id="qs-radh">${QS_HEIGHTS.map(v=>`<option value="${v}" ${+qs.radH===v?"selected":""}>${v}</option>`).join("")}</select></label></div>
       <p class="src" style="margin:0">Every radiator is this height. To change one room (e.g. under a window), set its height on the room.</p>
       <div id="qs-rooms" class="qs-rooms"></div>
@@ -1433,13 +1446,66 @@ function renderRooms(){
         <label>Room °C<input data-k="t" inputmode="decimal" value="${m.t}"></label>
         <label>Max L mm<input data-k="maxL" inputmode="numeric" placeholder="Any" value="${esc(String(m.maxL))}"></label>
       </div>
+      ${QS_MEASURE.btn?`<div class="qs-meas"><button class="btn sec" data-m="${i}">${QS_MEASURE.btn}</button><span class="qs-mnote" id="qs-m${i}">${m.scan?esc(m.scan):""}</span></div>`:""}
       <div class="src qs-pick" id="qs-p${i}"></div></div>`).join("")
     :`<p class="src" style="margin:0">No rooms yet. Pick a room type and tap <b>Add room</b>.</p>`;
   $("#qs-rooms").querySelectorAll("select[data-k=h]").forEach(sel=>sel.onchange=()=>{qs.rooms[+sel.closest(".qs-room").dataset.i].h=sel.value;qsSave();calcSurvey();});
   $("#qs-rooms").querySelectorAll("input[data-k]").forEach(inp=>inp.oninput=()=>{
     const m=qs.rooms[+inp.closest(".qs-room").dataset.i],k=inp.dataset.k;
-    m[k]=k==="t"?qsNum(inp.value):inp.value.trim();qsSave();calcSurvey();});
+    m[k]=k==="t"?qsNum(inp.value):inp.value.trim();
+    if((k==="l"||k==="w")&&m.scan){delete m.scan;const n=$("#qs-m"+inp.closest(".qs-room").dataset.i);if(n) n.textContent="";}
+    qsSave();calcSurvey();});
   $("#qs-rooms").querySelectorAll("[data-x]").forEach(b=>b.onclick=()=>{qs.rooms.splice(+b.dataset.x,1);qsSave();renderRooms();calcSurvey();});
+  $("#qs-rooms").querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>qsMeasure(+b.dataset.m));
+  if(QS_DEV==="android"&&qs.rooms.length) qsArReady();
+}
+/* Measuring a room (Donal 29/10/2026), by phone: an iPhone imports a scan from the free 3d Scanner App (LiDAR, Pro
+   iPhones); an Android phone measures with the camera in Chrome (WebXR AR); a computer can import a scan sent to it.
+   Typing the sizes always works. room-measure.js loads the first time it's used. */
+const QS_DEV=/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)?"ios":/Android/i.test(navigator.userAgent)?"android":"other";
+const QS_MEASURE={
+  ios:{btn:"Import 3D scan",help:"Pro iPhone? Scan each room with the free <b>3d Scanner App</b>, share it as <b>GLB</b> or <b>OBJ</b> (or the floor plan as <b>DXF</b>), save it to Files, then tap <b>Import 3D scan</b> on the room."},
+  android:{btn:"Measure with camera",help:"<b>Measure with camera</b> uses Chrome's AR to measure the length and width across the floor. It's a few cm less accurate than a laser, so check anything tight with a tape."},
+  other:{btn:"Import 3D scan",help:"Got a room scan from 3d Scanner App (GLB, OBJ or DXF)? Tap <b>Import 3D scan</b> on the room."}}[QS_DEV];
+let qsMeasureLib=null;
+const qsMeasureJs=()=>qsMeasureLib||=qsScript("room-measure.js").catch(e=>{qsMeasureLib=null;throw e;});
+const qsPickFile=()=>new Promise(ok=>{const f=document.createElement("input");f.type="file";f.accept=".glb,.gltf,.obj,.dxf";
+  f.onchange=()=>ok(f.files[0]||null);f.click();});
+/* Android: the camera has to start straight from the tap (Chrome refuses it after a wait), so the tool loads and
+   checks for AR as soon as there's a room, not when the button is tapped. */
+let qsAr=null,qsArOk=null;
+const qsArReady=()=>qsAr||=qsMeasureJs().then(()=>RoomAR.supported()).then(v=>qsArOk=v).catch(()=>{qsAr=null;return false;});
+const QS_NO_AR="This phone can't measure with the camera here. Open the app in Chrome itself (not inside another app or Samsung Internet), and check Google Play Services for AR is installed (Play Store). Or type the sizes in.";
+async function qsMeasure(i){
+  const note=()=>$("#qs-m"+i),say=t=>{const n=note();if(n) n.textContent=t;};
+  if(QS_DEV==="android"&&window.RoomAR&&qsArOk===true){
+    const run=RoomAR.measure(qs.rooms[i]?.name);
+    let r;try{r=await run;}catch(e){say(e.message);return;}
+    if(r) qsMeasured(i,{...r,scan:`Measured ${fmt(r.length,2)} × ${fmt(r.width,2)} m with the camera: a few cm less accurate than a laser.`});
+    return;
+  }
+  /* The file picker opens straight from the tap (an iPhone won't open it after a wait); the tool loads meanwhile. */
+  const file=QS_DEV==="android"?null:qsPickFile(),lib=qsMeasureJs();
+  try{await lib;}catch{say("Couldn't load the measuring tool. Check the signal and try again.");return;}
+  let r=null;
+  if(QS_DEV==="android"){
+    say("Starting the camera…");
+    if(!await qsArReady()){say(QS_NO_AR);return;}
+    try{r=await RoomAR.measure(qs.rooms[i]?.name);}catch(e){say(e.message);return;}
+    if(!r){say("");return;}
+    r.scan=`Measured ${fmt(r.length,2)} × ${fmt(r.width,2)} m with the camera: a few cm less accurate than a laser.`;
+  }else{
+    const f=await file;if(!f) return;
+    say("Reading the scan…");
+    try{r=RoomScan.read(f.name,new Uint8Array(await f.arrayBuffer()));}catch(e){say(e.message||"Couldn't read that file.");return;}
+    r.scan=`From the scan: ${fmt(r.length,2)} × ${fmt(r.width,2)} m${r.height?`, ${fmt(r.height,2)} m high`:""}. Check it looks right.`;
+  }
+  qsMeasured(i,r);
+}
+function qsMeasured(i,r){
+  const m=qs.rooms[i];if(!m) return;
+  m.l=fmt(r.length,2);m.w=fmt(r.width,2);m.scan=r.scan;if(r.height) m.ht=r.height;
+  qsSave();renderRooms();calcSurvey();
 }
 function calcSurvey(){
   const S=KB?.survey,hp=$("#qs-hp"),out=$("#qs-out");if(!S||!hp) return;
