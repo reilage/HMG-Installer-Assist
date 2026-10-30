@@ -426,6 +426,7 @@ table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
 #qs-body .qs-4{gap:8px}
 #qs-body .qs-4 label{font-size:11.5px}
 #qs-body .qs-pick{margin:0 -12px -12px;padding:10px 12px;background:var(--sunk);color:var(--fg);font-size:13.5px}
+#qs-body .qs-33{margin-top:8px}
 #qs-body .cp-x{border:1px solid var(--line);border-radius:0;background:transparent;padding:7px 10px;font:600 12.5px var(--f-body);color:var(--muted)}
 #qs-body .btn{border-radius:0;padding:13px 18px;font:600 15px/1.2 var(--f-body);letter-spacing:.01em}
 #qs-body .btn.sec{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted)}
@@ -1335,14 +1336,16 @@ const qsLoss=()=>{const a=qsArea(),h=qsHli(),dt=qs.tin-qs.tout;return a>0&&h>0&&
 const qsUnit=(r,w)=>r.sizes.find(z=>z.covers*1000>=w);
 /* HMG product codes for the quote (Donal 27/10/2026): one line per code, e.g. Baxi = outdoor unit + indoor controller. */
 const qsHmg=o=>o.z.hmg.map(h=>({item:h.item||`${o.r.name} ${o.z.kw} kW`,code:h.code}));
-function qsRad(need,room,maxL,H){
+/* When no single Type 22 fits and a pair would be needed, the installer can pick one Type 33 instead, so an existing
+   house doesn't need a second radiator in the room (Donal 30/10/2026). use33 is the room's choice. */
+function qsRad(need,room,maxL,H,use33){
   const R=KB?.radiators||[],dt=RAD_FLOW-RAD_DROP/2-room,out=r=>Math.round(radOut(r,dt)),L=maxL||1e9;
   const of=t=>R.filter(r=>r.type===t&&r.h===H&&r.l<=L).sort((a,b)=>out(a)-out(b));
   const t22=of("22"),one=t22.find(r=>out(r)>=need);
   if(one) return {r:one,qty:1,w:out(one)};
-  const pair=t22.find(r=>out(r)>=need/2);
-  if(pair) return {r:pair,qty:2,w:2*out(pair),note:"No single Type 22 fits"};
-  const t33=of("33").find(r=>out(r)>=need);
+  const pair=t22.find(r=>out(r)>=need/2),t33=of("33").find(r=>out(r)>=need);
+  if(pair&&t33&&use33) return {r:t33,qty:1,w:out(t33),note:"One Type 33 instead of 2 × Type 22",can33:1,is33:1};
+  if(pair) return {r:pair,qty:2,w:2*out(pair),note:t33?"No single Type 22 fits":"No single Type 22 or Type 33 fits",can33:!!t33};
   if(t33) return {r:t33,qty:1,w:out(t33),note:of("22").length?"No Type 22 pair fits":`No Type 22 at ${H} mm`};
   return null;
 }
@@ -1374,7 +1377,7 @@ function qsRooms(){
   const h=qsHli();
   return qs.rooms.map(m=>{
     const area=qsNum(m.l)*qsNum(m.w),dt=m.t-qs.tout,loss=h>0&&area>0&&dt>0?h*area*dt:0;
-    return {...m,area,loss,rad:loss>0?qsRad(loss,m.t,qsNum(m.maxL),qsH(m)):null};
+    return {...m,area,loss,rad:loss>0?qsRad(loss,m.t,qsNum(m.maxL),qsH(m),m.t33):null};
   });
 }
 function renderSurvey(){
@@ -1520,7 +1523,9 @@ function calcSurvey(){
   /* Per room: heat loss and radiator. */
   rooms.forEach((m,i)=>{const el=$("#qs-p"+i);if(!el) return;
     el.innerHTML=!m.loss?(qsHli()>0?"Enter length and width.":"Enter the HLI or pick the year built above.")
-      :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`);});
+      :`${fmt(m.area,1)} m² · <b>${Math.round(m.loss)} W</b> at ${fmt(m.t,0)} °C → `+(m.rad?`<b>${m.rad.qty>1?"2 × ":""}Type ${m.rad.r.type} ${m.rad.r.h}×${m.rad.r.l}</b> (${m.rad.r.code}) ${m.rad.w} W at 45 °C${m.rad.note?` · ${m.rad.note}`:""}`:`<b>no Warmhaus radiator in that space is enough</b>, needs a design`)
+      +(m.rad?.can33?`<div class="kw qs-33" data-i="${i}"><button data-v="0" aria-pressed="${!m.rad.is33}">2 × Type 22</button><button data-v="1" aria-pressed="${!!m.rad.is33}">1 × Type 33</button></div>`:"");
+    el.querySelectorAll(".qs-33 button").forEach(b=>b.onclick=()=>{qs.rooms[i].t33=b.dataset.v==="1";qsSave();calcSurvey();});});
   const rads=rooms.filter(m=>m.rad),roomW=rooms.reduce((s,m)=>s+m.loss,0);
   /* Radiators grouped by code (one ERP line each), with the rooms they're for (Donal 27/10/2026). */
   const list={};rads.forEach(m=>{const k=m.rad.r.code;list[k]=list[k]||{r:m.rad.r,n:0,rooms:[]};list[k].n+=m.rad.qty;list[k].rooms.push(m.rad.qty>1?`${m.name} (${m.rad.qty})`:m.name);});
@@ -1552,7 +1557,7 @@ function calcSurvey(){
   /* New survey: the one on screen is saved first if it has anything in it (and isn't saved already). */
   $("#qs-new").onclick=async()=>{if(w||rooms.some(m=>m.loss)||lines.length) await qsSaveRequest(qsDoc(w,pick,rooms,cyl,lines,qsMe),qsTitle(pick,cyl,rooms),[qs.addr,qs.eir].filter(Boolean).join(", "),qs.name);
     qs={area:"",hli:"",age:"",tin:21,tout:-3,radH:600,pick:"",rooms:[],eir:"",addr:"",beds:"",cylType:"pre",cyl:"",name:""};qsSave();renderSurvey();};
-  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, ${hi.band?`no BER, built ${hi.band.label}, estimated HLI ${hi.h}`:`HLI ${qs.hli}`}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}${+m.h&&+m.h!==+qs.radH?` (radiator ${m.h} mm high)`:""}`).join("; ")}. Which Warmhaus radiators, ${qsH()} mm high?`:""));};
+  $("#qs-ask").onclick=()=>{show("ask");ask(`Quick survey: floor area ${fmt(qsArea(),1)} m²${qs.fromRooms?" (total of the rooms below)":""}, ${hi.band?`no BER, built ${hi.band.label}, estimated HLI ${hi.h}`:`HLI ${qs.hli}`}${qs.tin!==21||qs.tout!==-3?`, ${qs.tin} °C inside, ${qs.tout} °C outside`:""}. What size heat pump?`+(qsNum(qs.beds)>0?` ${qs.beds} bedrooms, ${cyl?.type.id==="non"?"not pre-plumbed":"pre-plumbed"}: what hot water cylinder?`:"")+(rooms.length?` Rooms: ${rooms.map(m=>`${m.name} ${m.l} × ${m.w} m at ${m.t} °C${m.maxL?` (max rad length ${m.maxL} mm)`:""}${m.t33&&m.rad?.is33?" (one Type 33 rather than two radiators)":""}${+m.h&&+m.h!==+qs.radH?` (radiator ${m.h} mm high)`:""}`).join("; ")}. Which Warmhaus radiators, ${qsH()} mm high?`:""));};
   $("#qs-quote").onclick=()=>quoteRequest(w,pick,rooms,list,cyl,lines);
   $("#qs-pdf").onclick=()=>qsPdf(w,pick,rooms,cyl,lines);
 }
