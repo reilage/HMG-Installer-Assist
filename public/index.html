@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="HMG Assist">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
 <style>
 /* Layout: one-screen phone app. Sticky header with unit switch, scrolling view, fixed bottom tab bar. */
 :root{
@@ -386,6 +386,50 @@ table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
 .qs-att{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
 .qs-att label{cursor:pointer}
 .qs-file{display:flex;gap:10px;align-items:center;font-size:13px}
+/* Quick survey, modern look (Donal 30/10/2026): square corners, hairline boxes with an HMG cyan edge, Barlow with
+   even-width figures in place of the typewriter font, and the heat loss in a charcoal tile. Look only, same behaviour. */
+#qs-body{font-variant-numeric:tabular-nums}
+#qs-body .panel{border-radius:0;border:1px solid var(--line);border-top:3px solid var(--hmg-cyan);box-shadow:none;padding:18px 16px;gap:12px}
+#qs-body .box-h{font:700 13px/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase}
+#qs-body .box-h::before{width:10px;height:10px;border-radius:0}
+#qs-body .qs-lab{font:700 12px/1.2 var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--fg)}
+#qs-body .chip{border-radius:0;align-self:flex-start;font-size:11px;letter-spacing:.1em;padding:5px 9px;border-left:3px solid currentColor}
+#qs-body .src{font-size:13.5px;line-height:1.5}
+#qs-body .notice{border:0;border-left:4px solid var(--warn);border-radius:0;padding:12px 14px;font-size:13.5px;line-height:1.5}
+#qs-body .sz-in{gap:12px}
+#qs-body .sz-in label,#qs-body .qs-chg{font:600 12.5px/1.2 var(--f-body);letter-spacing:.02em;color:var(--muted);gap:6px}
+#qs-body .sz-in input,#qs-body .sz-in select,#qs-body .qs-chg select,#qs-body .qs-sel,#qs-body .qs-hsel{border:1px solid var(--line);border-radius:0;background:var(--surface);
+  padding:11px 12px;font:600 17px var(--f-body);font-variant-numeric:tabular-nums;color:var(--fg);transition:border-color .15s,box-shadow .15s}
+#qs-body input::placeholder{color:var(--muted);font-weight:400;opacity:.8}
+#qs-body .sz-in input:focus,#qs-body select:focus,#qs-body .qs-name:focus{outline:none;border-color:var(--hmg-cyan);box-shadow:inset 0 -2px 0 var(--hmg-cyan)}
+#qs-body #qs-area.qs-auto{background:var(--sunk);border-style:dashed}
+#qs-body .kw{gap:0;flex-wrap:nowrap}
+#qs-body .kw button{flex:1 1 0;min-width:0;border:1px solid var(--line);border-radius:0;background:var(--surface);color:var(--fg);padding:11px 8px;font:600 14.5px/1.2 var(--f-body)}
+#qs-body .kw button+button{border-left:0}
+#qs-body .kw button[aria-pressed="true"]{background:var(--hmg-grey);border-color:var(--hmg-grey);color:#fff;box-shadow:inset 0 -3px 0 var(--hmg-cyan)}
+#qs-body .sz-res{background:var(--hmg-grey);color:#fff;padding:16px;border-left:4px solid var(--hmg-cyan);gap:6px 12px}
+#qs-body .sz-res .big{font:700 52px/1 var(--f-body);letter-spacing:-.02em}
+#qs-body .sz-res .of{color:rgba(255,255,255,.8);font-size:13.5px;line-height:1.45}
+#qs-body table.cu{font-size:14.5px}
+#qs-body table.cu th{font:700 11px var(--f-body);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:2px solid var(--fg);padding:8px}
+#qs-body table.cu td{font-family:var(--f-body);padding:10px 8px}
+#qs-body table.cu tr.pick td{background:var(--accent-soft)}
+#qs-body table.cu tr.pick td:first-child{box-shadow:inset 3px 0 0 var(--hmg-cyan)}
+#qs-body table.qs-tot{margin-top:4px}
+#qs-body table.qs-tot th{font:600 14px var(--f-body);letter-spacing:0;text-transform:none;border-bottom:1px solid var(--line);padding:10px 8px}
+#qs-body table.qs-tot tr.net th,#qs-body table.qs-tot tr.net td{font-size:16px;border-top:2px solid var(--fg);border-bottom:0}
+#qs-body .qs-rooms{counter-reset:qsr;gap:10px}
+#qs-body .qs-room{counter-increment:qsr;border:1px solid var(--line);border-left:4px solid var(--hmg-cyan);border-radius:0;padding:12px;gap:10px;background:var(--surface)}
+#qs-body .qs-rh::before{content:counter(qsr,decimal-leading-zero);font:700 13px var(--f-body);color:var(--accent);letter-spacing:.04em}
+#qs-body .qs-name{border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:6px 2px;font:700 16px var(--f-body)}
+#qs-body .qs-hsel{padding:7px 6px;font-size:13.5px}
+#qs-body .qs-4{gap:8px}
+#qs-body .qs-4 label{font-size:11.5px}
+#qs-body .qs-pick{margin:0 -12px -12px;padding:10px 12px;background:var(--sunk);color:var(--fg);font-size:13.5px}
+#qs-body .cp-x{border:1px solid var(--line);border-radius:0;background:transparent;padding:7px 10px;font:600 12.5px var(--f-body);color:var(--muted)}
+#qs-body .btn{border-radius:0;padding:13px 18px;font:600 15px/1.2 var(--f-body);letter-spacing:.01em}
+#qs-body .btn.sec{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted)}
+#qs-body .qs-doc{border-radius:0;border-color:var(--line)}
 pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
 @media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
@@ -1343,7 +1387,7 @@ function renderSurvey(){
       <span class="chip warn">Quick estimate · not a design</span>
       <div class="sz-in"><label style="grid-column:1/-1">Survey name (optional)<input id="qs-name" style="font-family:var(--f-body)" placeholder="Homeowner or project, e.g. Murphy, Ballina" value="${esc(qs.name||"")}"></label></div>
       <p class="src" style="margin:0">From the BER: the total floor area and the HLI (Heat Loss Indicator, W/K per m²). No BER? Pick the year built for a typical HLI instead. It sizes the heat pump and picks a Warmhaus radiator for each room, ready to request an HMG quote.</p>
-      <div class="src" style="font-weight:600">Floor area</div>
+      <div class="qs-lab">Floor area</div>
       <div class="kw" id="qs-src"><button data-r="0" aria-pressed="${!qs.fromRooms}">Enter it</button><button data-r="1" aria-pressed="${!!qs.fromRooms}">Add up the rooms</button></div>
       <div class="sz-in">
         <label>Floor area m²<input id="qs-area" inputmode="decimal" placeholder="e.g. 150" value="${esc(String(qs.area))}"></label>
@@ -1460,10 +1504,10 @@ function calcSurvey(){
   const key=o=>`${o.r.unit}${o.z.kw}`;
   if(!all.some(o=>key(o)===qs.pick)) qs.pick="";
   const def=all[0], pick=all.find(o=>key(o)===qs.pick)||def;
-  hp.innerHTML=w?`<div class="src" style="font-weight:600">Design heat loss</div>
+  hp.innerHTML=w?`<div class="qs-lab">Design heat loss</div>
       <div class="sz-res"><span class="big">${fmt(w/1000)} kW</span><span class="of">${fmt(qsHli(),2)}${hi.band?" (est.)":""} × ${fmt(area,1)} m²${qs.fromRooms?" (rooms)":""} × ${fmt(qs.tin-qs.tout,0)} K (${fmt(qs.tin,0)} °C in, ${fmt(qs.tout,0)} °C out) = ${Math.round(w)} W</span></div>
       ${hi.band?`<p class="notice" style="margin:0">Estimated from the year built, not a BER. Check against the BER or a heat loss calculation before ordering.</p>`:""}
-      <div class="src" style="font-weight:600;margin-top:4px">Heat pump · tap to choose for the quote</div>
+      <div class="qs-lab" style="margin-top:4px">Heat pump · tap to choose for the quote</div>
       <table class="cu qs-hp"><thead><tr><th>Range</th><th>Unit</th><th>Covers</th></tr></thead><tbody>
       ${order.map(o=>o.z?`<tr data-p="${o.r.unit}${o.z.kw}" class="${pick&&pick.r===o.r&&pick.z===o.z?"pick":""}"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td>${o.z.kw} kW</td><td>up to ${o.z.covers} kW</td></tr>`
         :`<tr class="small"><td>${esc(o.r.name.replace(/^Panasonic /,""))}</td><td colspan="2">Nothing big enough (largest covers ${o.r.sizes.at(-1).covers} kW)</td></tr>`).join("")}</tbody></table>
