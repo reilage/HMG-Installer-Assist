@@ -15,13 +15,13 @@
 <meta name="apple-mobile-web-app-title" content="HMG Assist">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bree+Serif&family=JetBrains+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bree+Serif&display=swap">
 <style>
 /* Layout: one-screen phone app. Sticky header with unit switch, scrolling view, fixed bottom tab bar. */
 :root{
   /* Heat Merchants Group brand: charcoal #53565A and cyan #00A9E0 (from the logo). --accent is a deeper cyan so text and white-on-cyan buttons stay readable outdoors. */
   --hmg-grey:#53565a; --hmg-cyan:#00a9e0; --picked:#53565a;
-  --r:16px; --card-line:transparent; --shadow:0 1px 2px rgba(20,24,28,.05),0 2px 8px rgba(20,24,28,.07);
+  --r:0px; --card-line:transparent; --shadow:0 1px 2px rgba(20,24,28,.05),0 2px 8px rgba(20,24,28,.07);
   --bg:#f3f4f5; --surface:#ffffff; --sunk:#e8eaeb; --line:#d3d6d8;
   --fg:#26292c; --muted:#5f6367;
   --accent:#0077a8; --accent-fg:#ffffff; --accent-soft:#ddf1f9;
@@ -30,7 +30,7 @@
   --compose:#d6edf7; --compose-line:#00a9e0; --esc:#c62828; --esc-fg:#ffffff;
   --f-display:"Bree Serif",Georgia,serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-mono:"Barlow",system-ui,sans-serif; /* one typeface throughout: Barlow with even-width figures, no typewriter font */
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#17191b; --surface:#212427; --sunk:#2b2f33; --line:#3a3f44;
@@ -46,7 +46,7 @@
   --bubble:#4a4e53; --bubble-fg:#ffffff; --compose:#123a49; --compose-line:#00a9e0; --esc:#d32f2f; --esc-fg:#ffffff; --picked:#6b7076; --card-line:#33383d; --shadow:0 1px 2px rgba(0,0,0,.35); color-scheme:dark}
 [hidden]{display:none!important}
 html,body{height:100%;margin:0}
-body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);display:flex;flex-direction:column}
+body{background:var(--bg);color:var(--fg);font:16px/1.45 var(--f-body);font-variant-numeric:tabular-nums;display:flex;flex-direction:column}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
 button,input,textarea,select{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -66,11 +66,11 @@ header .wrap{display:flex;align-items:center;gap:10px;padding-block:8px}
 .brand-t span{font-size:11.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
 /* Unit pill: shows the selected heat pump; tap for the list. */
 .unit-pick{position:relative;flex:none}
-.unit-btn{display:flex;align-items:center;gap:6px;border:0;border-radius:999px;padding:8px 12px 8px 14px;background:var(--picked);color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.unit-btn{display:flex;align-items:center;gap:6px;border:0;border-radius:0;padding:8px 12px 8px 14px;background:var(--picked);color:#fff;font-size:13.5px;font-weight:600;white-space:nowrap;box-shadow:0 1px 2px rgba(0,0,0,.2)}
 .unit-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;transition:transform .15s}
 .unit-btn[aria-expanded="true"] svg{transform:rotate(180deg)}
 .unit{position:absolute;right:0;top:calc(100% + 8px);z-index:20;width:min(300px,calc(100vw - 32px));display:flex;flex-direction:column;gap:2px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.18)}
-.unit button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:0;background:none;padding:10px 12px;border-radius:10px;font-size:15px;font-weight:600;color:var(--fg)}
+.unit button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:0;background:none;padding:10px 12px;border-radius:0;font-size:15px;font-weight:600;color:var(--fg)}
 .unit button small{font-size:12.5px;font-weight:400;color:var(--muted)}
 .unit button:hover{background:var(--sunk)}
 .unit button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
@@ -79,9 +79,9 @@ main{flex:1;min-height:0;overflow-y:auto}
 main .wrap{padding-block:20px 28px}
 .view{display:flex;flex-direction:column;gap:16px}
 h2{font:400 25px/1.15 var(--f-display);margin:0 0 2px;text-wrap:balance}
-h2::after{content:"";display:block;width:32px;height:3px;border-radius:2px;background:var(--hmg-cyan);margin-top:6px}
+h2::after{content:"";display:block;width:32px;height:3px;background:var(--hmg-cyan);margin-top:6px}
 .lede{color:var(--muted);margin:0;font-size:15px}
-.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:0;background:var(--accent-soft);color:var(--accent)}
 .chip.warn{background:var(--warn-soft);color:var(--warn)}
 
 /* Bottom menu: HMG cyan bar, each option its own white-text button split by thin white dividers; the open one turns charcoal. */
@@ -92,7 +92,7 @@ nav.tabs button{border-left:1px solid rgba(255,255,255,.55)}
 nav.tabs button:last-child{border-right:1px solid rgba(255,255,255,.55)}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 nav.tabs button:active{background:rgba(0,0,0,.12)}
-nav.tabs button[aria-selected="true"]{background:var(--hmg-grey)}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--hmg-grey)}
 nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 
 /* Ask */
@@ -106,14 +106,14 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .msg.bot h4{font:700 15px/1.2 var(--f-body);margin:10px 0 4px}
 .msg.bot strong{font-weight:600}
 .msg .thinking{color:var(--muted);font-style:italic}
-.msg img{border-radius:8px;max-height:160px;display:block;margin-bottom:6px}
+.msg img{border-radius:0;max-height:160px;display:block;margin-bottom:6px}
 .msg-actions{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
 /* Greeting strip: one compact charcoal band with a cyan edge, so the questions and the box stay on screen. */
-.hero{border-radius:14px;padding:17px 16px 16px;color:#fff;background:linear-gradient(135deg,#53565a 0%,#3d4043 100%);border-left:5px solid var(--hmg-cyan);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
+.hero{border-radius:0;padding:17px 16px 16px;color:#fff;background:linear-gradient(135deg,#53565a 0%,#3d4043 100%);border-left:5px solid var(--hmg-cyan);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:7px}
 .hero-row{display:flex;align-items:center;gap:10px}
 .hero h2{flex:1;min-width:0;font-size:25px;color:#fff;margin:0}
 .hero h2::after{display:none}
-.hero-k{flex:none;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7fd6f2;border:1px solid rgba(127,214,242,.5);border-radius:999px;padding:3px 9px}
+.hero-k{flex:none;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#7fd6f2;border:1px solid rgba(127,214,242,.5);border-radius:0;padding:3px 9px}
 .hero-who{margin:0;font-size:13.5px;color:rgba(255,255,255,.78)}
 .hero-who b{color:#fff;font-weight:600}
 .hero-who a{color:#7fd6f2;white-space:nowrap}
@@ -121,7 +121,7 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .sugg-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
 .sugg-box:has(#suggest:empty){display:none}
 .box-h{font:400 17px/1.2 var(--f-display);margin:0;color:var(--fg);display:flex;align-items:center;gap:8px}
-.box-h::before{content:"";width:4px;height:17px;border-radius:2px;background:var(--hmg-cyan)}
+.box-h::before{content:"";width:4px;height:17px;background:var(--hmg-cyan)}
 .sugg-box .box-h{padding:12px 14px 10px;border-bottom:1px solid var(--line)}
 .suggest{display:grid;grid-template-columns:1fr}
 .sugg-box .suggest button{border:0;border-radius:0;box-shadow:none;background:none}
@@ -131,12 +131,12 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .composer .ghost{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;font-size:13.5px;font-weight:600}
 .composer .ghost svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round}
 .suggest button{display:flex;align-items:center;gap:12px;border:1px solid var(--card-line);background:var(--surface);border-radius:var(--r);padding:12px 12px 12px 12px;font-size:15px;text-align:left;box-shadow:var(--shadow);min-width:0}
-.suggest button .si{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.suggest button .si{flex:none;width:36px;height:36px;border-radius:0;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
 .suggest button .si svg,.suggest button .chev{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .suggest button .st{flex:1;min-width:0}
 .suggest button .chev{flex:none;width:18px;height:18px;color:var(--muted)}
 .suggest button:hover{box-shadow:0 0 0 2px var(--accent)}
-.ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;font-size:14px;text-align:left}
+.ghost{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:7px 12px;font-size:14px;text-align:left}
 .ghost:hover{border-color:var(--accent)}
 .composer{position:sticky;bottom:0;background:var(--compose);border-top:3px solid var(--compose-line);border-radius:var(--r) var(--r) 0 0;margin:8px -8px 0;padding:12px 8px 10px;display:flex;flex-direction:column;gap:6px}
 .composer .row{display:flex;gap:8px;align-items:flex-end}
@@ -149,13 +149,14 @@ nav.tabs :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 @keyframes pulse{50%{box-shadow:0 0 0 6px rgba(198,40,40,.25)}}
 @media (prefers-reduced-motion:reduce){.iconbtn.listening{animation:none}}
 .attached{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.attached img{height:40px;border-radius:6px}
+.attached img{height:40px;border-radius:0}
 /* My questions */
 /* History / new question: same blue button bar as Design and Controller. */
 /* Ask fills the screen so the question box always sits at the bottom, by the thumb and the keyboard, even before the chat is long. */
 main>.wrap:has(>#v-ask:not([hidden])){min-height:100%;box-sizing:border-box;display:flex;flex-direction:column;padding-bottom:0}
 #v-ask{flex:1}
-#v-ask>.disclaimer{margin-top:auto}
+#v-ask>.composer{margin-top:auto}
+.composer .disclaimer{padding:0 2px}
 .seg.blue.ask-top button{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:12px 6px;font-size:14.5px}
 /* Questions left today: right half of the bar, a ring that empties as they're used. */
 .ask-top .qleft{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 6px;color:#fff;font-size:14.5px;font-weight:600;line-height:1.15;border-left:1px solid rgba(255,255,255,.55)}
@@ -170,15 +171,16 @@ main>.wrap:has(>#v-ask:not([hidden])){min-height:100%;box-sizing:border-box;disp
 .hrow:hover{box-shadow:0 0 0 2px var(--accent)}
 .hrow .hq{font-weight:600}.hrow .hs{font-size:13.5px;color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .hmeta{display:flex;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);align-items:center}
-.hmeta b{font:600 12px/1 var(--f-body);background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:3px 8px}
+.hmeta b{font:600 12px/1 var(--f-body);background:var(--accent-soft);color:var(--accent);border-radius:0;padding:3px 8px}
 #hist-list{display:flex;flex-direction:column;gap:8px}
-.notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:10px;padding:10px 12px;font-size:14px}
+.notice{border:1px solid var(--warn);background:var(--warn-soft);color:var(--fg);border-radius:0;padding:10px 12px;font-size:14px}
 
 /* Fault codes */
-.search{position:sticky;top:-1px;z-index:3;border:1px solid var(--line);border-radius:999px;padding:12px 16px 12px 44px;width:100%;box-sizing:border-box;font-family:var(--f-body);font-size:16px;box-shadow:0 0 0 8px var(--bg),var(--shadow);
+#fault-detail{scroll-margin-top:84px}
+.search{position:sticky;top:-1px;z-index:3;border:1px solid var(--line);border-radius:0;padding:12px 16px 12px 44px;width:100%;box-sizing:border-box;font-family:var(--f-body);font-size:16px;box-shadow:0 0 0 8px var(--bg),var(--shadow);
   background:var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300a9e0' stroke-width='2.2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='M20 20l-4-4'/%3E%3C/svg%3E") no-repeat 15px center/20px}
 .codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.code{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--card-line);border-left:5px solid var(--line);background:var(--surface);box-shadow:var(--shadow);border-radius:12px;padding:11px 12px;min-width:0}
+.code{display:flex;flex-direction:column;gap:4px;text-align:left;border:1px solid var(--card-line);border-left:5px solid var(--line);background:var(--surface);box-shadow:var(--shadow);border-radius:0;padding:11px 12px;min-width:0}
 .code:has(b.H){border-left-color:var(--accent)}.code:has(b.F){border-left-color:var(--warn)}.code:has(b.E){border-left-color:var(--bad)}
 .code b{font:700 22px/1 var(--f-mono)}
 .code b.H{color:var(--accent)}.code b.F{color:var(--warn)}.code b.E{color:var(--bad)}
@@ -188,20 +190,20 @@ main>.wrap:has(>#v-ask:not([hidden])){min-height:100%;box-sizing:border-box;disp
 .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14.5px}
 .kv dt{color:var(--muted)}.kv dd{margin:0}
 .kv ul{margin:0;padding-left:18px}
-.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
+.btn{border:0;border-radius:0;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-fg)}
 .btn:active{filter:brightness(.92)}
 .btn.sec{background:var(--sunk);color:var(--fg)}
 .btn.esc,.ghost.esc{background:var(--esc);border-color:var(--esc);color:var(--esc-fg);font-weight:600}
 .ghost.esc:hover{border-color:var(--esc);filter:brightness(1.1)}
 nav.tabs button[data-v="esc"]{background:var(--esc)}
-nav.tabs button[data-v="esc"][aria-selected="true"]{background:var(--hmg-grey)}
+nav.tabs button[data-v="esc"][aria-selected="true"]{background:var(--surface);color:var(--esc)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
 .src{font-size:13px;color:var(--muted)}
 
 /* Controller */
 .task{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
 .task h3{margin:0;font-size:16px;font-weight:600}
-.path{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:6px;padding:6px 8px;overflow-wrap:anywhere}
+.path{font-family:var(--f-mono);font-size:13px;background:var(--sunk);border-radius:0;padding:6px 8px;overflow-wrap:anywhere}
 .keys{font-family:var(--f-mono);font-size:13.5px}
 .task details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:14px}
 .group-h{font:600 13px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:8px}
@@ -228,8 +230,8 @@ nav.tabs button[data-v="esc"][aria-selected="true"]{background:var(--hmg-grey)}
 .doc .meta{font-size:13px;color:var(--muted)}
 .doc-top{display:flex;gap:14px;align-items:flex-start}
 .doc-top>div{min-width:0;display:flex;flex-direction:column;gap:4px}
-.pdf{flex:none;width:44px;height:54px;border-radius:6px 14px 6px 6px;background:#d93a2b;color:#fff;display:grid;place-items:end center;padding-bottom:8px;box-sizing:border-box;font:700 11px/1 var(--f-body);letter-spacing:.05em;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
-.saved{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:#e3f5e8;color:#1c7a3d}
+.pdf{flex:none;width:44px;height:54px;border-radius:0 12px 0 0;background:#d93a2b;color:#fff;display:grid;place-items:end center;padding-bottom:8px;box-sizing:border-box;font:700 11px/1 var(--f-body);letter-spacing:.05em;box-shadow:inset 0 -3px 0 rgba(0,0,0,.15)}
+.saved{align-self:flex-start;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:0;background:#e3f5e8;color:#1c7a3d}
 .saved svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .saved{background:#173322;color:#7fd99c}}
 :root[data-theme="dark"] .saved{background:#173322;color:#7fd99c}
@@ -247,13 +249,13 @@ a.pg{color:var(--accent);font-weight:600;font-size:14px}
 .pt-no code{font:600 16px var(--f-mono);letter-spacing:.02em}
 .pt-no button,.pt-meta button{border:0;background:none;padding:2px 0;color:var(--accent);font-weight:600;font-size:13.5px}
 .pt-meta{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
-.pt-tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--fg)}
+.pt-tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:0;background:var(--accent-soft);color:var(--fg)}
 .pt-tag.diff{background:var(--warn-soft)}
 .pt-none{color:var(--muted);font-style:italic}
 
 /* Component identifier (Design › Components) */
 .cp-draw{display:flex;flex-wrap:wrap;gap:8px}
-.cp-draw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;font:600 14px var(--f-body);text-align:left}
+.cp-draw button{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:8px 12px;font:600 14px var(--f-body);text-align:left}
 .cp-draw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 #cp-fig .wfig{margin:0}
 .cp{background:var(--surface);border:1px solid var(--card-line);box-shadow:var(--shadow);border-radius:var(--r);padding:10px 14px;display:flex;flex-direction:column;gap:6px}
@@ -264,20 +266,20 @@ a.pg{color:var(--accent);font-weight:600;font-size:14px}
 .cp p{margin:0;font-size:14.5px;line-height:1.45}
 .cp-meta{display:flex;gap:6px 10px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted)}
 .cp-meta button{border:0;background:none;padding:2px 0;color:var(--accent);font-weight:600;font-size:13.5px;text-align:left}
-.cp-meta button.code{font:700 13px var(--f-mono);padding:3px 9px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.cp-meta button.code{font:700 13px var(--f-mono);padding:3px 9px;border-radius:0;background:var(--warn-soft);color:var(--warn)}
 .cp-meta code{font:600 13.5px var(--f-mono);color:var(--fg)}
 
 /* Sizing */
 .sz-in{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .sz-in label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
-.sz-in input,.sz-in select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:9px 10px;font:500 16px var(--f-mono);color:var(--fg);min-width:0}
+.sz-in input,.sz-in select{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:9px 10px;font:500 16px var(--f-mono);color:var(--fg);min-width:0}
 .kw{display:flex;flex-wrap:wrap;gap:8px}
-.kw button{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 14px;font:700 16px var(--f-mono)}
+.kw button{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:8px 14px;font:700 16px var(--f-mono)}
 .kw button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .sz-res{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .sz-res .big{font:700 44px/1 var(--f-mono)}
 .sz-res .of{color:var(--muted);font-size:15px}
-.sum{font:13px/1.5 var(--f-mono);background:var(--sunk);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
+.sum{font:13px/1.5 var(--f-mono);background:var(--sunk);border-radius:0;padding:8px 10px;overflow-wrap:anywhere}
 table.cu{border-collapse:collapse;width:100%;font-size:14.5px}
 table.cu th,table.cu td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
 table.cu th{font-size:12.5px;color:var(--muted);font-weight:600}
@@ -289,19 +291,16 @@ table.cu+table.cu{margin-top:8px}
 .sz-notes li{margin:3px 0}
 
 /* Clearances */
-.seg{display:flex;background:var(--sunk);border-radius:8px;padding:3px;align-self:flex-start;flex-wrap:wrap;max-width:100%}
-.seg button{border:0;background:none;padding:7px 14px;border-radius:6px;font-size:14.5px;font-weight:600;color:var(--muted)}
+.seg{display:flex;background:var(--sunk);border-radius:0;padding:3px;align-self:flex-start;flex-wrap:wrap;max-width:100%}
+.seg button{border:0;background:none;padding:7px 14px;border-radius:0;font-size:14.5px;font-weight:600;color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.15)}
 /* Design and Controller topics: blue buttons with white dividers, like the bottom menu. */
-.seg.blue{display:flex;flex-wrap:nowrap;align-self:stretch;background:var(--hmg-cyan);border-radius:10px;padding:0;overflow:hidden;box-shadow:var(--shadow)}
+.seg.blue{display:flex;flex-wrap:nowrap;align-self:stretch;background:var(--hmg-cyan);border-radius:0;padding:0;overflow:hidden;box-shadow:var(--shadow)}
 .seg.blue button{flex:1 1 0;min-width:0;border-radius:0;padding:11px 2px;font-size:12.5px;line-height:1.2;color:#fff;text-align:center}
 .seg.blue button+button{border-left:1px solid rgba(255,255,255,.55)}
 .seg.blue button:active{background:rgba(0,0,0,.12)}
-.seg.blue button[aria-pressed="true"]{background:var(--hmg-grey);color:#fff;box-shadow:none}
-/* Design has more topics than fit in one row on a phone: two rows of up to four, white lines between. */
-#install-seg{flex-wrap:wrap;gap:1px;background:rgba(255,255,255,.55);border:1px solid var(--hmg-cyan)}
-#install-seg button{flex:1 1 calc(25% - 1px);background:var(--hmg-cyan);border-left:0}
-#install-seg button[aria-pressed="true"]{background:var(--hmg-grey)}
+.seg.blue button[aria-pressed="true"]{background:var(--surface);color:var(--accent);font-weight:700;box-shadow:inset 0 -3px 0 var(--hmg-grey)}
+.seg.blue{border:1px solid var(--hmg-cyan)}
 .seg.blue :focus-visible{outline:2px solid #fff;outline-offset:-4px}
 .cl-fig{width:100%;max-width:360px;height:auto;align-self:center}
 .cl-fig .u{fill:var(--sunk);stroke:var(--fg);stroke-width:1.5}
@@ -316,23 +315,23 @@ table.cl td.bad{color:var(--warn);font-weight:700}
 #wc-e button{font:600 15px var(--f-body)}
 #wc-body table.cu td:first-child{font-family:var(--f-body)}
 #rd-out table.cu td{white-space:nowrap}
-.qs-room{border:1px solid var(--card-line);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}
+.qs-room{border:1px solid var(--card-line);border-radius:0;padding:10px;display:flex;flex-direction:column;gap:8px}
 .qs-rooms{display:flex;flex-direction:column;gap:8px}
 .qs-rh{display:flex;gap:8px;align-items:center}
-.qs-name{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;font:600 15px var(--f-body);color:var(--fg)}
-.qs-rh .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
+.qs-name{flex:1;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:0;padding:8px 10px;font:600 15px var(--f-body);color:var(--fg)}
+.qs-rh .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:5px 10px;font-size:13px;color:var(--muted)}
 .qs-top{display:flex;justify-content:flex-end}
 table.qs-saved td{font-family:var(--f-body);vertical-align:top}
 .qs-sv-b{text-align:right;white-space:nowrap}.qs-sv-b .btn{padding:6px 12px;margin-right:6px}
-.qs-sv-b .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 10px;font-size:13px;color:var(--muted)}
-.qs-hsel{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 6px;font:500 13px var(--f-body);color:var(--fg)}
+.qs-sv-b .cp-x{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:5px 10px;font-size:13px;color:var(--muted)}
+.qs-hsel{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:7px 6px;font:500 13px var(--f-body);color:var(--fg)}
 .qs-4{grid-template-columns:repeat(4,1fr)}
 .qs-4 label{font-size:12px}
 .qs-pick{font-size:14px;line-height:1.45}
-.qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
+.qs-sel{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:10px;font:500 15px var(--f-body);color:var(--fg);min-width:0;flex:1}
 table.qs-hp tr[data-p]{cursor:pointer}
 .qs-chg{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted)}
-.qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
+.qs-chg select{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:10px;font:600 15px var(--f-body);color:var(--fg)}
 #qs-area.qs-auto{background:var(--sunk)}
 table.qs-hp td:nth-child(n+2){white-space:nowrap}
 table.qs-hp td:first-child,table.qs-list td:first-child,table.qs-list td:nth-child(4){font-family:var(--f-body)}
@@ -352,10 +351,10 @@ table.qs-tot tr.net td,table.qs-tot tr.net th{font-weight:700;color:var(--fg)}
 form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 form label{display:flex;flex-direction:column;gap:4px;font-size:13.5px;font-weight:600;color:var(--muted);min-width:0}
 form .full{grid-column:1/-1}
-form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 12px;font-weight:400;color:var(--fg);min-width:0}
+form input,form textarea{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:11px 12px;font-weight:400;color:var(--fg);min-width:0}
 form textarea{min-height:76px;resize:vertical}
 /* Quote request preview (tables). */
-.qs-doc{display:flex;flex-direction:column;gap:14px;border:1px solid var(--card-line);border-radius:12px;padding:14px;background:var(--surface)}
+.qs-doc{display:flex;flex-direction:column;gap:14px;border:1px solid var(--card-line);border-radius:0;padding:14px;background:var(--surface)}
 /* Download PDF, when the PDF maker can't load: only the quotation is printed, always black on white. */
 .qs-print{display:none}
 @media print{
@@ -366,7 +365,7 @@ form textarea{min-height:76px;resize:vertical}
   #qs-print .qs-scroll{overflow:visible}
   #qs-print .qs-doc .qs-scroll table.cu td{white-space:normal}
   #qs-print section{break-inside:avoid}
-  #qs-print .qs-doc-n{font-size:12.5px;color:#222;border:1px solid #c98a00;border-radius:6px;padding:8px}
+  #qs-print .qs-doc-n{font-size:12.5px;color:#222;border:1px solid #c98a00;border-radius:0;padding:8px}
   @page{margin:14mm}
 }
 .qp-head{display:flex;gap:14px;align-items:center;margin-bottom:14px}
@@ -431,7 +430,7 @@ table.qs-kv th{text-align:left;font-weight:600;width:42%;color:var(--muted)}
 #qs-body .btn{border-radius:0;padding:13px 18px;font:600 15px/1.2 var(--f-body);letter-spacing:.01em}
 #qs-body .btn.sec{background:transparent;box-shadow:inset 0 0 0 1.5px var(--muted)}
 #qs-body .qs-doc{border-radius:0;border-color:var(--line)}
-pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:10px;padding:12px;margin:0;overflow-wrap:anywhere}
+pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(--sunk);border-radius:0;padding:12px;margin:0;overflow-wrap:anywhere}
 .addr{font-family:var(--f-mono);user-select:all}
 @media (max-width:520px){form{grid-template-columns:1fr}.brand{gap:10px}.logo{height:38px}.brand-t{padding-left:10px}.brand-t b{font-size:16px}.brand-t span{font-size:10.5px}.unit-btn{padding:7px 10px 7px 12px;font-size:13px}}
 @media (max-width:360px){.logo{height:34px}.brand-t b{font-size:15px}.brand-t span{display:none}}
@@ -448,7 +447,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .zoom{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.88);display:flex;flex-direction:column}
 .zoom .bar{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;font-size:14px;background:#111}
 .zoom .bar span{flex:1;min-width:0}
-.zoom .bar button,.zoom .bar a{border:0;border-radius:8px;padding:8px 12px;background:#ffffff22;color:#fff;font:600 14px var(--f-body);text-decoration:none}
+.zoom .bar button,.zoom .bar a{border:0;border-radius:0;padding:8px 12px;background:#ffffff22;color:#fff;font:600 14px var(--f-body);text-decoration:none}
 .zoom .pane{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;background:#fff;touch-action:pan-x pan-y pinch-zoom}
 .zoom .pane img{display:block;width:100%;height:auto}
 .zoom.big .pane img{width:auto;max-width:none}
@@ -458,14 +457,14 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 .spot{position:absolute;transform:translate(-50%,-50%);border:2px solid var(--hmg-cyan);border-radius:8px;background:rgba(0,169,224,.12);padding:0;cursor:pointer}
 .spot[aria-pressed="true"]{background:rgba(0,169,224,.35);border-color:#0077A8}
 .zoom .sheet{max-height:48%;overflow:auto;background:var(--bg);padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 16px rgba(0,0,0,.3)}
-.zoom .sheet .cp-x{display:block;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px;margin:0 0 6px auto}
+.zoom .sheet .cp-x{display:block;border:1px solid var(--line);background:var(--surface);border-radius:0;padding:4px 10px;font-size:13px;margin:0 0 6px auto}
 .gate{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:24px}
 .gate form{max-width:360px;width:100%;display:flex;flex-direction:column;gap:12px}
 .gate .brand{flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 6px}
 .gate .logo{height:88px}
 .gate .brand-t{border-left:0;padding-left:0;border-top:3px solid var(--hmg-cyan);padding-top:10px}
 .gate .brand-t b{font-size:26px}
-.gate input{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:11px 12px;font-size:17px}
+.gate input{border:1px solid var(--line);background:var(--surface);border-radius:0;padding:11px 12px;font-size:17px}
 .install{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 .splash{position:fixed;inset:0;z-index:2000;background:var(--surface);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;transition:opacity .35s ease,visibility .35s}
 .splash .logo{height:88px}
@@ -520,7 +519,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 
 <section class="view" id="v-ask">
   <div class="hero" id="hero">
-    <div class="hero-row"><h2>How can we assist?</h2><span class="hero-k" id="hero-unit">J-series</span></div>
+    <div class="hero-row"><h2>How can we assist?</h2></div>
     <p class="hero-who" id="who" hidden></p>
   </div>
   <div class="seg blue ask-top" id="ask-top" role="group" aria-label="Questions"><button id="hist-open"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>My questions history</button><div class="qleft" id="q-left" role="status" hidden></div></div>
@@ -533,7 +532,6 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
   <div class="panel install" id="install" hidden><span id="install-t">Add HMG Installer Assistant to your home screen to open it like an app.</span><span class="btnrow" style="margin:0"><button class="btn" id="install-go" hidden>Install</button><button class="ghost" id="install-x">Not now</button></span></div>
   <div class="sugg-box" id="sugg-box"><h3 class="box-h">Suggested Questions</h3><div class="suggest" id="suggest"></div></div>
   <div id="log" aria-live="polite"></div>
-  <p class="disclaimer" id="disc">For qualified installers. It supports, and doesn't replace, the manufacturer's manual, F-Gas rules or your own judgement on site. Questions are saved to help Heat Merchants improve the service.</p>
   <div class="composer">
     <div class="box-row"><h3 class="box-h">Ask a Question</h3><button class="ghost" id="new-chat" hidden><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New question</button></div>
     <div class="attached" id="attached" hidden><img id="att-img" alt="Attached photo"><span>Photo attached</span><button class="ghost" id="att-x">Remove</button></div>
@@ -547,6 +545,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
       <button class="iconbtn primary" id="send" title="Send"><svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     </div>
     <p class="src" id="voice-note" role="status" hidden></p>
+    <p class="disclaimer" id="disc">For qualified installers. Supports, never replaces, the manual, F-Gas rules and your judgement. Questions are saved to improve the service.</p>
   </div>
 </section>
 
@@ -558,9 +557,10 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-ctrl" hidden>
-  <div><h2>Controller</h2><p class="lede" id="ctrl-lede">Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.</p></div>
+  <div><h2>Controller</h2><p class="lede" id="ctrl-lede">Settings and commissioning, button by button.</p></div>
   <div class="seg blue" role="group" aria-label="Controller topic"><button data-c="set" aria-pressed="true">Settings</button><button data-c="comm" aria-pressed="false">Commissioning</button></div>
   <div class="view" id="ctrl-set">
+    <p class="src" style="margin:0" id="ctrl-tip">Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.</p>
     <input class="search" id="cq" placeholder="Find a setting, e.g. thermostat, flow rate" autocomplete="off">
     <div class="view" id="tasks"></div>
   </div>
@@ -568,28 +568,27 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 </section>
 
 <section class="view" id="v-docs" hidden>
-  <div><h2>Manuals</h2><p class="lede" id="docs-lede">The original manufacturer PDFs for this unit. Open one to read it on your phone, or download it to keep a copy for sites with no signal. Manuals you open are also kept on the phone for next time.</p></div>
-  <div class="view" id="docs"></div>
-  <div><h2 style="font-size:20px">Spare parts</h2><p class="lede" id="parts-lede">Part numbers from the manufacturer's parts list for this unit.</p></div>
-  <div class="view" id="parts"></div>
-  <div><h2 style="font-size:20px">Wiring and PCB diagrams</h2><p class="lede">Terminal blocks and PCB layouts from the manuals for this unit. Tap one to enlarge.</p></div>
-  <div class="wgrid" id="wiring"></div>
+  <div><h2>Manuals</h2><p class="lede" id="docs-lede">Manufacturer manuals, parts and drawings for this unit.</p></div>
+  <div class="seg blue" id="docs-seg" role="group" aria-label="Manuals topic"><button data-m="pdf" aria-pressed="true">Manuals</button><button data-m="cp" aria-pressed="false">Components</button><button data-m="pt" aria-pressed="false">Spare parts</button><button data-m="wr" aria-pressed="false">Wiring</button></div>
+  <div class="view" id="pdf-body"><p class="src" style="margin:0">Open one to read it, or download it for sites with no signal. Manuals you open are kept on the phone.</p><div class="view" id="docs"></div></div>
+  <div class="view" id="pt-body" hidden><p class="src" style="margin:0" id="parts-lede">Part numbers from the manufacturer's parts list for this unit.</p><div class="view" id="parts"></div></div>
+  <div class="view" id="wr-body" hidden><p class="src" style="margin:0">Terminal blocks and PCB layouts from the manuals. Tap one to enlarge.</p><div class="wgrid" id="wiring"></div></div>
+  <div id="cp-body" class="view" hidden></div>
 </section>
 
 <section class="view" id="v-size" hidden>
-  <div><h2>Design</h2><p class="lede" id="size-lede">Size the system from the BER, pick radiators, set the heating curve and size the pipework. Plus clearances and what each component inside the unit is, for the selected unit.</p></div>
-  <div class="seg blue" id="install-seg" role="group" aria-label="Design topic"><button data-s="cp" aria-pressed="true">Components</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button><button data-s="ez" aria-pressed="false" hidden>Exclusion zones</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="rd" aria-pressed="false">Radiators</button><button data-s="qs" aria-pressed="false">Quick survey</button></div>
+  <div><h2>Design</h2><p class="lede" id="size-lede">Size the system, pick radiators, site the unit.</p></div>
+  <div class="seg blue" id="install-seg" role="group" aria-label="Design topic"><button data-s="qs" aria-pressed="true">Quick survey</button><button data-s="rd" aria-pressed="false">Radiators</button><button data-s="wc" aria-pressed="false">Heating curve</button><button data-s="sz" aria-pressed="false">Pipe sizing</button><button data-s="cl" aria-pressed="false">Clearances</button></div>
+  <div id="qs-body" class="view"></div>
+  <div id="rd-body" hidden></div>
+  <div id="wc-body" hidden></div>
+  <div id="size-body" hidden></div>
   <div id="cl-body" hidden></div>
   <div id="ez-body" hidden></div>
-  <div id="size-body" hidden></div>
-  <div id="wc-body" hidden></div>
-  <div id="rd-body" hidden></div>
-  <div id="qs-body" class="view" hidden></div>
-  <div id="cp-body" class="view"></div>
 </section>
 
 <section class="view" id="v-esc" hidden>
-  <div><h2>Escalate</h2><p class="lede">Send the job to Heat Merchants Technical Support from your own email, so they can reply to you directly. Your name, company and mobile are kept on this phone for next time.</p></div>
+  <div><h2>Escalate</h2><p class="lede">Send the job to HMG Technical Support by email.</p></div>
   <div class="btnrow"><button class="btn sec" id="fill">Fill from chat</button><span class="src" id="fill-note"></span></div>
   <form id="esc">
     <label>Model<input id="e-model"></label>
@@ -620,7 +619,7 @@ pre.summary{white-space:pre-wrap;font:13.5px/1.45 var(--f-mono);background:var(-
 <div class="zoom" id="zoom" hidden role="dialog" aria-label="Diagram"><div class="bar"><span id="zoom-t"></span><button id="zoom-size">Zoom in</button><button id="zoom-x">Close</button></div><div class="pane"><div class="zw"><img id="zoom-img" alt=""><div id="zoom-spots"></div></div></div><div class="sheet" id="zoom-sheet" hidden></div></div>
 <nav class="tabs" role="tablist"><div class="wrap">
   <button role="tab" data-v="ask" aria-selected="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>Ask</button>
-  <button role="tab" data-v="faults" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>Fault codes</button>
+  <button role="tab" data-v="faults" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>Faults</button>
   <button role="tab" data-v="ctrl" aria-selected="false"><svg viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><rect x="8" y="6" width="8" height="5"/><path d="M9 15h.01M12 15h.01M15 15h.01M12 18h.01"/></svg>Controller</button>
   <button role="tab" data-v="docs" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4z"/><path d="M20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>Manuals</button>
   <button role="tab" data-v="size" aria-selected="false"><svg viewBox="0 0 24 24"><path d="M3 9h7a4 4 0 0 1 4 4v8M3 15h7"/><path d="M10 21h8M14 3v4"/><circle cx="14" cy="10" r="3"/></svg>Design</button>
@@ -800,6 +799,7 @@ function show(v){
   for(const id of ["ask","faults","ctrl","docs","size","esc"]) $("#v-"+id).hidden=id!==v;
   $("#main").scrollTop=0;
   if(v==="docs") renderDocs();
+  if(v==="size"&&!$("#qs-body").hidden) qsLoadPrices(); /* Quick survey opens first on Design */
 }
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>show(b.dataset.v));
 function setUnit(u){
@@ -946,10 +946,17 @@ const CLEAR={J:{rear:300,right:300,left:100,front:1000},T:{rear:300,right:300,le
 const BAXI_MAN={rear:300,right:500,left:500,front:{small:1000,big:1500}};
 let clSize="small";
 /* Design topics. Exclusion zones is only for the R290 units (L-series, Baxi HP55). */
+/* Clearances shows the R290 exclusion zones under it on the L-series and Baxi. */
 function installTopic(s){
   document.querySelectorAll("#install-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.s===s));
-  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="ez";$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#qs-body").hidden=s!=="qs";if(s==="qs") qsLoadPrices(); /* fresh prices and discounts each time it opens */$("#cp-body").hidden=s!=="cp";
+  $("#cl-body").hidden=s!=="cl";$("#ez-body").hidden=s!=="cl"||!R290(unit);$("#size-body").hidden=s!=="sz";$("#wc-body").hidden=s!=="wc";$("#rd-body").hidden=s!=="rd";$("#qs-body").hidden=s!=="qs";if(s==="qs") qsLoadPrices(); /* fresh prices and discounts each time it opens */
 }
+/* Manuals topics: the PDFs, labelled component drawings, spare parts, wiring diagrams. */
+function docsTopic(m){
+  document.querySelectorAll("#docs-seg button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.m===m));
+  for(const k of ["pdf","cp","pt","wr"]) $("#"+k+"-body").hidden=k!==m;
+}
+document.querySelectorAll("#docs-seg button").forEach(b=>b.onclick=()=>docsTopic(b.dataset.m));
 document.querySelectorAll("#install-seg button").forEach(b=>b.onclick=()=>installTopic(b.dataset.s));
 function clFig(c,m){
   const lab=(k,x,y)=>{const bad=m&&m[k]>c[k];return `<text x="${x}" y="${y}" text-anchor="middle" class="${bad?"x":""}">${c[k]}${bad?" / "+m[k]:""}</text>`;};
@@ -1001,13 +1008,13 @@ function renderClear(){
   }
   box.innerHTML=body+`<div class="btnrow"><button class="btn sec" id="cl-ask">Ask about this</button></div>`;
   box.querySelectorAll("#cl-sz button").forEach(b=>b.onclick=()=>{clSize=b.dataset.s;renderClear();});
-  box.querySelectorAll("[data-ez]").forEach(b=>b.onclick=()=>{installTopic("ez");$("#ez-body").scrollIntoView({block:"start"});});
+  box.querySelectorAll("[data-ez]").forEach(b=>b.onclick=()=>$("#ez-body").scrollIntoView({block:"start",behavior:"smooth"}));
   $("#cl-ask").onclick=()=>{show("ask");ask(`What clearances do I need around the ${u.short} outdoor unit?`);};
 }
 
 /* ---------- R290 exclusion zones (L-series SM p.168, Baxi HP55 IM pp.30-31; HMG uses the maker's figures, Donal Reilly 26/10/2026) ---------- */
 const R290=u=>u==="L"||u==="B";
-const ezPointer=()=>`<div class="panel"><span class="chip warn">R290: protective zone too</span><p style="margin:0">R290 is extremely flammable (A3) and heavier than air. As well as these clearances, the outdoor unit needs a protective zone kept clear of openings, drains and ignition sources.</p><div class="btnrow"><button class="btn sec" type="button" data-ez>See Exclusion zones</button></div></div>`;
+const ezPointer=()=>`<div class="panel"><span class="chip warn">R290: protective zone too</span><p style="margin:0">R290 is extremely flammable (A3) and heavier than air. As well as these clearances, the outdoor unit needs a protective zone kept clear of openings, drains and ignition sources.</p><div class="btnrow"><button class="btn sec" type="button" data-ez>See the exclusion zone below</button></div></div>`;
 const LZONES=[
   {id:"l-zone-1-open",file:"zones/l-zone-1-open.png",w:470,h:191,title:"1. Ground or flat roof, open area",fig:"A 1000 mm all round the unit."},
   {id:"l-zone-2-ground-wall",file:"zones/l-zone-2-ground-wall.png",w:552,h:366,title:"2. On the ground, in front of a wall",fig:"A 2000 · B 3000 · C 300 · D 1000 mm"},
@@ -1015,9 +1022,8 @@ const LZONES=[
   {id:"l-zone-4-wall-mounted",file:"zones/l-zone-4-wall-mounted.png",w:480,h:365,title:"4. Wall-mounted, in front of a wall",fig:"A 2000 · B 3000 · C 300 · D 1000 mm. The zone under the unit goes down to the floor."},
   {id:"l-zone-5-wall-corner",file:"zones/l-zone-5-wall-corner.png",w:479,h:378,title:"5. Wall-mounted, in a corner",fig:"A 2000 · B 2500 · C 300 · D 500 · E 1000 · F 500 · G 1800 mm. The zone under the unit goes down to the floor."}];
 function renderZones(){
-  const tab=document.querySelector('#install-seg [data-s="ez"]'), on=R290(unit);
-  tab.hidden=!on;
-  if(!on&&tab.getAttribute("aria-pressed")==="true") installTopic("cl");
+  const on=R290(unit), cl=document.querySelector('#install-seg [data-s="cl"]');
+  $("#ez-body").hidden=!on||cl.getAttribute("aria-pressed")!=="true";
   const box=$("#ez-body");if(!on){box.innerHTML="";return;}
   const fig=z=>`<figure class="wfig" style="margin:0"><button type="button" data-z="${z.id}" aria-label="Enlarge ${esc(z.title)}"><img loading="lazy" src="${z.file}" width="${z.w}" height="${z.h}" alt="${esc(z.title)}"></button></figure>`;
   let body;
@@ -1050,7 +1056,7 @@ function renderZones(){
       <div class="btnrow">${pageLink("B",31)}</div>
       <div class="src">Source: HMG R290 exclusion zone guidance (Donal Reilly, 26/10/2026); Baxi HP55 IM pp.30-31 (Fig.18-20), p.36.</div></div>`;
   }
-  box.innerHTML=`<div class="view">${body}<div class="btnrow"><button class="btn sec" id="ez-ask">Ask about this</button></div></div>`;
+  box.innerHTML=`<div class="view"><h3 class="box-h">R290 exclusion zone</h3>${body}<div class="btnrow"><button class="btn sec" id="ez-ask">Ask about this</button></div></div>`;
   const zs=Object.fromEntries([...LZONES,{id:"b-perimeter-p31",file:"zones/b-perimeter-p31.png",w:910,h:1287,title:"Baxi HP55 protective perimeter (Fig.18-20)"}].map(z=>[z.id,z]));
   box.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>{const z=zs[b.dataset.z];openZoom({...z,key:unit,page:unit==="L"?168:31,unit});});
   $("#ez-ask").onclick=()=>{show("ask");ask(`What exclusion zone does the ${UNITS[unit].short} outdoor unit need, and what can't be inside it?`);};
@@ -1209,7 +1215,7 @@ function renderRad(){
   if(!rd.spec) rd.spec=R.find(r=>r.type==="22"&&r.h===600&&r.l===1000)?.code||R[0].code;
   const opts=["11","22","33"].map(t=>`<optgroup label="Type ${t}">${R.filter(r=>r.type===t).map(r=>`<option value="${r.code}" ${r.code===rd.spec?"selected":""}>${radName(r)} (${r.code})</option>`).join("")}</optgroup>`).join("");
   box.innerHTML=`<div class="panel">
-      <div class="kw" id="rd-mode"><button data-m="size" aria-pressed="${rd.mode==="size"}">Size a Rad</button><button data-m="swap" aria-pressed="${rd.mode==="swap"}">Replace a Rad</button></div>
+      <div class="kw" id="rd-mode"><button data-m="size" aria-pressed="${rd.mode==="size"}">Size a radiator</button><button data-m="swap" aria-pressed="${rd.mode==="swap"}">Replace a radiator</button></div>
       <div class="src" style="margin:6px 2px 4px">${rd.mode==="size"?"Checking an existing radiator? Enter the room heat loss and room temperature, then see if it's equal to or above the suggested radiator.":"Specified radiator won't fit? Select it and enter the max height or length to find a suitable alternative."}</div>
       <div class="sz-in">
         ${rd.mode==="size"?`<label>Room heat loss W<input id="rd-w" inputmode="numeric" value="${rd.w}"></label>
@@ -1875,7 +1881,7 @@ function sicon(s){
 }
 function renderSuggest(){
   const box=$("#suggest");box.innerHTML="";
-  $("#hero-unit").textContent=UNITS[unit].pill;$("#hero").hidden=!!turns.length||!$("#hist").hidden;
+  $("#hero").hidden=!!turns.length||!$("#hist").hidden;
   if(turns.length||!$("#hist").hidden) return;
   for(const s of SUGGEST[unit]){const b=document.createElement("button");b.innerHTML=`${sicon(s)}<span class="st">${esc(s)}</span><svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>`;b.onclick=()=>ask(s);box.append(b);}
 }
@@ -2167,7 +2173,7 @@ function renderFaults(){
   box.innerHTML="";
   if(unit==="B"){
     const ctl=KB.B.ctlFaults, odu=KB.B.faults;
-    $("#fault-lede").textContent=`Baxi Assure HP55 · ${ctl.length} controller codes (A/H/E, ASHP Control IM pp.125-134, with checks) and ${odu.length} outdoor unit codes (HP55 IM pp.57-60, meaning only). Tap a code.`;
+    $("#fault-lede").textContent=`${ctl.length} controller and ${odu.length} outdoor unit codes for the Baxi HP55. Tap one.`;
     const hit=(f,extra)=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||extra.toLowerCase().includes(q);
     const groups=[["Controller (on the indoor unit screen)",ctl.filter(f=>hit(f,f.type+" "+f.checks)),"c"],["Outdoor unit (on the outdoor PCB display)",odu.filter(f=>hit(f,f.group)),"o"]];
     for(const [title,list,k] of groups){
@@ -2185,7 +2191,7 @@ function renderFaults(){
     return;
   }
   const P=PFAULTS();
-  $("#fault-lede").textContent=`${P.name} · ${P.list.length} codes from the error codes table (SM ${P.pages}). Tap a code.`;
+  $("#fault-lede").textContent=`${P.list.length} ${UNITS[unit].pill} codes from the service manual (${P.pages}). Tap one.`;
   const list=P.list.filter(f=>!q||f.code.toLowerCase().includes(q)||f.meaning.toLowerCase().includes(q)||f.verify.join(" ").toLowerCase().includes(q));
   for(const f of list){
     const b=document.createElement("button");b.className="code";
@@ -2302,7 +2308,7 @@ function renderTasks(){
     box.append(d);
   }
   if(!box.children.length) box.innerHTML=`<p class="src">Nothing matches. Ask the assistant instead.</p>`;
-  $("#ctrl-lede").textContent=unit==="B"?"Button-by-button help on the Baxi ASHP Control screen. Installer settings: [Menu] › Installer › code 0012.":"Button-by-button help on the wired remote. Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.";
+  $("#ctrl-tip").textContent=unit==="B"?"Installer settings on the Baxi ASHP Control: [Menu] › Installer › code 0012.":"Installer setup is locked while the unit runs: switch off with [Operate] ⏻ first.";
   if(unit==="B"){const g=document.createElement("div");g.className="notice";g.textContent="Baxi buttons (manual p.15): [Back] on the left, [Menu] on the right, and the [Dial] knob in the centre (turn to scroll, press to confirm). Blue screen = normal, red = warning or blockage, flashing red = lockout. No need to switch the unit off for installer settings. Error history: highlight an error and press the dial for details, press and hold the dial to clear. Child lock: briefly press Menu and the dial together.";box.prepend(g);}
 }
 $("#cq").addEventListener("input",renderTasks);
@@ -2330,7 +2336,7 @@ function renderComm(){
   box.innerHTML=`<div class="panel">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><b>${UNITS[unit].pill} commissioning</b><span class="src">${done} of ${all.length} done</span></div>
       <div class="cm-bar"><i style="width:${all.length?done/all.length*100:0}%"></i></div>
-      <p class="src" style="margin:0">Work down the list and tick each step as you go. Ticks stay on this phone until you start a new job. Steps tagged <span class="chip warn">HMG value needed</span> (${need}) don't have an HMG figure yet: the factory setting is shown.</p>
+      <p class="src" style="margin:0">Work down the list and tick each step as you go. Ticks stay on this phone until you start a new job.${need?` Steps tagged <span class="chip warn">HMG value needed</span> (${need}) don't have an HMG figure yet: the factory setting is shown.`:""}</p>
       <div class="btnrow"><button class="btn sec" id="cm-new">Start a new job</button><button class="btn sec" id="cm-ask">Talk me through it</button></div>
     </div>`+stages.map(s=>{
       const n=s.steps.filter(x=>ticks.has(x.id)).length;
